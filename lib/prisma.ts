@@ -1,4 +1,9 @@
-import { PrismaClient } from "@prisma/client";
+/**
+ * Prisma client singleton para evitar multiples instancias de PrismaClient
+ * @returns Instancia de PrismaClient
+ */
+
+import { PrismaClient } from "@/lib/prismaClient";
 
 const prismaClientSingleton = () => {
   return new PrismaClient();

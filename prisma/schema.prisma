@@ -5,18 +5,18 @@ datasource db {
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../lib/prismaClient"
 }
 
 model User {
-  id            String          @id @default(cuid())
-  name          String?
-  email         String          @unique
-  emailVerified DateTime?
-  image         String?
-  accounts      Account[]
-  sessions      Session[]
-  // Optional for WebAuthn support
-  Authenticator Authenticator[]
+  id                 String               @id @default(cuid())
+  name               String?
+  email              String               @unique
+  password           String?
+  emailVerified      DateTime?
+  image              String?
+  accounts           Account[]
+  passwordResetToken PasswordResetToken[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -43,36 +43,21 @@ model Account {
   @@id([provider, providerAccountId])
 }
 
-model Session {
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
 model VerificationToken {
-  identifier String
+  identifier String   @unique
   token      String
   expires    DateTime
 
-  @@id([identifier, token])
+  @@id([identifier])
 }
 
-// Optional for WebAuthn support
-model Authenticator {
-  credentialID         String  @unique
-  userId               String
-  providerAccountId    String
-  credentialPublicKey  String
-  counter              Int
-  credentialDeviceType String
-  credentialBackedUp   Boolean
-  transports           String?
+model PasswordResetToken {
+  id      String   @id @default(cuid())
+  userId  String
+  token   String   @unique
+  expires DateTime
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@id([userId, credentialID])
+  createdAt DateTime @default(now())
 }
