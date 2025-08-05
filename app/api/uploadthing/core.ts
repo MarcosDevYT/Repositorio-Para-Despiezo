@@ -16,7 +16,7 @@ export const ourFileRouter = {
     },
   })
     // Permisos y tipos de archivo para esta ruta
-    .middleware(async ({ req }) => {
+    .middleware(async () => {
       const session = await auth();
 
       // Si no hay sesion o usuario, se lanza un error
@@ -43,7 +43,7 @@ export const ourFileRouter = {
     },
   })
     // Permisos y tipos de archivo para esta ruta
-    .middleware(async ({ req }) => {
+    .middleware(async () => {
       const session = await auth();
 
       // Si no hay sesion o usuario, se lanza un error

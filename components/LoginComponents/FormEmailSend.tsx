@@ -17,7 +17,6 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Loader2, MailCheck } from "lucide-react";
 import { forgotPasswordAction } from "@/actions/auth-actions";
-import { useRouter } from "next/navigation";
 
 export const FormEmailSend = () => {
   const [error, setError] = useState<string | null>(null);

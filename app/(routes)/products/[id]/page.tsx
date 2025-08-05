@@ -20,7 +20,7 @@ export default function ProductPage() {
   const product = productsArray.find((product) => product.id === id);
 
   const [isFavorite, setIsFavorite] = useState(false);
-  const conditionColor = getConditionColor(product?.condition!);
+  const conditionColor = getConditionColor(product?.condition ?? "nuevo");
 
   if (!product) {
     return <div>Producto no encontrado</div>;

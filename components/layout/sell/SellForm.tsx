@@ -34,6 +34,7 @@ import { UploadDropzone } from "@/lib/upload-thing";
 import { Label } from "@/components/ui/label";
 import { LocationAutocomplete } from "@/components/LocationSearchInput";
 import { Switch } from "@/components/ui/switch";
+import Image from "next/image";
 
 export const SellForm = () => {
   const [error, setError] = useState<string | null>(null);
@@ -389,12 +390,12 @@ export const SellForm = () => {
                   <div className="flex gap-5 flex-wrap">
                     {images.map((image: string, index: number) => (
                       <div className="relative size-[100px]" key={index}>
-                        <img
+                        <Image
                           src={image}
                           alt="Product Image"
                           className="size-full object-cover rounded-lg border"
-                          height={100}
                           width={100}
+                          height={100}
                         />
 
                         <Button

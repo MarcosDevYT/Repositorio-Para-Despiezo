@@ -1,12 +1,5 @@
 import { auth } from "@/auth";
 import { RealtimeChat } from "@/components/realtime-chat";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { User } from "lucide-react";
 import { redirect } from "next/navigation";
@@ -43,7 +36,10 @@ export default async function ChatPage() {
       </article>
 
       <div className="flex-1 w-full">
-        <RealtimeChat roomName="my-chat-room" username={session?.user?.name!} />
+        <RealtimeChat
+          roomName="my-chat-room"
+          username={session?.user?.name ?? "Anónimo"}
+        />
       </div>
     </section>
   );

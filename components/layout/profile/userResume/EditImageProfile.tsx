@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Camera } from "lucide-react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import Image from "next/image";
 
 export const EditImageProfile = ({ image }: { image: string | null }) => {
   const [imageProfile, setImageProfile] = useState<string[] | null>(null);
@@ -47,9 +48,11 @@ export const EditImageProfile = ({ image }: { image: string | null }) => {
           <div className="flex flex-col gap-4 items-center justify-center">
             {imageProfile ? (
               <>
-                <img
+                <Image
                   src={imageProfile[0]}
                   alt="Imagen de perfil"
+                  width={160}
+                  height={160}
                   className="rounded-full size-40 object-cover"
                 />
 
@@ -84,7 +87,7 @@ export const EditImageProfile = ({ image }: { image: string | null }) => {
                     setImageProfile(res.map((r) => r.url));
                   }}
                   onUploadError={(error: Error) => {
-                    alert("Error uploading file");
+                    toast.error(`Error al subir la imagen: ${error.message}`);
                   }}
                 />
               </>
@@ -101,10 +104,12 @@ export const EditImageProfile = ({ image }: { image: string | null }) => {
         </div>
       ) : (
         <div className="relative">
-          <img
+          <Image
             src={image ?? ""}
             alt="Imagen de perfil"
             className="rounded-full size-40 object-cover"
+            width={160}
+            height={160}
           />
 
           <Button

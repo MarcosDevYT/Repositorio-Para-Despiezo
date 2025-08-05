@@ -1,4 +1,4 @@
-import { z, string, number } from "zod";
+import { z, string } from "zod";
 
 export const sellSchema = z.object({
   name: string({ error: "El Nombre es requerido" })
