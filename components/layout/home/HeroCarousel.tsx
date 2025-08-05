@@ -58,10 +58,10 @@ export function HeroCarousel() {
                 backgroundPosition: "center",
               }}
             >
-              <h2 className="text-4xl md:text-6xl font-bold mb-4">
+              <h2 className="text-4xl md:text-6xl font-bold mb-4 text-center">
                 {slide.title}
               </h2>
-              <p className="text-xl md:text-2xl mb-8 opacity-90">
+              <p className="text-xl md:text-2xl mb-8 opacity-90 text-center">
                 {slide.subtitle}
               </p>
               <Button className="text-base w-max px-8 py-3 rounded-full bg-blue-500 text-white hover:bg-blue-700">
