@@ -16,7 +16,7 @@ export async function GoogleLogin() {
         });
       }}
     >
-      <Button size="loginSize" type="submit">
+      <Button variant="outline" size="loginSize" type="submit">
         <img src="google-icon.svg" className="size-8" alt="Google" />
         Iniciar sesión con Google
       </Button>

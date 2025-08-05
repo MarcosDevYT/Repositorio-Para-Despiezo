@@ -1,3 +1,4 @@
+import { MainContainer } from "@/components/layout/MainContainer";
 import { FormLogin } from "@/components/LoginComponents/FormLogin";
 import { GoogleLogin } from "@/components/LoginComponents/GoogleLogin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,7 +17,7 @@ export default async function LoginPage({
   const isVerified = (await searchParams).verified === "true";
 
   return (
-    <main className="container mx-auto flex flex-col items-center justify-center h-screen">
+    <MainContainer className="flex items-center justify-center py-16 min-h-[calc(90vh)]">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl font-bold mb-4 text-center">
@@ -36,6 +37,6 @@ export default async function LoginPage({
           </p>
         </CardContent>
       </Card>
-    </main>
+    </MainContainer>
   );
 }

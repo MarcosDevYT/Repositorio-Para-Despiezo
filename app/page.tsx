@@ -1,35 +1,25 @@
-import { auth } from "@/auth";
-import EmailVerificationStatus from "@/components/LoginComponents/EnviarVerificacionButton";
-import { LogOutButton } from "@/components/LoginComponents/LogOutButton";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { HeroCarousel } from "@/components/layout/home/HeroCarousel";
+import { MainContainer } from "@/components/layout/MainContainer";
+import { RecentProducts } from "@/components/layout/home/RecentProducts";
+import { NavCategories } from "@/components/layout/navbar/NavCategories";
+import { ProductCategories } from "@/components/layout/home/ProductCategories";
+import { ToolsSection } from "@/components/layout/home/ToolsSection";
 
 export default async function Home() {
-  const session = await auth();
-
   return (
-    <div>
-      <p>
-        {session
-          ? `Estas logeado como ${session.user?.name}`
-          : "No estas logeado"}
-      </p>
-
-      <div className="my-4">
-        <p>Datos de la session:</p>
-
-        <pre>{JSON.stringify(session, null, 2)}</pre>
+    <MainContainer className="py-16 mt-4">
+      <aside className="h-16 bg-blue-100">
+        <div className="container mx-auto flex items-center justify-center h-full w-full px-4">
+          {/* Categorias */}
+          <NavCategories />
+        </div>
+      </aside>
+      <div className="container mx-auto px-4 pt-16">
+        <HeroCarousel />
+        <RecentProducts />
+        <ProductCategories />
+        <ToolsSection />
       </div>
-
-      {session?.user ? (
-        <LogOutButton />
-      ) : (
-        <Button asChild>
-          <Link href="/login">Login</Link>
-        </Button>
-      )}
-
-      <EmailVerificationStatus email={session?.user?.email ?? ""} />
-    </div>
+    </MainContainer>
   );
 }

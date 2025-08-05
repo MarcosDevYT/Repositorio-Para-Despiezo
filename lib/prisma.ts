@@ -3,7 +3,7 @@
  * @returns Instancia de PrismaClient
  */
 
-import { PrismaClient } from "@/lib/prismaClient";
+import { PrismaClient } from "@prisma/client";
 
 const prismaClientSingleton = () => {
   return new PrismaClient();

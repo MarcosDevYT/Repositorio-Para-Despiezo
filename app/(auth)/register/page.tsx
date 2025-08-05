@@ -1,3 +1,4 @@
+import { MainContainer } from "@/components/layout/MainContainer";
 import { FormRegister } from "@/components/LoginComponents/FormRegister";
 import { GoogleLogin } from "@/components/LoginComponents/GoogleLogin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +11,7 @@ import Link from "next/link";
 
 export default function RegisterPage() {
   return (
-    <main className="container mx-auto flex flex-col items-center justify-center h-screen">
+    <MainContainer className="flex items-center justify-center py-16 min-h-[calc(90vh)]">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl font-bold mb-4 text-center">
@@ -30,6 +31,6 @@ export default function RegisterPage() {
           </p>
         </CardContent>
       </Card>
-    </main>
+    </MainContainer>
   );
 }

@@ -15,13 +15,13 @@ import {
 import { useState, useTransition } from "react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, MailCheck } from "lucide-react";
 import { forgotPasswordAction } from "@/actions/auth-actions";
 import { useRouter } from "next/navigation";
 
 export const FormEmailSend = () => {
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<boolean>(false);
   const [isPending, startTransition] = useTransition();
 
   // Valores por defecto del formulario
@@ -35,7 +35,8 @@ export const FormEmailSend = () => {
   // Función para manejar el submit del formulario
   const onSubmit = async (data: z.infer<typeof forgotPasswordSchema>) => {
     startTransition(async () => {
-      // Limpiamos el error
+      // Limpiamos el error y el success
+      setSuccess(false);
       setError(null);
 
       // Llamamos a la acción de enviar el correo de restablecimiento de contraseña
@@ -45,10 +46,28 @@ export const FormEmailSend = () => {
       if (result.error) {
         setError(result.error);
       } else {
-        router.push("/login");
+        setSuccess(true);
       }
     });
   };
+
+  if (success) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center px-6">
+        <div className="bg-green-500/10 p-4 rounded-full mb-4">
+          <MailCheck className="size-10 text-green-500" />
+        </div>
+
+        <h1 className="text-2xl font-semibold mb-2">
+          ¡Correo enviado con éxito!
+        </h1>
+        <p className="text-sm text-neutral-600">
+          Te hemos enviado un enlace para restablecer tu contraseña. Revisá tu
+          bandeja de entrada o spam.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <Form {...form}>

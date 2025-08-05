@@ -1,3 +1,4 @@
+import { MainContainer } from "@/components/layout/MainContainer";
 import { VerificarEmailButton } from "@/components/LoginComponents/VerificarEmailButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -13,7 +14,7 @@ export default async function VerifyEmailPage({
   }
 
   return (
-    <main className="container mx-auto flex flex-col items-center justify-center h-screen">
+    <MainContainer className="flex items-center justify-center py-16 min-h-[calc(90vh)]">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl font-bold mb-4 text-center">
@@ -29,6 +30,6 @@ export default async function VerifyEmailPage({
           <VerificarEmailButton token={token} />
         </CardContent>
       </Card>
-    </main>
+    </MainContainer>
   );
 }

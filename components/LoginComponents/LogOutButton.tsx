@@ -1,5 +1,4 @@
 import { signOut } from "@/auth";
-import { Button } from "../ui/button";
 import { LogOut } from "lucide-react";
 
 /**
@@ -15,10 +14,13 @@ export async function LogOutButton() {
         await signOut();
       }}
     >
-      <Button type="submit">
-        <LogOut className="size-4 mr-2" />
+      <button
+        type="submit"
+        className="flex items-center gap-2 text-sm text-neutral-900 p-1.5 px-2 w-full cursor-pointer"
+      >
+        <LogOut className="size-4 text-neutral-900" />
         Cerrar sesión
-      </Button>
+      </button>
     </form>
   );
 }

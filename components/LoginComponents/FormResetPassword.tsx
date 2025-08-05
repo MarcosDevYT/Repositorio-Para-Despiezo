@@ -15,13 +15,12 @@ import {
 import { useState, useTransition } from "react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { Loader2 } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { resetPasswordAction } from "@/actions/auth-actions";
-import { useRouter } from "next/navigation";
 
 export const FormResetPassword = ({ token }: { token: string }) => {
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<boolean>(false);
   const [isPending, startTransition] = useTransition();
 
   // Valores por defecto del formulario
@@ -52,10 +51,28 @@ export const FormResetPassword = ({ token }: { token: string }) => {
       if (result.error) {
         setError(result.error);
       } else {
-        router.push("/login");
+        setSuccess(true);
       }
     });
   };
+
+  if (success) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center px-6">
+        <div className="bg-green-500/10 p-4 rounded-full mb-4">
+          <Check className="size-10 text-green-500" />
+        </div>
+
+        <h1 className="text-2xl font-semibold mb-2">
+          ¡Contraseña actualizada!
+        </h1>
+        <p className="text-sm text-neutral-600 mb-6">
+          Tu contraseña ha sido restablecida correctamente. Ahora podés iniciar
+          sesión con tu nueva clave.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <Form {...form}>

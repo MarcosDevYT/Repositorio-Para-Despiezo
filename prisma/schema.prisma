@@ -1,22 +1,34 @@
+/// Configuracion de la base de datos
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
+/// Generador de codigo para el cliente de Prisma
 generator client {
   provider = "prisma-client-js"
-  output   = "../lib/prismaClient"
 }
 
+/// Modelos para el usuario 
 model User {
   id                 String               @id @default(cuid())
-  name               String?
   email              String               @unique
   password           String?
   emailVerified      DateTime?
-  image              String?
+  phoneVerified      DateTime?
   accounts           Account[]
   passwordResetToken PasswordResetToken[]
+
+  /// Campos editables por el usuario
+  name               String?
+  businessName       String?
+  image              String?
+  phoneNumber        String?
+  location           String?
+
+  /// Productos del usuario
+  products Product[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -60,4 +72,33 @@ model PasswordResetToken {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
+}
+
+
+// Modelo para los productos
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  price       String
+  images      String[]
+  oemNumber   String
+  category    String
+  brand       String
+  model       String
+  year        String
+  condition   String
+  status      String
+  typeOfPiece String
+  location    String
+
+  offer       Boolean?
+  offerPrice  String?
+
+  // Relaciones
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

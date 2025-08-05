@@ -4,12 +4,12 @@
  * @returns Configuración de NextAuth
  */
 
-import authConfig from "@/auth.config"
+import authConfig from "@/auth.config";
 
-import NextAuth from "next-auth"
+import NextAuth from "next-auth";
 
-import { PrismaAdapter } from "@auth/prisma-adapter"
-import { prisma } from "@/lib/prisma"
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import { prisma } from "@/lib/prisma";
 
 // Configuración de NextAuth
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -18,10 +18,41 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
   callbacks: {
     async session({ session, token }) {
-      if (token.sub) {
-        session.user.id = token.sub;
+      if (token.sub && session.user) {
+        const user = await prisma.user.findUnique({
+          where: { id: token.sub },
+          select: {
+            id: true,
+            email: true,
+            emailVerified: true,
+            name: true,
+            image: true,
+            phoneNumber: true,
+            phoneVerified: true,
+            location: true,
+            businessName: true,
+            createdAt: true,
+          },
+        });
+
+        if (user) {
+          session.user = {
+            ...session.user,
+            id: user.id,
+            email: user.email,
+            emailVerified: user.emailVerified,
+            name: user.name,
+            image: user.image,
+            phoneNumber: user.phoneNumber,
+            phoneVerified: user.phoneVerified,
+            location: user.location,
+            businessName: user.businessName,
+            createdAt: user.createdAt,
+          };
+        }
       }
+
       return session;
-    }
-  }
+    },
+  },
 });

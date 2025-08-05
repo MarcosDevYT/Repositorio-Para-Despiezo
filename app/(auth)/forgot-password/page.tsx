@@ -1,20 +1,41 @@
+import { MainContainer } from "@/components/layout/MainContainer";
 import { FormEmailSend } from "@/components/LoginComponents/FormEmailSend";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import Link from "next/link";
 
 export default function ForgotPasswordPage() {
   return (
-    <main className="container mx-auto flex flex-col items-center justify-center h-screen">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold mb-4 text-center">
+    <MainContainer className="flex items-center justify-center py-16 min-h-[calc(90vh)]">
+      <Card className="w-full max-w-md shadow-lg border border-gray-200">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold text-gray-800">
             Restablecer contraseña
           </CardTitle>
+          <p className="text-sm text-gray-500 mt-2">
+            Ingresá tu email y te enviaremos un enlace para restablecer tu
+            contraseña.
+          </p>
         </CardHeader>
 
-        <CardContent className="space-y-4">
+        <CardContent className="pt-0">
           <FormEmailSend />
         </CardContent>
+
+        <CardFooter className="flex justify-center">
+          <Link
+            href="/login"
+            className="text-sm text-gray-500 underline hover:text-gray-700"
+          >
+            Volver a iniciar sesión
+          </Link>
+        </CardFooter>
       </Card>
-    </main>
+    </MainContainer>
   );
 }
