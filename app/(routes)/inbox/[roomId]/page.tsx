@@ -1,6 +1,8 @@
 import { MarketplaceChat } from "@/components/chatComponents/marketplace-chat";
 import { auth } from "@/auth";
 
+export const dynamic = "force-dynamic";
+
 export default async function ChatPage({
   params,
 }: {

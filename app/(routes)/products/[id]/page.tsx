@@ -1,6 +1,8 @@
 import { getProductByIdAction } from "@/actions/sell-actions";
 import { ProductLayout } from "@/components/layout/ProductComponents/ProductLayout";
 
+export const dynamic = "force-dynamic";
+
 export default async function ProductPage({
   params,
 }: {

@@ -10,6 +10,8 @@ interface Props {
   params: Promise<{ categorySlug: string; subcategorySlug: string }>;
 }
 
+export const dynamic = "force-dynamic";
+
 export default async function SubcategoryPage({ searchParams, params }: Props) {
   const { query } = await searchParams;
   const { categorySlug, subcategorySlug } = await params;

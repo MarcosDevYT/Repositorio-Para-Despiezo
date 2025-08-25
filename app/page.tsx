@@ -5,6 +5,8 @@ import { ProductCategories } from "@/components/layout/home/ProductCategories";
 import { ToolsSection } from "@/components/layout/home/ToolsSection";
 import { Categories } from "@/components/layout/Categories/Categories";
 
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   return (
     <MainContainer params="products">

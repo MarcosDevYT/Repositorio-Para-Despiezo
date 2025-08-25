@@ -5,6 +5,8 @@ import { ProductCard } from "@/components/layout/ProductComponents/ProductCard";
 import ProductFilters from "@/components/ProductFilters";
 import { Badge } from "@/components/ui/badge";
 
+export const dynamic = "force-dynamic";
+
 export default async function AllCategoriesPage({
   searchParams,
   params,

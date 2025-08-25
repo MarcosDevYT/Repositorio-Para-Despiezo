@@ -3,6 +3,8 @@ import { ProductCard } from "@/components/layout/ProductComponents/ProductCard";
 import { Badge } from "@/components/ui/badge";
 import ProductFilters from "@/components/ProductFilters";
 
+export const dynamic = "force-dynamic";
+
 export default async function ProductsPage({
   searchParams,
 }: {
