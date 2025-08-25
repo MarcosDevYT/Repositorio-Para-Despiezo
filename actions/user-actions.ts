@@ -3,6 +3,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { editProfileSchema } from "@/lib/zodSchemas/userSchema";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 
 /**
@@ -86,5 +87,44 @@ export const updateImageProfile = async (imageProfile: string[]) => {
     return {
       error: "Error al actualizar la imagen de perfil",
     };
+  }
+};
+
+// Agregar un producto a favoritos
+export const toggleFavoriteAction = async (productId: string) => {
+  console.log("Aplicando favorito");
+
+  // Verificar el usuario logeado
+  const session = await auth();
+
+  if (!session?.user) {
+    return redirect("/login");
+  }
+
+  // Conseguir el id
+  const userId = session.user.id;
+
+  // Verificar si existe
+  const existing = await prisma.favorite.findUnique({
+    where: {
+      userId_productId: {
+        userId,
+        productId,
+      },
+    },
+  });
+
+  if (existing) {
+    // Si existe eliminamos de favoritos
+    await prisma.favorite.delete({
+      where: { userId_productId: { userId, productId } },
+    });
+    return { success: true, isFavorite: false };
+  } else {
+    // Si no lo agregamos
+    await prisma.favorite.create({
+      data: { userId, productId },
+    });
+    return { success: true, isFavorite: true };
   }
 };

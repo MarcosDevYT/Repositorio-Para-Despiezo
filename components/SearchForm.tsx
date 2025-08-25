@@ -5,13 +5,13 @@ import { Search } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "./ui/button";
 
-export const SearchForm = () => {
+export const SearchForm = ({ params }: { params: string }) => {
   const searchParams = useSearchParams();
   const queryParams = searchParams.get("query") || "";
 
   return (
     <Form
-      action={"/products/"}
+      action={`/${params}/`}
       scroll={false}
       className="flex items-center w-full relative"
     >

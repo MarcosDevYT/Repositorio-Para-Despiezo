@@ -1,6 +1,9 @@
 "use client";
 
-import { getProductsAction } from "@/actions/sell-actions";
+import {
+  deleteProductAction,
+  getUserProductsAction,
+} from "@/actions/sell-actions";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -39,15 +42,25 @@ import { useEffect, useState } from "react";
 export const SellProducts = () => {
   const [products, setProducts] = useState<Product[]>([]);
 
+  // UseEffect para recuperar los productos
   useEffect(() => {
     const fetchProducts = async () => {
-      const products = await getProductsAction();
+      const products = await getUserProductsAction();
       if (products) {
         setProducts(products as Product[]);
       }
     };
     fetchProducts();
   }, []);
+
+  // HandleDeleteProduct
+  const handleDeleteProduct = async (id: string) => {
+    const response = await deleteProductAction(id);
+    if (response) {
+      const newProducts = products.filter((product) => product.id !== id);
+      setProducts(newProducts);
+    }
+  };
 
   return (
     <Card className="w-full h-max py-8">
@@ -70,10 +83,12 @@ export const SellProducts = () => {
                 <TableHead className="w-[100px]">Nombre</TableHead>
                 <TableHead>Precio</TableHead>
                 <TableHead>Numero OEM</TableHead>
+                <TableHead>Tipo de vehiculo</TableHead>
                 <TableHead>Categoría</TableHead>
+
                 <TableHead>Estado</TableHead>
                 <TableHead>Fecha de creación</TableHead>
-                <TableHead className="text-right w-[100px]">Acciones</TableHead>
+                <TableHead className="text-right w-[80px]">Acciones</TableHead>
               </TableRow>
             </TableHeader>
 
@@ -81,24 +96,25 @@ export const SellProducts = () => {
             <TableBody>
               {products.map((product) => (
                 <TableRow key={product.id}>
-                  <TableCell className="w-[100px]">
+                  <TableCell className="w-[100px] h-[100px]">
                     <Image
                       src={product.images[0] || ""}
                       alt="Producto"
                       width={100}
                       height={100}
-                      className="rounded-md w-full h-full object-cover"
+                      className="rounded-md w-full h-full object-contain"
                     />
                   </TableCell>
                   <TableCell className="font-medium">{product.name}</TableCell>
                   <TableCell>{product.price}</TableCell>
                   <TableCell>{product.oemNumber}</TableCell>
+                  <TableCell>{product.tipoDeVehiculo}</TableCell>
                   <TableCell>{product.category}</TableCell>
                   <TableCell>{product.status}</TableCell>
                   <TableCell>
                     {product.createdAt.toLocaleDateString()}
                   </TableCell>
-                  <TableCell className="text-right w-[100px]">
+                  <TableCell className="text-right w-[80px]">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant={"outline"} size={"icon"}>
@@ -122,6 +138,7 @@ export const SellProducts = () => {
 
                         <DropdownMenuItem className="p-0">
                           <Button
+                            onClick={() => handleDeleteProduct(product.id)}
                             variant={"ghost"}
                             size={"sm"}
                             className="p-1.5 px-2 h-9 w-full flex items-center justify-start gap-2 text-red-500 hover:text-red-500"

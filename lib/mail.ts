@@ -1,72 +1,90 @@
-import { MailerSend, EmailParams, Sender, Recipient } from "mailersend";
+import nodemailer from "nodemailer";
+import { baseUrl } from "./utils";
 
-const mailerSend = new MailerSend({
-  apiKey: process.env.MAILERSEND_API_KEY!,
+const transporter = nodemailer.createTransport({
+  service: process.env.EMAIL_SERVICE, // ej: "gmail"
+  auth: {
+    user: process.env.EMAIL_USER, // tu correo
+    pass: process.env.EMAIL_PASS, // contraseña o app password
+  },
 });
 
-const sentFrom = new Sender(
-  "despiezo@test-3m5jgrodmj0gdpyo.mlsender.net",
-  "Despiezo"
-);
-
+// 🔹 Email de verificación
 export const sendEmailVerification = async (email: string, token: string) => {
-  const recipients = [new Recipient(email, "")];
+  const verifyLink = `${baseUrl}/api/auth/verify-email?token=${token}`;
 
-  // URL de verificación
-  const url = `${process.env.NEXT_PUBLIC_URL}/api/auth/verify-email?token=${token}`;
-
-  const emailParams = new EmailParams()
-    .setFrom(sentFrom)
-    .setTo(recipients)
-    .setSubject("Verifica tu email")
-    .setHtml(
-      `
-          <p>Haz click en el siguiente enlace para verificar tu email:</p>
-          <p>
-            <a href="${url}">${url}</a>
-          </p>
-          <p>Si no solicitaste este email, por favor ignora este mensaje.</p>
-          `
-    );
+  const html = `
+  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #eaeaea; border-radius: 12px; overflow: hidden;">
+    <div style="background-color: #000; padding: 20px; text-align: center;">
+      <h1 style="color: white; margin: 10; font-size: 24px;">MarketIA Labs</h1>
+    </div>
+    <div style="padding: 20px;">
+      <p style="font-size: 16px; color: #333;">
+        Haz clic en el siguiente botón para verificar tu correo electrónico:
+      </p>
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${verifyLink}" style="background-color: #000; color: #fff; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-size: 16px; font-weight: bold;">
+          Verificar correo
+        </a>
+      </div>
+      <p style="font-size: 14px; color: #777;">
+        Si no solicitaste este correo, puedes ignorarlo.
+      </p>
+    </div>
+  </div>
+  `;
 
   try {
-    await mailerSend.email.send(emailParams);
+    await transporter.sendMail({
+      from: `"MarketIA Labs" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Verifica tu email",
+      html,
+    });
+
     return { success: true };
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error("Error al enviar email:", error);
     return { error: "Error al enviar email" };
   }
 };
 
-export const sendPasswordResetEmail = async (email: string, token: string) => {
-  const recipients = [new Recipient(email, "")];
+// 🔹 Email de restablecer contraseña
+export const sendResetPasswordEmail = async (email: string, token: string) => {
+  const resetLink = `${baseUrl}/reset-password?token=${token}`;
 
-  // URL de verificación
-  const url = `${process.env.NEXT_PUBLIC_URL}/reset-password?token=${token}`;
-
-  const emailParams = new EmailParams()
-    .setFrom(sentFrom)
-    .setTo(recipients)
-    .setSubject("Restablece tu contraseña")
-    .setHtml(
-      `
-      <p>
-        Haz clic en el siguiente enlace para restablecer tu contraseña:
-        <a href="${url}">
+  const html = `
+  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #eaeaea; border-radius: 12px; overflow: hidden;">
+    <div style="background-color: #000; padding: 20px; text-align: center;">
+      <h1 style="color: white; margin: 10; font-size: 24px;">MarketIA Labs</h1>
+    </div>
+    <div style="padding: 20px;">
+      <p style="font-size: 16px; color: #333;">
+        Has solicitado restablecer tu contraseña. Por favor, haz clic en el botón de abajo para continuar:
+      </p>
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${resetLink}" style="background-color: #000; color: #fff; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-size: 16px; font-weight: bold;">
           Restablecer contraseña
         </a>
+      </div>
+      <p style="font-size: 14px; color: #777;">
+        Si no solicitaste este cambio, puedes ignorar este correo.
       </p>
-      <p>
-        Si no solicitaste este correo, puedes ignorarlo.
-      </p>
-      `
-    );
+    </div>
+  </div>
+  `;
 
   try {
-    await mailerSend.email.send(emailParams);
+    await transporter.sendMail({
+      from: `"MarketIA Labs" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Restablece tu contraseña",
+      html,
+    });
+
     return { success: true };
   } catch (error) {
-    console.error("Error al enviar el correo:", error);
-    return { error: "Error al enviar el correo" };
+    console.error("Error al enviar email:", error);
+    return { error: "Error al enviar email" };
   }
 };

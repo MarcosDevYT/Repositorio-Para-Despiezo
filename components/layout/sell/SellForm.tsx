@@ -28,7 +28,6 @@ import {
 
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { createProductAction } from "@/actions/sell-actions";
 import { sellSchema } from "@/lib/zodSchemas/sellSchema";
 import { UploadDropzone } from "@/lib/upload-thing";
 import { Label } from "@/components/ui/label";
@@ -36,7 +35,17 @@ import { LocationAutocomplete } from "@/components/LocationSearchInput";
 import { Switch } from "@/components/ui/switch";
 import Image from "next/image";
 
-export const SellForm = () => {
+type SellFormProps = {
+  initialValues?: Partial<z.infer<typeof sellSchema>>;
+  action: (
+    data: z.infer<typeof sellSchema>
+  ) => Promise<
+    | { error: string; success?: undefined }
+    | { success: string; error?: undefined }
+  >;
+};
+
+export const SellForm = ({ initialValues, action }: SellFormProps) => {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -52,6 +61,7 @@ export const SellForm = () => {
       brand: "",
       model: "",
       year: "",
+      tipoDeVehiculo: "coche",
       condition: "nuevo",
       status: "publicado",
       typeOfPiece: "",
@@ -59,6 +69,7 @@ export const SellForm = () => {
       location: "",
       offer: false,
       offerPrice: "",
+      ...initialValues,
     },
   });
 
@@ -75,7 +86,7 @@ export const SellForm = () => {
 
         setError(null);
 
-        const result = await createProductAction(data);
+        const result = await action(data);
 
         if (result?.error) {
           setError(result.error);
@@ -230,6 +241,36 @@ export const SellForm = () => {
                     <SelectItem value="otros">Otros</SelectItem>
                   </SelectContent>
                 </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Condición */}
+
+          <FormField
+            control={form.control}
+            name="tipoDeVehiculo"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Tipo De Vehiculo</FormLabel>
+                <FormControl>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Seleccioná el tipo de vehiculo" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="coche">Coche</SelectItem>
+                      <SelectItem value="moto">Moto</SelectItem>
+                      <SelectItem value="furgoneta">Furgoneta</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
@@ -443,10 +484,10 @@ export const SellForm = () => {
           {isPending ? (
             <>
               <Loader2 className="size-4 animate-spin" />
-              Creando producto...
+              {initialValues ? "Editando producto..." : "Creando producto..."}
             </>
           ) : (
-            "Crear producto"
+            <>{initialValues ? "Editar producto" : "Crear producto"}</>
           )}
         </Button>
       </form>

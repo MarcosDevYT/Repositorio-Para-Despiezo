@@ -21,6 +21,7 @@ export const sellSchema = z.object({
     "bujías",
     "otros",
   ]),
+  tipoDeVehiculo: z.enum(["coche", "moto", "furgoneta"]),
   condition: z.enum(["nuevo", "verificado", "usado", "defectuoso"]),
   brand: string({ error: "La Marca es requerida" }),
   model: string({ error: "El Modelo es requerido" }),

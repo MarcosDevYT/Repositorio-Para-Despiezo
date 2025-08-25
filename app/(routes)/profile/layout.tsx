@@ -12,7 +12,10 @@ export default function ProfileLayout({
   children: React.ReactNode;
 }) {
   return (
-    <MainContainer className="container mx-auto px-4 py-16 mt-20 flex flex-col lg:flex-row gap-4">
+    <MainContainer
+      params="products"
+      className="container mx-auto px-4 py-16 mt-20 flex flex-col lg:flex-row gap-4"
+    >
       <ProfileNav />
       {children}
     </MainContainer>

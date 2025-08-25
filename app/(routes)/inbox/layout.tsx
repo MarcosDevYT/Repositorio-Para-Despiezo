@@ -1,3 +1,4 @@
+import { ChatNavigation } from "@/components/chatComponents/ChatNavigation";
 import { MainContainer } from "@/components/layout/MainContainer";
 
 /**
@@ -11,7 +12,11 @@ export default function ProductsLayout({
   children: React.ReactNode;
 }) {
   return (
-    <MainContainer className="flex flex-col lg:flex-row gap-4 mt-20">
+    <MainContainer
+      params="products"
+      className="flex-col md:flex-row flex min-h-[82.5vh] max-h-[82.5vh]"
+    >
+      <ChatNavigation />
       {children}
     </MainContainer>
   );

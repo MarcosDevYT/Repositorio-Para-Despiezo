@@ -1,6 +1,5 @@
 import { signOut } from "@/auth";
 import { LogOut } from "lucide-react";
-
 /**
  * Botón de logout que utiliza el hook signOut de NextAuth configurado en auth.ts
  * @returns Componente de logout

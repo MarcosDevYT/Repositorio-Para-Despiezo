@@ -9,14 +9,16 @@ import { Navbar } from "./navbar/Navbar";
  */
 export const MainContainer = ({
   children,
+  params,
   className,
 }: {
   children: React.ReactNode;
+  params: string;
   className?: string;
 }) => {
   return (
     <>
-      <Navbar />
+      <Navbar params={params} />
       <main className={`${className}`}>{children}</main>
       <Footer />
     </>

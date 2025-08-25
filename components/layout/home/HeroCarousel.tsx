@@ -21,7 +21,7 @@ const slides = [
     title: "Vende tus partes usadas fácilmente",
     subtitle: "Conecta con compradores de toda la región",
     cta: "Vender Ahora",
-    link: "/profile/productos",
+    link: "/products",
   },
   {
     id: 3,

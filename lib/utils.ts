@@ -17,3 +17,8 @@ export const getConditionColor = (condition: string) => {
       return "bg-red-500/10 text-red-500 border-red-500/20";
   }
 };
+
+export const baseUrl =
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:3000"
+    : `${process.env.NEXT_PUBLIC_BASE_URL}`;

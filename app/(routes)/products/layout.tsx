@@ -1,3 +1,4 @@
+import { Categories } from "@/components/layout/Categories/Categories";
 import { MainContainer } from "@/components/layout/MainContainer";
 
 /**
@@ -11,8 +12,12 @@ export default function ProductsLayout({
   children: React.ReactNode;
 }) {
   return (
-    <MainContainer className="container mx-auto px-4 py-16 mt-20">
-      {children}
+    <MainContainer params="products">
+      <div className="border-b bg-blue-50 px-4 lg:px-12 py-4 w-full">
+        <Categories params="products" />
+      </div>
+
+      <div className="container mx-auto px-4 py-16">{children}</div>
     </MainContainer>
   );
 }

@@ -1,3 +1,4 @@
+import { createProductAction } from "@/actions/sell-actions";
 import { SellForm } from "@/components/layout/sell/SellForm";
 import {
   Card,
@@ -16,7 +17,7 @@ export default function SellCreatePage() {
       </CardHeader>
 
       <CardContent>
-        <SellForm />
+        <SellForm action={createProductAction} />
       </CardContent>
     </Card>
   );

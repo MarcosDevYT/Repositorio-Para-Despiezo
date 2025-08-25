@@ -1,11 +1,11 @@
-"use client";
-
-import { ProductCard } from "@/components/ProductCard";
 import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { productsArray } from "@/data";
+import { getProductsAction } from "@/actions/sell-actions";
+import { ProductCard } from "../ProductComponents/ProductCard";
 
-export const RecentProducts = () => {
+export const RecentProducts = async () => {
+  const products = await getProductsAction();
+
   return (
     <section className="py-8">
       <article className="flex items-center justify-between mb-6">
@@ -20,8 +20,12 @@ export const RecentProducts = () => {
       </article>
 
       <article className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {productsArray.map((product) => (
-          <ProductCard key={product.id} {...product} />
+        {products.map((product) => (
+          <ProductCard
+            key={product.id}
+            product={product}
+            isFavorite={product.isFavorite}
+          />
         ))}
       </article>
     </section>

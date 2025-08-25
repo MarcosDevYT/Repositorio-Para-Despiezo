@@ -28,7 +28,15 @@ model User {
   location           String?
 
   /// Productos del usuario
-  products Product[]
+  products           Product[]
+
+  /// Relación con favoritos
+  favorites          Favorite[]
+
+  /// Relacion con chats
+  roomsAsVendor  Room[]    @relation("VendorRooms")
+  roomsAsBuyer   Room[]    @relation("BuyerRooms")
+  messages       Message[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -77,28 +85,74 @@ model PasswordResetToken {
 
 // Modelo para los productos
 model Product {
-  id          String   @id @default(uuid())
-  name        String
-  description String
-  price       String
-  images      String[]
-  oemNumber   String
-  category    String
-  brand       String
-  model       String
-  year        String
-  condition   String
-  status      String
-  typeOfPiece String
-  location    String
+  id                String   @id @default(uuid())
+  name              String
+  description       String
+  price             String
+  images            String[]
+  oemNumber         String
+  category          String
+  brand             String
+  model             String
+  year              String
+  tipoDeVehiculo    String
+  condition         String
+  status            String
+  typeOfPiece       String
+  location          String
 
-  offer       Boolean?
-  offerPrice  String?
+  offer             Boolean?
+  offerPrice        String?
 
   // Relaciones
-  userId String
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vendorId          String
+  vendor            User     @relation(fields: [vendorId], references: [id])
+  rooms             Room[]
+  favorites         Favorite[]
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+/// Modelo de Favoritos
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+
+  @@unique([userId, productId]) 
+}
+
+// Modelos de chat en tiempo real
+/// Conversaciones (chat)
+model Room {
+  id        String   @id @default(cuid())
+  productId String?
+  vendorId  String
+  buyerId   String
+  createdAt DateTime @default(now())
+
+  product Product? @relation(fields: [productId], references: [id])
+  vendor  User     @relation("VendorRooms", fields: [vendorId], references: [id])
+  buyer   User     @relation("BuyerRooms", fields: [buyerId], references: [id])
+  messages Message[]
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  roomId    String
+  senderId  String
+  content   String
+  createdAt DateTime @default(now())
+
+  room   Room @relation(fields: [roomId], references: [id])
+  sender User @relation(fields: [senderId], references: [id])
+
+  @@index([roomId])
+  @@index([senderId])
 }
