@@ -1,15 +1,15 @@
 "use client";
 
-import { categories } from "@/data";
 import { useEffect, useRef, useState } from "react";
-import { cn } from "@/lib/utils";
-import { ListFilter } from "lucide-react";
 import { CategoriesSidebar } from "./CategoriesSidebar";
-import { Button } from "@/components/ui/button";
 import { CategoryDropdown } from "./CategoryDropdown";
-import { SearchForm } from "@/components/SearchForm";
+import { SearchProducts } from "@/components/searchComponents/SearchProducts";
+import { ListFilter } from "lucide-react";
+import { categories } from "@/data";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
-export const Categories = ({ params }: { params: string }) => {
+export const Categories = ({ params }: { params?: string }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
   const viewAllRef = useRef<HTMLDivElement>(null);
@@ -124,7 +124,7 @@ export const Categories = ({ params }: { params: string }) => {
       <CategoriesSidebar open={isSidebarOpen} onOpenChange={setIsSidebarOpen} />
 
       <div className="flex items-center gap-2 md:hidden">
-        <SearchForm params={params} />
+        <SearchProducts params={params} />
 
         <Button
           onClick={handleOpenSidebar}

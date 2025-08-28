@@ -24,11 +24,11 @@ export const VerificarEmailButton = ({ token }: { token: string }) => {
 
   return (
     <>
-      {error && <p className="text-red-500">{error}</p>}
+      {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
       {success ? (
         <div className="flex flex-col items-center justify-center gap-4">
-          <div className="flex items-center justify-center bg-green-500/20 rounded-full p-2">
+          <div className="flex items-center justify-center bg-green-50 rounded-full p-2">
             <CheckCircle className="size-12 text-green-500" />
           </div>
 

@@ -30,8 +30,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             phoneNumber: true,
             phoneVerified: true,
             location: true,
+            description: true,
+            bussinesCategory: true,
             businessName: true,
             createdAt: true,
+            products: true,
           },
         });
 
@@ -43,11 +46,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             emailVerified: user.emailVerified,
             name: user.name,
             image: user.image,
+            description: user.description,
+            bussinesCategory: user.bussinesCategory,
             phoneNumber: user.phoneNumber,
             phoneVerified: user.phoneVerified,
             location: user.location,
             businessName: user.businessName,
             createdAt: user.createdAt,
+            products: user.products,
           };
         }
       }

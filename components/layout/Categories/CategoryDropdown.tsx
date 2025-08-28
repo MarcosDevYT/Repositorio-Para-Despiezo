@@ -51,8 +51,8 @@ export const CategoryDropdown = ({
           <Link
             href={
               category.slug === "todas-las-categorias"
-                ? "/products"
-                : `/category/${category.slug}`
+                ? "/productos"
+                : `/productos?categoria=${category.slug}`
             }
           >
             {category.icon && <category.icon className="size-4" />}

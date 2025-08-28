@@ -15,17 +15,21 @@ model User {
   id                 String               @id @default(cuid())
   email              String               @unique
   password           String?
-  emailVerified      DateTime?
-  phoneVerified      DateTime?
   accounts           Account[]
   passwordResetToken PasswordResetToken[]
 
   /// Campos editables por el usuario
   name               String?
-  businessName       String?
+  description        String?
   image              String?
   phoneNumber        String?
+
+  /// Campos necesarios para Vender
+  emailVerified      DateTime?
+  phoneVerified      DateTime?
   location           String?
+  businessName       String?
+  bussinesCategory   String[] @default([])
 
   /// Productos del usuario
   products           Product[]
@@ -34,12 +38,12 @@ model User {
   favorites          Favorite[]
 
   /// Relacion con chats
-  roomsAsVendor  Room[]    @relation("VendorRooms")
-  roomsAsBuyer   Room[]    @relation("BuyerRooms")
-  messages       Message[]
+  roomsAsVendor      Room[]    @relation("VendorRooms")
+  roomsAsBuyer       Room[]    @relation("BuyerRooms")
+  messages           Message[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 }
 
 model Account {

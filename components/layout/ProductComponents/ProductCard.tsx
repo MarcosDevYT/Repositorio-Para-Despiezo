@@ -3,21 +3,21 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Heart, Star, MapPin } from "lucide-react";
+import { Heart, Star, MapPin, Car } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getConditionColor } from "@/lib/utils";
-import { Product } from "@prisma/client";
 import { toggleFavoriteAction } from "@/actions/user-actions";
+import { ProductType } from "@/types/ProductTypes";
 
 export const ProductCard = ({
   product,
   isFavorite: initialFavorite,
 }: {
-  product: Product;
-  isFavorite: boolean;
+  product: ProductType;
+  isFavorite: boolean | undefined;
 }) => {
   const [isFavorite, setIsFavorite] = useState(initialFavorite ?? false);
 
@@ -31,95 +31,116 @@ export const ProductCard = ({
   const conditionColor = getConditionColor(product.condition);
 
   return (
-    <Card className="border border-border bg-card overflow-hidden hover:shadow-lg transition-shadow gap-0 py-0">
+    <Card className="w-full rounded-2xl pb-0 gap-0 border border-transparent shadow-sm overflow-hidden bg-white">
       {/* Imagen + acciones */}
-      <div className="relative aspect-square max-h-[300px] md:max-h-[340px]">
+      <CardHeader className="relative">
         {product.offer && (
-          <Badge className="absolute top-2 left-2 z-10 bg-destructive text-white">
+          <span className="absolute top-0 left-3 z-10 px-3 py-1 text-xs font-medium rounded-full bg-red-500/90 text-white shadow-md">
             Oferta
-          </Badge>
+          </span>
         )}
 
         <Button
-          variant={"ghost"}
-          size={"icon"}
+          variant="ghost"
+          size="icon"
           onClick={handleFavorite}
-          className="absolute top-2 right-2 z-10 rounded-full p-1.5"
+          className="absolute -top-2 right-3 z-10 rounded-full backdrop-blur-md shadow-sm bg-white hover:bg-white"
         >
           <Heart
-            className={`h-5 w-5 transition-colors ${
-              isFavorite ? "fill-red-500 text-red-500" : "text-muted-foreground"
+            className={`size-5 transition-colors ${
+              isFavorite ? "fill-red-500 text-red-500" : "text-gray-600"
             }`}
           />
         </Button>
 
-        <Link href={`/products/${product.id}`} className="block h-full w-full">
-          <Image
-            src={product.images[0]}
-            alt={product.name}
-            width={500}
-            height={500}
-            className="object-contain w-full h-full"
-          />
-        </Link>
-      </div>
+        <div className="relative h-60 md:h-64 rounded-lg">
+          <Link href={`/productos/${product.id}`}>
+            <Image
+              src={product.images[0]}
+              alt={product.name}
+              width={500}
+              height={500}
+              className="object-contain w-full h-full "
+            />
+          </Link>
+        </div>
+      </CardHeader>
 
       {/* Contenido */}
-      <CardContent className="p-4 space-y-3">
-        {/* Rating */}
-        <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <div className="flex items-center space-x-1 text-yellow-500">
-              <Star className="h-4 w-4 fill-yellow-500" />
-              <span className="text-sm font-medium">5</span>
+      <CardContent className="p-5 space-y-4">
+        {/* Nombre y rating */}
+        <div className="flex flex-col gap-1 justify-between items-start">
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center text-yellow-500 text-sm">
+              <Star className="size-4 fill-yellow-500" />
+              <span className="ml-1 font-medium">5.0</span>
             </div>
-            <span className="text-sm text-muted-foreground">(16 reseñas)</span>
-          </div>
 
-          <Badge variant="outline" className={conditionColor}>
-            {product.condition}
+            <Badge
+              variant="outline"
+              className={`${conditionColor} rounded-full text-xs px-3`}
+            >
+              {product.condition}
+            </Badge>
+          </div>
+          <h3 className="font-semibold text-lg text-gray-900 line-clamp-2">
+            {product.name}
+          </h3>
+        </div>
+
+        {/* Badges técnicos */}
+        <div className="flex flex-wrap gap-2">
+          <Badge variant="outline" className="rounded-full text-xs px-3">
+            {product.brand}
+          </Badge>
+          <Badge variant="outline" className="rounded-full text-xs px-3">
+            {product.model}
+          </Badge>
+          <Badge variant="outline" className="rounded-full text-xs px-3">
+            {product.year}
           </Badge>
         </div>
 
-        {/* Nombre */}
-        <h3 className="font-semibold text-base line-clamp-2">{product.name}</h3>
+        <div className="flex flex-col gap-2 text-sm text-gray-500">
+          {/* Numero OEM */}
+          <div className="flex items-center">
+            <Car className="size-4 min-w-4 mr-1" />
+            <span className="line-clamp-1">
+              Numero OEM: {product.oemNumber}
+            </span>
+          </div>
 
-        {/* Ubicación + estado */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-1 text-sm text-muted-foreground">
-            <MapPin className="min-w-4 h-4" />
-            <span>{product.location}</span>
+          {/* Ubicación */}
+          <div className="flex items-center">
+            <MapPin className="size-4 min-w-4 mr-1" />
+            <span className="line-clamp-1">{product.location}</span>
           </div>
         </div>
 
-        {/* Descripción breve */}
-        <p className="text-sm text-muted-foreground line-clamp-2">
-          {product.description}
-        </p>
-
-        {/* Precio + botón */}
-        <div className="flex items-center justify-between">
+        {/* Precio */}
+        <div className="flex items-center justify-between pt-2">
           {product.offer && product.offerPrice ? (
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-muted-foreground line-through">
+            <div className="flex items-baseline gap-2">
+              <span className="text-sm line-through text-gray-400">
                 ${product.price}
               </span>
-              <span className="text-lg font-bold text-green-600">
+              <span className="text-xl font-bold text-green-600">
                 ${product.offerPrice}
               </span>
             </div>
           ) : (
-            <span className="text-lg font-bold text-primary">
+            <span className="text-xl font-bold text-gray-900">
               ${product.price}
             </span>
           )}
 
-          <Link
-            href={`/products/${product.id}`}
-            className="px-3 py-1.5 text-sm rounded-full bg-primary text-white hover:bg-primary/90 transition"
+          <Button
+            className="px-4 py-2 text-sm rounded-full"
+            variant={"card"}
+            asChild
           >
-            Ver detalles
-          </Link>
+            <Link href={`/productos/${product.id}`}>Ver detalles</Link>
+          </Button>
         </div>
       </CardContent>
     </Card>

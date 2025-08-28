@@ -24,8 +24,8 @@ export default middleware((req) => {
     "/api/auth/signin/google",
     "/api/auth/verify-email",
     "/api/auth/callback/google",
-    "/products",
-    "/products/[id]",
+    "/productos",
+    "/productos/[id]",
     "/api/uploadthing",
   ];
 

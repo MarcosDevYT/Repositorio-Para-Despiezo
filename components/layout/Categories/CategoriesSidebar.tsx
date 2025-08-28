@@ -42,13 +42,15 @@ export const CategoriesSidebar = ({ open, onOpenChange }: SidebarProps) => {
     } else {
       // This is a leaf category (no subcategories)
       if (parentCategories && selectedCategory) {
-        router.push(`/category/${selectedCategory.slug}/${category.slug}`);
+        router.push(
+          `/productos?categoria=${selectedCategory.slug}&subcategoria=${category.slug}`
+        );
       } else {
         // This is a main category - navigate to /category
         if (category.slug === "todas-las-categorias") {
-          router.push("/products");
+          router.push("/productos");
         } else {
-          router.push(`/category/${category.slug}`);
+          router.push(`/productos?categoria=${category.slug}`);
         }
       }
 
@@ -85,7 +87,10 @@ export const CategoriesSidebar = ({ open, onOpenChange }: SidebarProps) => {
 
           {parentCategories && selectedCategory && (
             <button
-              onClick={() => router.push(`/category/${selectedCategory.slug}`)}
+              onClick={() => {
+                router.push(`/productos?categoria=${selectedCategory.slug}`);
+                handleOpenChange(false);
+              }}
               className="cursor-pointer w-full text-left p-4 hover:bg-blue-500/10 hover:text-blue-500 flex justify-between items-center text-base font-medium"
             >
               {selectedCategory.name}

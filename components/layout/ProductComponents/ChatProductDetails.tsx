@@ -4,11 +4,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { getConditionColor } from "@/lib/utils";
+import { ProductType } from "@/types/ProductTypes";
 import { Car, ShoppingCart } from "lucide-react";
-import { Product } from "@prisma/client";
 import Link from "next/link";
 
-export const ChatProductDetails = ({ product }: { product: Product }) => {
+export const ChatProductDetails = ({ product }: { product: ProductType }) => {
   const conditionColor = getConditionColor(product?.condition ?? "nuevo");
 
   return (
@@ -73,7 +73,7 @@ export const ChatProductDetails = ({ product }: { product: Product }) => {
       {/* Enlaces */}
       <div className="flex flex-col gap-2">
         <Link
-          href={`/products/${product.id}`}
+          href={`/productos/${product.id}`}
           className="text-sm text-blue-500 hover:underline"
         >
           Ver publicación completa

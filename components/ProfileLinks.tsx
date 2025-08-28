@@ -14,7 +14,7 @@ export const ProfileLinks = () => {
   const pathname = usePathname();
 
   return (
-    <nav className="flex flex-col items-center justify-center gap-3">
+    <nav className="flex flex-col items-center justify-center gap-1">
       {/* Mapping de los links de navegacion */}
       {ProfileNavLinks.map((query) => (
         <Button

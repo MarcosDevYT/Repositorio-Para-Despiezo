@@ -1,4 +1,5 @@
 import { clsx, type ClassValue } from "clsx";
+import { Session } from "next-auth";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -22,3 +23,34 @@ export const baseUrl =
   process.env.NODE_ENV === "development"
     ? "http://localhost:3000"
     : `${process.env.NEXT_PUBLIC_BASE_URL}`;
+
+// Funcion para verificar al vendedor
+export const verifySeller = (session: Session): boolean => {
+  if (!session) return false;
+
+  if (!session.user) return false;
+
+  const hasValidEmailVerification =
+    typeof session.user.phoneNumber === "string" &&
+    session.user.phoneNumber.trim() !== "";
+
+  const hasValidPhoneNumber =
+    typeof session.user.phoneNumber === "string" &&
+    session.user.phoneNumber.trim() !== "";
+
+  const hasValidLocation =
+    typeof session.user.location === "string" &&
+    session.user.location.trim() !== "";
+
+  const hasValidBusinessName =
+    typeof session.user.businessName === "string" &&
+    session.user.businessName.trim() !== "";
+
+  const isUserFullyVerified =
+    hasValidEmailVerification &&
+    hasValidPhoneNumber &&
+    hasValidLocation &&
+    hasValidBusinessName;
+
+  return isUserFullyVerified;
+};

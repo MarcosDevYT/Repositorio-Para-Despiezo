@@ -1,29 +1,23 @@
 "use client";
 
-import {
-  getEmailVerificationStatus,
-  verifyEmailAction,
-} from "@/actions/auth-actions";
+import { verifyEmailAction } from "@/actions/auth-actions";
 import { Check } from "lucide-react";
-import { useEffect, useState, useTransition } from "react";
+import { Session } from "next-auth";
+import { useTransition } from "react";
 import { toast } from "sonner";
 
-export default function EmailVerificationStatus({ email }: { email: string }) {
-  const [isVerified, setIsVerified] = useState<boolean | null>(null);
+export default function EmailVerificationStatus({
+  session,
+}: {
+  session: Session;
+}) {
   const [isPending, startTransition] = useTransition();
 
-  useEffect(() => {
-    const fetchStatus = async () => {
-      const result = await getEmailVerificationStatus();
-      setIsVerified(result);
-    };
-
-    fetchStatus();
-  }, [email]);
+  const isVerified = session.user.emailVerified || false;
 
   const handleSendVerification = async () => {
     startTransition(async () => {
-      const res = await verifyEmailAction(email);
+      const res = await verifyEmailAction(session.user.email);
       if (res?.error) {
         toast.error(res.error);
       } else {
@@ -39,14 +33,14 @@ export default function EmailVerificationStatus({ email }: { email: string }) {
   if (isVerified === null) return;
 
   return isVerified ? (
-    <p className="text-green-600 flex items-center gap-2">
-      Email verificado <Check className="size-4" />
-    </p>
+    <span className="bg-green-500 text-white font-semibold text-sm p-0.5 px-2 md:px-3 rounded-full inline-flex items-center gap-2">
+      Verificado <Check className="size-4" strokeWidth={2.5} />
+    </span>
   ) : (
     <button
       onClick={handleSendVerification}
       disabled={isPending}
-      className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded"
+      className="bg-blue-600 hover:bg-blue-700 text-white text-sm p-0.5 px-3 rounded-full"
     >
       {isPending ? "Enviando..." : "Verificar correo"}
     </button>

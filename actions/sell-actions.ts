@@ -4,7 +4,6 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { sellSchema } from "@/lib/zodSchemas/sellSchema";
 import { prisma } from "@/lib/prisma";
-import { Product } from "@prisma/client";
 
 // Crear un producto
 export const createProductAction = async (data: z.infer<typeof sellSchema>) => {
@@ -179,6 +178,35 @@ export const getProductsAction = async () => {
     }));
   } catch (error) {
     console.log(error);
+    return [];
+  }
+};
+
+// Obtener todos los productos favoritos del usuario
+export const getFavoriteProductsAction = async () => {
+  try {
+    const session = await auth();
+    const userId = session?.user?.id;
+
+    if (!userId) return [];
+
+    const products = await prisma.product.findMany({
+      where: {
+        favorites: {
+          some: { userId },
+        },
+      },
+      include: {
+        favorites: { where: { userId }, select: { id: true } },
+      },
+    });
+
+    return products.map((p) => ({
+      ...p,
+      isFavorite: true, // si entró acá, ya es favorito
+    }));
+  } catch (error) {
+    console.error(error);
     return [];
   }
 };

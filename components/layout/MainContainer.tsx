@@ -13,7 +13,7 @@ export const MainContainer = ({
   className,
 }: {
   children: React.ReactNode;
-  params: string;
+  params?: string;
   className?: string;
 }) => {
   return (

@@ -94,7 +94,7 @@ export const MarketplaceChat = ({
                 </span>
               </div>
               <Link
-                href={`/products/${room.product.id}`}
+                href={`/productos/${room.product.id}`}
                 className="text-sm text-muted-foreground line-clamp-1"
               >
                 Producto: {room.product.name}

@@ -11,7 +11,7 @@ const transporter = nodemailer.createTransport({
 
 // 🔹 Email de verificación
 export const sendEmailVerification = async (email: string, token: string) => {
-  const verifyLink = `${baseUrl}/api/auth/verify-email?token=${token}`;
+  const verifyLink = `${baseUrl}/verify-email?token=${token}`;
 
   const html = `
   <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #eaeaea; border-radius: 12px; overflow: hidden;">
@@ -36,7 +36,7 @@ export const sendEmailVerification = async (email: string, token: string) => {
 
   try {
     await transporter.sendMail({
-      from: `"MarketIA Labs" <${process.env.EMAIL_USER}>`,
+      from: `"Despiezo" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: "Verifica tu email",
       html,
@@ -76,7 +76,7 @@ export const sendResetPasswordEmail = async (email: string, token: string) => {
 
   try {
     await transporter.sendMail({
-      from: `"MarketIA Labs" <${process.env.EMAIL_USER}>`,
+      from: `"Despiezo" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: "Restablece tu contraseña",
       html,

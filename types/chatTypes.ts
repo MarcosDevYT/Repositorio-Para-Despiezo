@@ -1,4 +1,4 @@
-import { Product } from "@prisma/client";
+import { ProductType } from "./ProductTypes";
 
 export interface UseMarketplaceChatProps {
   roomId: string;
@@ -22,7 +22,7 @@ export interface MarketplaceChatMessage {
 export interface ChatRoom {
   id: string;
   productId: string;
-  product: Product;
+  product: ProductType;
   vendor: {
     id: string;
     name: string;

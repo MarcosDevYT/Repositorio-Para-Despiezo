@@ -1,15 +1,15 @@
-import { SearchForm } from "@/components/SearchForm";
-import { Button } from "@/components/ui/button";
+import { SearchProducts } from "@/components/searchComponents/SearchProducts";
 import { UserDropdown } from "@/components/UserDropdown";
-import Link from "next/link";
 import { Package } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { auth } from "@/auth";
+import Link from "next/link";
 
 /**
  * @description Componente de la barra de navegacion
  * @returns Componente de la barra de navegacion
  */
-export const Navbar = async ({ params }: { params: string }) => {
+export const Navbar = async ({ params }: { params?: string }) => {
   const session = await auth();
 
   const isLoggedIn = !!session?.user;
@@ -25,7 +25,7 @@ export const Navbar = async ({ params }: { params: string }) => {
 
           {/* Buscador */}
           <div className="hidden md:block w-full max-w-3xl">
-            <SearchForm params={params} />
+            <SearchProducts params={params} />
           </div>
 
           {/* User Dropdown */}
@@ -35,7 +35,7 @@ export const Navbar = async ({ params }: { params: string }) => {
                 asChild
                 className="bg-blue-500 hover:bg-blue-600 rounded-full px-6 hidden md:flex items-center gap-2"
               >
-                <Link href="/sell">
+                <Link href="/vendedor">
                   <Package />
                   Vender
                 </Link>
