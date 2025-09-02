@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Heart, Star, MapPin, Car } from "lucide-react";
@@ -20,12 +20,19 @@ export const ProductCard = ({
   isFavorite: boolean | undefined;
 }) => {
   const [isFavorite, setIsFavorite] = useState(initialFavorite ?? false);
+  const [isPending, startTransition] = useTransition();
 
-  const handleFavorite = async () => {
-    const res = await toggleFavoriteAction(product.id);
-    if (res.success) {
-      setIsFavorite(res.isFavorite);
-    }
+  const handleFavorite = () => {
+    startTransition(async () => {
+      try {
+        const res = await toggleFavoriteAction(product.id);
+        if (res.success) {
+          setIsFavorite(res.isFavorite);
+        }
+      } catch (error) {
+        console.error("Error al marcar como favorito:", error);
+      }
+    });
   };
 
   const conditionColor = getConditionColor(product.condition);
@@ -44,6 +51,7 @@ export const ProductCard = ({
           variant="ghost"
           size="icon"
           onClick={handleFavorite}
+          disabled={isPending}
           className="absolute -top-2 right-3 z-10 rounded-full backdrop-blur-md shadow-sm bg-white hover:bg-white"
         >
           <Heart

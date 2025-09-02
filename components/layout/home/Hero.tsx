@@ -1,8 +1,7 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Bike, Car, Search, Truck } from "lucide-react";
+import { Bike, Car, Truck } from "lucide-react";
 
 import { useState } from "react";
 
@@ -21,7 +20,7 @@ const heroInfo = {
   title: "Encuentra las mejores partes para tu auto",
   subtitle: "Partes de segunda mano verificadas y garantizadas",
   cta: "Explorar Productos",
-  link: "/products",
+  link: "/productos",
 };
 
 export function Hero() {

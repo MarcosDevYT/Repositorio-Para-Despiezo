@@ -12,10 +12,7 @@ export default function ProductsLayout({
   children: React.ReactNode;
 }) {
   return (
-    <MainContainer
-      params="products"
-      className="flex-col md:flex-row flex min-h-[82.5vh] max-h-[82.5vh]"
-    >
+    <MainContainer className="flex-col md:flex-row flex min-h-[82.5vh] max-h-[82.5vh]">
       <ChatNavigation />
       {children}
     </MainContainer>

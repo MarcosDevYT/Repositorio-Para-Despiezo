@@ -37,8 +37,8 @@ export const ProductCategories = () => {
                     className="h-full w-full px-2 py-4"
                     href={
                       category.slug === "todas-las-categorias"
-                        ? "/products"
-                        : `/products?categoria=${category.slug}`
+                        ? "/productos"
+                        : `/productos?categoria=${category.slug}`
                     }
                   >
                     <CardContent className="p-6 text-center">
@@ -74,8 +74,8 @@ export const ProductCategories = () => {
                 className="h-full w-full px-2 py-4"
                 href={
                   category.slug === "todas-las-categorias"
-                    ? "/products"
-                    : `/products?categoria=${category.slug}`
+                    ? "/productos"
+                    : `/productos?categoria=${category.slug}`
                 }
               >
                 <CardContent className="p-6 text-center">

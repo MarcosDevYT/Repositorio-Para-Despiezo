@@ -18,10 +18,7 @@ export default async function ProfileLayout({
   if (!session?.user) redirect("/login");
 
   return (
-    <MainContainer
-      params="products"
-      className="container mx-auto px-4 py-16 min-h-[82.5vh] flex flex-col lg:flex-row gap-4"
-    >
+    <MainContainer className="container mx-auto px-4 py-16 min-h-[82.5vh] flex flex-col lg:flex-row gap-4">
       <ProfileNav />
       {children}
     </MainContainer>

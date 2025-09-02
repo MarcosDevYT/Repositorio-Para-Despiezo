@@ -9,9 +9,22 @@ export const dynamic = "force-dynamic";
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ query: string }>;
+  searchParams: Promise<{
+    matriculaoem: string;
+    subcategoria: string;
+    categoria: string;
+    query: string;
+    oem: string;
+  }>;
 }) {
-  const { query } = await searchParams;
+  const { query, subcategoria, categoria, oem, matriculaoem } =
+    await searchParams;
+
+  console.log(subcategoria);
+  console.log(matriculaoem);
+  console.log(categoria);
+  console.log(query);
+  console.log(oem);
 
   const products = await getProductsAction();
 

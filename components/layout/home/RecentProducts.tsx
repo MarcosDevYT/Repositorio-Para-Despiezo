@@ -9,6 +9,7 @@ import { ProductCard } from "../ProductComponents/ProductCard";
 import { ProductType } from "@/types/ProductTypes";
 import "swiper/css";
 import "swiper/css/navigation";
+import Link from "next/link";
 
 export const RecentProducts = ({ products }: { products: ProductType[] }) => {
   const prevRef = useRef<HTMLButtonElement>(null);
@@ -18,12 +19,16 @@ export const RecentProducts = ({ products }: { products: ProductType[] }) => {
     <section className="py-8">
       <article className="flex flex-col md:flex-row items-center justify-between mb-6">
         <h2 className="text-2xl font-bold">Productos Vistos Recientemente</h2>
+
         <Button
+          asChild
           variant="ghost"
           className="rounded-full flex items-center space-x-2 text-primary hover:text-blue-600"
         >
-          <span>Ver todos</span>
-          <ChevronRight className="h-4 w-4" />
+          <Link href={"/productos"}>
+            <span>Ver todos</span>
+            <ChevronRight className="h-4 w-4" />
+          </Link>
         </Button>
       </article>
 

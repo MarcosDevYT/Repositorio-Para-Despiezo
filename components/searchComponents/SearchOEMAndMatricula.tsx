@@ -1,5 +1,5 @@
 import { Skeleton } from "../ui/skeleton";
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { Search } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -7,6 +7,8 @@ import { Input } from "../ui/input";
 import Form from "next/form";
 
 export const SearchOEMAndMatricula = () => {
+  const [query, setQuery] = useState("");
+
   return (
     <Suspense
       fallback={
@@ -19,7 +21,7 @@ export const SearchOEMAndMatricula = () => {
       }
     >
       <Form
-        action={"/products"}
+        action={"/productos"}
         scroll={false}
         className="max-w-2xl w-full bg-white p-2 rounded-lg"
       >
@@ -27,10 +29,11 @@ export const SearchOEMAndMatricula = () => {
           <Input
             name="matriculaoem"
             autoComplete="off"
+            onChange={(e) => setQuery(e.target.value)}
             placeholder="Ej: matrícula '1234ABC' o referencia OEM"
-            className="flex-1 h-10 text-sm"
+            className="flex-1 h-10 text-sm text-gray-700"
           />
-          <Button type="submit" className="px-8">
+          <Button type="submit" disabled={!query.trim()} className="px-8">
             <Search className="size-5" />
             <span className="hidden md:flex">Buscar</span>
           </Button>

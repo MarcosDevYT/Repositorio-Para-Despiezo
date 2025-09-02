@@ -12,9 +12,9 @@ export default async function Home() {
   const products = await getProductsAction();
 
   return (
-    <MainContainer params="products">
+    <MainContainer>
       <div className="border-b bg-blue-50 px-4 lg:px-12 py-4 w-full">
-        <Categories params="products" />
+        <Categories />
       </div>
 
       <Hero />

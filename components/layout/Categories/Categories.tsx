@@ -9,7 +9,7 @@ import { categories } from "@/data";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export const Categories = ({ params }: { params?: string }) => {
+export const Categories = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
   const viewAllRef = useRef<HTMLDivElement>(null);
@@ -124,7 +124,7 @@ export const Categories = ({ params }: { params?: string }) => {
       <CategoriesSidebar open={isSidebarOpen} onOpenChange={setIsSidebarOpen} />
 
       <div className="flex items-center gap-2 md:hidden">
-        <SearchProducts params={params} />
+        <SearchProducts />
 
         <Button
           onClick={handleOpenSidebar}

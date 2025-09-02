@@ -30,7 +30,7 @@ export default middleware((req) => {
   ];
 
   const isPublic =
-    publicRouter.includes(pathname) || pathname.startsWith("/products/"); // permite /products/42, /products/xxx
+    publicRouter.includes(pathname) || pathname.startsWith("/productos/"); // permite /productos/42, /productos/xxx
 
   if (!isPublic && !isLoggedIn) {
     return NextResponse.redirect(new URL("/login", nextUrl));

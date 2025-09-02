@@ -56,13 +56,20 @@ export const ProductLayout = ({
 }) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [isFavoritePending, startFavoriteTransition] = useTransition();
   const [isFavorite, setIsFavorite] = useState(product.isFavorite ?? false);
 
-  const handleFavorite = async () => {
-    const res = await toggleFavoriteAction(product.id);
-    if (res.success) {
-      setIsFavorite(res.isFavorite);
-    }
+  const handleFavorite = () => {
+    startFavoriteTransition(async () => {
+      try {
+        const res = await toggleFavoriteAction(product.id);
+        if (res.success) {
+          setIsFavorite(res.isFavorite);
+        }
+      } catch (error) {
+        console.error("Error al marcar como favorito:", error);
+      }
+    });
   };
 
   const handleInitChat = () => {
@@ -87,6 +94,7 @@ export const ProductLayout = ({
           size="icon"
           variant="outline"
           className="absolute top-2 right-2 rounded-full"
+          disabled={isFavoritePending}
           onClick={handleFavorite}
         >
           <Heart

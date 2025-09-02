@@ -1,4 +1,4 @@
-import { type MarketplaceChatMessage } from "@/hooks/use-marketplace-chat";
+import { MarketplaceChatMessage } from "@/types/chatTypes";
 import { cn } from "@/lib/utils";
 
 interface MessageItemProps {

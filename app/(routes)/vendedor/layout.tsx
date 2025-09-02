@@ -17,10 +17,7 @@ export default async function SellLayout({
   if (!session) return null;
 
   return (
-    <MainContainer
-      params="products"
-      className="container mx-auto px-4 py-16 flex flex-col gap-4 min-h-[82.5vh]"
-    >
+    <MainContainer className="container mx-auto px-4 py-8 md:py-16 flex flex-col gap-4 min-h-[82.5vh]">
       <SellNav />
 
       {children}

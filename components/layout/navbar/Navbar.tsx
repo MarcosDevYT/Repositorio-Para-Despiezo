@@ -9,7 +9,7 @@ import Link from "next/link";
  * @description Componente de la barra de navegacion
  * @returns Componente de la barra de navegacion
  */
-export const Navbar = async ({ params }: { params?: string }) => {
+export const Navbar = async () => {
   const session = await auth();
 
   const isLoggedIn = !!session?.user;
@@ -25,7 +25,7 @@ export const Navbar = async ({ params }: { params?: string }) => {
 
           {/* Buscador */}
           <div className="hidden md:block w-full max-w-3xl">
-            <SearchProducts params={params} />
+            <SearchProducts />
           </div>
 
           {/* User Dropdown */}
