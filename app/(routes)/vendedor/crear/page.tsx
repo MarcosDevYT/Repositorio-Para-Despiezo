@@ -20,7 +20,7 @@ export default async function SellCreatePage() {
   const isVerify = verifySeller(session);
 
   if (!isVerify) {
-    redirect("/sell/business");
+    redirect("/vendedor/negocio");
   }
 
   return (

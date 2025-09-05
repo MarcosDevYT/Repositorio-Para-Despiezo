@@ -194,7 +194,10 @@ export const ProductLayout = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Avatar className="size-12">
-                  <AvatarImage src={vendedor.image || ""} />
+                  <AvatarImage
+                    className="object-cover"
+                    src={vendedor.image || ""}
+                  />
                   <AvatarFallback>{vendedor.name?.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div>

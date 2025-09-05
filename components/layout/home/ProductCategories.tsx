@@ -7,6 +7,7 @@ import { categories } from "@/data";
 import "swiper/css";
 
 import Link from "next/link";
+import { ShoppingBag } from "lucide-react";
 
 export const ProductCategories = () => {
   return (
@@ -28,6 +29,26 @@ export const ProductCategories = () => {
           spaceBetween={0}
           className="mySwiper"
         >
+          <SwiperSlide className="py-4 px-2">
+            <Card className="group cursor-pointer hover:shadow-hover transition-all duration-300 hover:scale-105 bg-background border border-border p-0">
+              <Link className="h-full w-full px-2 py-4" href={"/productos"}>
+                <CardContent className="p-6 text-center">
+                  <div
+                    className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center bg-slate-50 text-slate-600 group-hover:scale-110 transition-transform duration-300`}
+                  >
+                    <ShoppingBag className="size-8" />
+                  </div>
+                  <h3 className="font-semibold text-sm mb-1 group-hover:text-primary transition-colors">
+                    Todos los productos
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    10,000 productos
+                  </p>
+                </CardContent>
+              </Link>
+            </Card>
+          </SwiperSlide>
+
           {categories.map((category) => {
             const Icon = category.icon;
             return (
@@ -63,6 +84,22 @@ export const ProductCategories = () => {
       </div>
 
       <div className="hidden lg:grid lg:grid-cols-4 2xl:grid-cols-7 gap-4">
+        <Card className="group cursor-pointer hover:shadow-hover transition-all duration-300 hover:scale-105 bg-background border border-border p-0">
+          <Link className="h-full w-full px-2 py-4" href={"/productos"}>
+            <CardContent className="p-6 text-center">
+              <div
+                className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center bg-slate-50 text-slate-600 group-hover:scale-110 transition-transform duration-300`}
+              >
+                <ShoppingBag className="size-8" />
+              </div>
+              <h3 className="font-semibold text-sm mb-1 group-hover:text-primary transition-colors">
+                Todos los productos
+              </h3>
+              <p className="text-xs text-muted-foreground">10,000 productos</p>
+            </CardContent>
+          </Link>
+        </Card>
+
         {categories.map((category) => {
           const Icon = category.icon;
           return (

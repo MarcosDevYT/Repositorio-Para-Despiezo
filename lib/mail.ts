@@ -16,7 +16,7 @@ export const sendEmailVerification = async (email: string, token: string) => {
   const html = `
   <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #eaeaea; border-radius: 12px; overflow: hidden;">
     <div style="background-color: #000; padding: 20px; text-align: center;">
-      <h1 style="color: white; margin: 10; font-size: 24px;">MarketIA Labs</h1>
+      <h1 style="color: white; margin: 10; font-size: 24px;">Despiezo</h1>
     </div>
     <div style="padding: 20px;">
       <p style="font-size: 16px; color: #333;">
@@ -56,7 +56,7 @@ export const sendResetPasswordEmail = async (email: string, token: string) => {
   const html = `
   <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #eaeaea; border-radius: 12px; overflow: hidden;">
     <div style="background-color: #000; padding: 20px; text-align: center;">
-      <h1 style="color: white; margin: 10; font-size: 24px;">MarketIA Labs</h1>
+      <h1 style="color: white; margin: 10; font-size: 24px;">Despiezo</h1>
     </div>
     <div style="padding: 20px;">
       <p style="font-size: 16px; color: #333;">

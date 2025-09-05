@@ -22,7 +22,7 @@ export default async function EditPage({ params }: { params: { id: string } }) {
   const isVerify = verifySeller(session);
 
   if (!isVerify) {
-    redirect("/sell/business");
+    redirect("/vendedor/negocio");
   }
 
   const product = await getProductByIdAction(id);

@@ -123,14 +123,6 @@ export const DropdownLinks = [
 
 export const categories = [
   {
-    id: 1,
-    name: "Todos los productos",
-    slug: "todas-las-categorias",
-    icon: LucideShoppingBag,
-    count: "10,000 productos",
-    color: "bg-slate-50 text-slate-600",
-  },
-  {
     id: 2,
     name: "Motor",
     slug: "motor",

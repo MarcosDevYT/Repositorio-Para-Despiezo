@@ -55,9 +55,9 @@ export const ProductCard = ({
           className="absolute -top-2 right-3 z-10 rounded-full backdrop-blur-md shadow-sm bg-white hover:bg-white"
         >
           <Heart
-            className={`size-5 transition-colors ${
-              isFavorite ? "fill-red-500 text-red-500" : "text-gray-600"
-            }`}
+            className={`size-5 transition-colors 
+              ${isPending ? "animate-pulse" : ""}
+              ${isFavorite ? "fill-red-500 text-red-500" : "text-gray-600"}`}
           />
         </Button>
 

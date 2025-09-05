@@ -1,6 +1,6 @@
 "use client";
 
-import { z } from "zod";
+import { map, z } from "zod";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -34,6 +34,7 @@ import { Label } from "@/components/ui/label";
 import { LocationAutocomplete } from "@/components/LocationSearchInput";
 import { Switch } from "@/components/ui/switch";
 import Image from "next/image";
+import { categories } from "@/data";
 
 type SellFormProps = {
   initialValues?: Partial<z.infer<typeof sellSchema>>;
@@ -57,7 +58,8 @@ export const SellForm = ({ initialValues, action }: SellFormProps) => {
       description: "",
       oemNumber: "",
       price: "",
-      category: "filtro",
+      category: "",
+      subcategory: "",
       brand: "",
       model: "",
       year: "",
@@ -232,18 +234,70 @@ export const SellForm = ({ initialValues, action }: SellFormProps) => {
                       <SelectValue placeholder="Seleccioná una categoría" />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent>
-                    <SelectItem value="filtro">Filtro</SelectItem>
-                    <SelectItem value="aceite">Aceite</SelectItem>
-                    <SelectItem value="frenos">Frenos</SelectItem>
-                    <SelectItem value="batería">Batería</SelectItem>
-                    <SelectItem value="bujías">Bujías</SelectItem>
-                    <SelectItem value="otros">Otros</SelectItem>
+                  <SelectContent side="bottom" className="max-h-72">
+                    {categories.map((cat) => (
+                      <SelectItem
+                        key={cat.id}
+                        value={cat.slug}
+                        className="flex items-center gap-2"
+                      >
+                        <cat.icon />
+                        {cat.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />
               </FormItem>
             )}
+          />
+
+          {/* Subcategoría */}
+          <FormField
+            control={form.control}
+            name="subcategory"
+            render={({ field }) => {
+              const selectedCategory = form.watch("category");
+              const categoryObj = categories.find(
+                (cat) => cat.slug === selectedCategory
+              );
+              const subcategories = categoryObj?.subcategories ?? [];
+
+              const hasSubcategories = subcategories.length > 0;
+
+              return (
+                <FormItem>
+                  <FormLabel>Subcategoría</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    disabled={!selectedCategory || !hasSubcategories}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue
+                          placeholder={
+                            !selectedCategory
+                              ? "Seleccioná primero una categoría"
+                              : hasSubcategories
+                                ? "Seleccioná una subcategoría"
+                                : "Esta categoría no tiene subcategorías"
+                          }
+                        />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent side="bottom" className="max-h-72">
+                      {subcategories.map((sub) => (
+                        <SelectItem key={sub.slug} value={sub.slug}>
+                          {sub.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
           />
 
           {/* Condición */}
@@ -315,6 +369,7 @@ export const SellForm = ({ initialValues, action }: SellFormProps) => {
               <FormItem>
                 <FormLabel>Estado</FormLabel>
                 <Select
+                  disabled
                   onValueChange={field.onChange}
                   defaultValue={field.value}
                 >
@@ -377,7 +432,7 @@ export const SellForm = ({ initialValues, action }: SellFormProps) => {
               name="offerPrice"
               render={({ field }) => (
                 <FormItem className="max-w-48">
-                  <FormLabel>Precio</FormLabel>
+                  <FormLabel>Precio de la oferta</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
@@ -400,7 +455,7 @@ export const SellForm = ({ initialValues, action }: SellFormProps) => {
               <FormItem className="max-w-48">
                 <FormLabel>Precio</FormLabel>
                 <FormControl>
-                  <Input {...field} placeholder="2000" type="number" />
+                  <Input {...field} placeholder="200" type="number" />
                 </FormControl>
                 <FormMessage />
               </FormItem>

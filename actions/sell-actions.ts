@@ -22,20 +22,6 @@ export const createProductAction = async (data: z.infer<typeof sellSchema>) => {
 
     console.log("Datos validados", validatedData);
 
-    // Verificar si el usuario ya tiene un producto con el mismo nombre
-    const existingProduct = await prisma.product.findFirst({
-      where: {
-        name: validatedData.name,
-        vendorId: session.user.id,
-      },
-    });
-
-    if (existingProduct) {
-      return {
-        error: "Ya tienes un producto con este nombre",
-      };
-    }
-
     // Crear el producto
     const product = await prisma.product.create({
       data: {
@@ -179,6 +165,134 @@ export const getProductsAction = async () => {
   } catch (error) {
     console.log(error);
     return [];
+  }
+};
+
+type ProductFilter = {
+  query?: string; // nombre o descripción
+  categoria?: string; // slug categoría
+  subcategoria?: string; // slug subcategoría
+  oem?: string; // OEM number
+  marca?: string; // brand
+  modelo?: string; // modelo
+  estado?: string; // condition
+  año?: string; // año del vehículo
+  tipoDeVehiculo?: string; // coche, moto, furgoneta
+  priceMin?: number; // precio mínimo
+  priceMax?: number; // precio máximo
+  page?: number; // página de paginación
+  limit?: number; // cantidad por página
+  orderBy?: "price" | "name" | "createdAt"; // campo para ordenar
+  orderDirection?: "asc" | "desc"; // dirección
+};
+
+export const getProductsByFilterAction = async (filters: ProductFilter) => {
+  try {
+    const session = await auth();
+    const userId = session?.user?.id;
+
+    const {
+      page = 1,
+      limit = 20,
+      orderBy = "createdAt",
+      orderDirection = "desc",
+    } = filters;
+
+    const where: any = {};
+
+    // Búsqueda por texto en nombre o descripción
+    if (filters.query) {
+      where.OR = [
+        { name: { contains: filters.query, mode: "insensitive" } },
+        { description: { contains: filters.query, mode: "insensitive" } },
+        { brand: { contains: filters.query, mode: "insensitive" } },
+        { model: { contains: filters.query, mode: "insensitive" } },
+        { oemNumber: { contains: filters.query, mode: "insensitive" } },
+      ];
+    }
+
+    // Búsqueda combinada categoría + subcategoría
+    if (filters.categoria && filters.subcategoria) {
+      where.AND = [
+        { category: filters.categoria },
+        { subcategory: filters.subcategoria },
+      ];
+    } else if (filters.categoria) {
+      where.category = filters.categoria;
+    } else if (filters.subcategoria) {
+      where.subcategory = filters.subcategoria;
+    }
+
+    if (filters.oem) where.oemNumber = filters.oem;
+    if (filters.marca)
+      where.brand = { contains: filters.marca, mode: "insensitive" };
+
+    if (filters.modelo)
+      where.model = { contains: filters.modelo, mode: "insensitive" };
+
+    if (filters.estado) where.condition = filters.estado;
+    if (filters.año) where.year = filters.año;
+    if (filters.tipoDeVehiculo) where.tipoDeVehiculo = filters.tipoDeVehiculo;
+
+    // Filtrado por precio (recordar que price es string)
+    if (filters.priceMin !== undefined || filters.priceMax !== undefined) {
+      where.OR = [
+        {
+          offer: true,
+          offerPrice: {
+            ...(filters.priceMin !== undefined && {
+              gte: filters.priceMin.toString(),
+            }),
+            ...(filters.priceMax !== undefined && {
+              lte: filters.priceMax.toString(),
+            }),
+          },
+        },
+        {
+          offer: false,
+          price: {
+            ...(filters.priceMin !== undefined && {
+              gte: filters.priceMin.toString(),
+            }),
+            ...(filters.priceMax !== undefined && {
+              lte: filters.priceMax.toString(),
+            }),
+          },
+        },
+      ];
+    }
+
+    // Conteo total para paginación
+    const total = await prisma.product.count({ where });
+
+    // Productos con paginación y orden
+    const products = await prisma.product.findMany({
+      where,
+      skip: (page - 1) * limit,
+      take: limit,
+      orderBy: { [orderBy]: orderDirection },
+      include: {
+        favorites: userId ? { where: { userId }, select: { id: true } } : false,
+      },
+    });
+
+    return {
+      total,
+      page,
+      limit,
+      products: products.map((p) => ({
+        ...p,
+        isFavorite: userId ? p.favorites.length > 0 : false,
+      })),
+    };
+  } catch (error) {
+    console.error(error);
+    return {
+      total: 0,
+      page: 1,
+      limit: 20,
+      products: [],
+    };
   }
 };
 

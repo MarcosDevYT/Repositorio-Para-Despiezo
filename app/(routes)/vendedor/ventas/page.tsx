@@ -11,7 +11,7 @@ export default async function SalesPage() {
   const isVerify = verifySeller(session);
 
   if (!isVerify) {
-    redirect("/sell/business");
+    redirect("/vendedor/negocio");
   }
 
   return <SalesProducts />;

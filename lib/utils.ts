@@ -2,6 +2,19 @@ import { clsx, type ClassValue } from "clsx";
 import { Session } from "next-auth";
 import { twMerge } from "tailwind-merge";
 
+interface FilterCheck {
+  subcategoria?: string;
+  categoria?: string;
+  query?: string;
+  oem?: string;
+  marca?: string;
+  estado?: string;
+  año?: string;
+  tipoDeVehiculo?: string;
+  priceMax?: number;
+  priceMin?: number;
+}
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -53,4 +66,13 @@ export const verifySeller = (session: Session): boolean => {
     hasValidBusinessName;
 
   return isUserFullyVerified;
+};
+
+export const hasAnyFilter = (filters: FilterCheck): boolean => {
+  return Object.values(filters).some((value) => {
+    // Para strings: no vacíos, para números: no null/undefined
+    if (typeof value === "string") return value.trim() !== "";
+    if (typeof value === "number") return !isNaN(value);
+    return false;
+  });
 };

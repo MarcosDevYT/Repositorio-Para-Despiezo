@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/sheet";
 import { categories } from "@/data";
 import { Category } from "@/types/CategoriesTypes";
-import { ChevronLeftIcon, ListFilter } from "lucide-react";
+import { ChevronLeftIcon, ListFilter, ShoppingBag } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -94,6 +94,21 @@ export const CategoriesSidebar = ({ open, onOpenChange }: SidebarProps) => {
               className="cursor-pointer w-full text-left p-4 hover:bg-blue-500/10 hover:text-blue-500 flex justify-between items-center text-base font-medium"
             >
               {selectedCategory.name}
+            </button>
+          )}
+
+          {currentCategories && !selectedCategory && (
+            <button
+              onClick={() => {
+                router.push("/productos");
+                handleOpenChange(false);
+              }}
+              className="cursor-pointer w-full text-left p-4 hover:bg-blue-500/10 hover:text-blue-500 flex justify-between items-center text-base font-medium"
+            >
+              <span className="flex gap-2 items-center">
+                <ShoppingBag className="size-4" />
+                Todos los productos
+              </span>
             </button>
           )}
 

@@ -4,10 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { CategoriesSidebar } from "./CategoriesSidebar";
 import { CategoryDropdown } from "./CategoryDropdown";
 import { SearchProducts } from "@/components/searchComponents/SearchProducts";
-import { ListFilter } from "lucide-react";
+import { ListFilter, LucideShoppingBag } from "lucide-react";
 import { categories } from "@/data";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 export const Categories = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -73,6 +74,21 @@ export const Categories = () => {
             className="absolute opacity-0 pointer-events-none flex container"
             style={{ position: "fixed", top: -9999, left: -9999 }}
           >
+            {" "}
+            <div>
+              <Button
+                variant="ghost"
+                asChild
+                className={cn(
+                  "h-11 flex items-center space-x-2 text-sm font-medium hover:bg-blue-500/10 hover:text-blue-500 rounded-full px-4  whitespace-nowrap"
+                )}
+              >
+                <Link href={"/productos"}>
+                  <LucideShoppingBag className="size-4" />
+                  Todos los productos
+                </Link>
+              </Button>
+            </div>
             {categories.map((category) => (
               <div key={category.id}>
                 <CategoryDropdown
@@ -91,6 +107,20 @@ export const Categories = () => {
             onMouseEnter={() => setIsAnyHovered(true)}
             onMouseLeave={() => setIsAnyHovered(false)}
           >
+            <div>
+              <Button
+                variant="ghost"
+                asChild
+                className={cn(
+                  "h-11 flex items-center space-x-2 text-sm font-medium hover:bg-blue-500/10 hover:text-blue-500 rounded-full px-4  whitespace-nowrap"
+                )}
+              >
+                <Link href={"/productos"}>
+                  <LucideShoppingBag className="size-4" />
+                  Todos los productos
+                </Link>
+              </Button>
+            </div>
             {categories.slice(0, visibleCount).map((category) => (
               <div key={category.id}>
                 <CategoryDropdown
