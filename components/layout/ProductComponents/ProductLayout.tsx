@@ -16,6 +16,7 @@ import {
   Tag,
   Factory,
   Circle,
+  Loader2,
 } from "lucide-react";
 import { useState, useTransition } from "react";
 import { toggleFavoriteAction } from "@/actions/user-actions";
@@ -34,6 +35,7 @@ import {
 } from "@/components/ui/card";
 import { User } from "@prisma/client";
 import Link from "next/link";
+import { buyProductActions } from "@/actions/buy-actions";
 
 function Detail({
   icon: Icon,
@@ -64,6 +66,7 @@ export const ProductLayout = ({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isFavoritePending, startFavoriteTransition] = useTransition();
+  const [isPaymentPending, startPaymentTransition] = useTransition();
   const [isFavorite, setIsFavorite] = useState(product.isFavorite ?? false);
 
   const handleFavorite = () => {
@@ -79,6 +82,25 @@ export const ProductLayout = ({
     });
   };
 
+  // Funcion para iniciar la compra por stripe
+  const handlePayment = () => {
+    startPaymentTransition(async () => {
+      try {
+        const res = await buyProductActions(product.id);
+
+        if (res.error || !res.url) {
+          toast.error(res.error);
+          return;
+        }
+
+        window.location.href = res.url;
+      } catch (error) {
+        toast.error("Error iniciando el checkout");
+      }
+    });
+  };
+
+  // Funcion para llamar al action asi crear un chat con el vendedor
   const handleInitChat = () => {
     startTransition(async () => {
       const res = await startChatAction(product.id);
@@ -175,22 +197,32 @@ export const ProductLayout = ({
             {hasOffer ? (
               <div className="flex items-baseline gap-3">
                 <span className="text-3xl font-bold text-green-600">
-                  Precio: ${product.offerPrice}
+                  Precio: €{product.offerPrice}
                 </span>
                 <span className="line-through text-muted-foreground">
-                  ${product.price}
+                  €{product.price}
                 </span>
               </div>
             ) : (
               <span className="text-3xl font-bold text-primary">
-                Precio: ${product.price}
+                Precio: €{product.price}
               </span>
             )}
           </CardHeader>
 
           <CardContent className="flex flex-col gap-3">
-            <Button className="w-full rounded-full bg-blue-500 text-white hover:bg-blue-600">
-              <ShoppingCart className="size-5" /> Comprar ahora
+            <Button
+              onClick={handlePayment}
+              disabled={isPaymentPending}
+              className="w-full rounded-full bg-blue-500 text-white hover:bg-blue-600"
+            >
+              {isPaymentPending ? (
+                <Loader2 className="size-5 animate-spin" />
+              ) : (
+                <>
+                  <ShoppingCart className="size-5" /> Comprar ahora
+                </>
+              )}
             </Button>
           </CardContent>
         </Card>
@@ -237,7 +269,7 @@ export const ProductLayout = ({
                 className="w-24 rounded-full border-green-500 text-green-600 hover:text-green-700 hover:bg-green-50"
               >
                 {isPending ? (
-                  <Circle className="size-4 animate-spin" />
+                  <Loader2 className="size-4 animate-spin" />
                 ) : (
                   <>
                     <MessageCircle className="size-5" /> Chat

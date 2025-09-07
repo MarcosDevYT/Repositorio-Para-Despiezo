@@ -52,10 +52,10 @@ export const ChatProductDetails = ({ product }: { product: ProductType }) => {
         {product.offer && product.offerPrice ? (
           <div className="flex items-baseline gap-2">
             <span className="text-xl font-bold text-green-600">
-              ${product.offerPrice}
+              €{product.offerPrice}
             </span>
             <span className="line-through text-muted-foreground">
-              ${product.price}
+              €{product.price}
             </span>
             <Badge className="bg-red-500/10 text-red-500 border-red-500/20">
               Oferta
@@ -63,7 +63,7 @@ export const ChatProductDetails = ({ product }: { product: ProductType }) => {
           </div>
         ) : (
           <span className="text-xl font-bold text-primary">
-            ${product.price}
+            €{product.price}
           </span>
         )}
       </div>

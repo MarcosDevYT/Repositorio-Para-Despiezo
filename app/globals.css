@@ -141,3 +141,11 @@
   background: #888;
   border-radius: 10px;
 }
+
+.dropzone-uploadthing {
+  border: 2px dashed #2b7fff !important;
+}
+
+.dropzone-uploadthing button {
+  border-radius: 999px;
+}

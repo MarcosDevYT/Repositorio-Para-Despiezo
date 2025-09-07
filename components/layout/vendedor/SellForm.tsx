@@ -509,6 +509,10 @@ export const SellForm = ({ initialValues, action }: SellFormProps) => {
                 ) : (
                   <UploadDropzone
                     endpoint="productImageUploader"
+                    content={{
+                      label: "Arrastra una imagen aquí",
+                      button: "Subir imagen",
+                    }}
                     onClientUploadComplete={(res) => {
                       const urls = res.map((r) => r.url);
                       field.onChange(urls);

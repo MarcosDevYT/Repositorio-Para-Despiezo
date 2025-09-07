@@ -19,47 +19,45 @@ export const ourFileRouter = {
     .middleware(async () => {
       const session = await auth();
 
-      // Si no hay sesion o usuario, se lanza un error
       if (!session || !session.user) throw new UploadThingError("Unauthorized");
 
-      // Lo que se retorna aqui es accesible en onUploadComplete como metadata
       return { userId: session.user.id };
     })
     .onUploadComplete(async ({ metadata, file }) => {
-      // Este codigo se ejecuta en el servidor despues de la subida
       console.log("Upload complete for userId:", metadata.userId);
-
       console.log("file url", file.ufsUrl);
-
-      // Lo que se retorna aqui es enviado al cliente en el callback `onClientUploadComplete`
       return { uploadedBy: metadata.userId };
     }),
 
-  // Products Uploader
   productImageUploader: f({
     image: {
       maxFileSize: "4MB",
       maxFileCount: 10,
     },
   })
-    // Permisos y tipos de archivo para esta ruta
     .middleware(async () => {
       const session = await auth();
-
-      // Si no hay sesion o usuario, se lanza un error
       if (!session || !session.user) throw new UploadThingError("Unauthorized");
-
-      // Lo que se retorna aqui es accesible en onUploadComplete como metadata
       return { userId: session.user.id };
     })
     .onUploadComplete(async ({ metadata, file }) => {
-      // Este codigo se ejecuta en el servidor despues de la subida
       console.log("Upload complete for userId:", metadata.userId);
-
       console.log("file url", file.ufsUrl);
-
-      // Lo que se retorna aqui es enviado al cliente en el callback `onClientUploadComplete`
       return { uploadedBy: metadata.userId };
+    }),
+
+  // singleImageUploader (sin autenticación, una sola imagen)
+  singleImageUploader: f({
+    image: {
+      maxFileSize: "4MB",
+      maxFileCount: 1,
+    },
+  })
+    // No requiere middleware, cualquier usuario puede subir
+    .onUploadComplete(async ({ file }) => {
+      console.log("Single image uploaded:", file.ufsUrl);
+      // Retornamos la URL directamente
+      return { url: file.ufsUrl };
     }),
 } satisfies FileRouter;
 

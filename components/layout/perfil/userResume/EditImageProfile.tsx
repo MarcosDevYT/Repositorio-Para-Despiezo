@@ -83,6 +83,10 @@ export const EditImageProfile = ({ image }: { image: string | null }) => {
 
                 <UploadDropzone
                   endpoint="imageUploader"
+                  content={{
+                    label: "Arrastra una imagen aquí",
+                    button: "Subir imagen",
+                  }}
                   onClientUploadComplete={(res) => {
                     setImageProfile(res.map((r) => r.url));
                   }}

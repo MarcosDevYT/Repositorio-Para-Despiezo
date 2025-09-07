@@ -130,15 +130,15 @@ export const ProductCard = ({
           {product.offer && product.offerPrice ? (
             <div className="flex items-baseline gap-2">
               <span className="text-sm line-through text-gray-400">
-                ${product.price}
+                €{product.price}
               </span>
               <span className="text-xl font-bold text-green-600">
-                ${product.offerPrice}
+                €{product.offerPrice}
               </span>
             </div>
           ) : (
             <span className="text-xl font-bold text-gray-900">
-              ${product.price}
+              €{product.price}
             </span>
           )}
 
