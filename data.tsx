@@ -39,7 +39,7 @@ export const ProfileNavLinks = [
   },
   {
     label: "Favoritos",
-    href: "/perfil/favorites",
+    href: "/perfil/favoritos",
     icon: <Heart />,
   },
   {

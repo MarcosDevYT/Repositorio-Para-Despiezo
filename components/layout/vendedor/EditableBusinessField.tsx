@@ -169,7 +169,7 @@ export const EditableBusinessField = ({
       ) : (
         // Read-only display (click to edit)
         <div
-          className="flex items-center w-max gap-2 cursor-pointer transition"
+          className="flex items-center w-fit gap-2 cursor-pointer transition"
           onClick={() => setIsEditing(true)}
         >
           <span
@@ -181,7 +181,7 @@ export const EditableBusinessField = ({
                 : "Agrega una descripción para tu negocio"
               : (value ?? `Sin ${label.toLowerCase()}`)}
           </span>
-          <Pencil className="size-4 text-gray-400" />
+          <Pencil className="min-w-4 size-4 text-gray-400" />
         </div>
       )}
     </div>

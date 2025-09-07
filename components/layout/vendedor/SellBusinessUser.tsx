@@ -49,7 +49,7 @@ export const SellBusinessUser = ({ session }: Props) => {
     .toUpperCase();
 
   return (
-    <Card className="lg:flex-row w-full p-0 bg-white border border-gray-200 shadow-lg rounded-2xl">
+    <Card className="lg:flex-row w-full p-0 bg-white border border-gray-200 shadow-lg rounded-2xl gap-2">
       {/* HEADER CON AVATAR Y NOMBRE */}
       <CardHeader className="relative w-full lg:max-w-[360px] 2xl:max-w-sm py-8 px-6 flex flex-col items-center gap-4 text-center border-b lg:border-r lg:border-b-0">
         <div className="z-10 absolute top-2 w-full px-2 flex items-center justify-between">
@@ -144,7 +144,8 @@ export const SellBusinessUser = ({ session }: Props) => {
         </div>
       </CardHeader>
 
-      <CardContent className="px-2 xl:px-6 py-10 xl:pr-12 w-full">
+      {/* Vendedor Content */}
+      <CardContent className="px-6 py-10 xl:pr-12 w-full">
         <div className="mb-12">
           <h1 className="text-2xl font-bold">Tus información como vendedor</h1>
           <p className="text-muted-foreground">

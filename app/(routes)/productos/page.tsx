@@ -1,4 +1,3 @@
-import { getProductsByFilterAction } from "@/actions/sell-actions";
 import { ProductsPageClient } from "@/components/layout/ProductComponents/ProductsPageClient";
 
 export const dynamic = "force-dynamic";

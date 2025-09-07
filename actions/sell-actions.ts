@@ -4,6 +4,33 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { sellSchema } from "@/lib/zodSchemas/sellSchema";
 import { prisma } from "@/lib/prisma";
+import { Product, User } from "@prisma/client";
+
+type VendedorResType = {
+  user: User | null;
+  products: Product[];
+  total: number;
+  page: number;
+  limit: number;
+};
+
+type ProductFilter = {
+  query?: string; // nombre o descripción
+  categoria?: string; // slug categoría
+  subcategoria?: string; // slug subcategoría
+  oem?: string; // OEM number
+  marca?: string; // brand
+  modelo?: string; // modelo
+  estado?: string; // condition
+  año?: string; // año del vehículo
+  tipoDeVehiculo?: string; // coche, moto, furgoneta
+  priceMin?: number; // precio mínimo
+  priceMax?: number; // precio máximo
+  page?: number; // página de paginación
+  limit?: number; // cantidad por página
+  orderBy?: "price" | "name" | "createdAt"; // campo para ordenar
+  orderDirection?: "asc" | "desc"; // dirección
+};
 
 // Crear un producto
 export const createProductAction = async (data: z.infer<typeof sellSchema>) => {
@@ -166,24 +193,6 @@ export const getProductsAction = async () => {
     console.log(error);
     return [];
   }
-};
-
-type ProductFilter = {
-  query?: string; // nombre o descripción
-  categoria?: string; // slug categoría
-  subcategoria?: string; // slug subcategoría
-  oem?: string; // OEM number
-  marca?: string; // brand
-  modelo?: string; // modelo
-  estado?: string; // condition
-  año?: string; // año del vehículo
-  tipoDeVehiculo?: string; // coche, moto, furgoneta
-  priceMin?: number; // precio mínimo
-  priceMax?: number; // precio máximo
-  page?: number; // página de paginación
-  limit?: number; // cantidad por página
-  orderBy?: "price" | "name" | "createdAt"; // campo para ordenar
-  orderDirection?: "asc" | "desc"; // dirección
 };
 
 export const getProductsByFilterAction = async (filters: ProductFilter) => {
@@ -349,5 +358,64 @@ export const getProductByIdAction = async (id: string) => {
   } catch (error) {
     console.log(error);
     return { error: "Error al obtener el producto" };
+  }
+};
+
+/**
+ * Funcion para obtener la informacion de un vendedor para la tienda
+ * @param userId id del vendedor
+ * @param page numero de pagina
+ * @param limit limite de objectos
+ * @returns Retorna la lista de productos, informacion del vendedor y la paginacion
+ */
+export const getVendedorProductsAndInfo = async (
+  userId: string,
+  page: number = 1,
+  limit: number = 20
+): Promise<VendedorResType> => {
+  try {
+    const session = await auth();
+
+    if (!userId) {
+      return { user: null, products: [], total: 0, page: 1, limit };
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return { user: null, products: [], total: 0, page: 1, limit };
+    }
+
+    // conteo total de productos del vendedor
+    const total = await prisma.product.count({
+      where: { vendorId: userId },
+    });
+
+    // productos paginados
+    const products = await prisma.product.findMany({
+      where: { vendorId: userId },
+      skip: (page - 1) * limit,
+      take: limit,
+      include: {
+        favorites: userId ? { where: { userId }, select: { id: true } } : false,
+      },
+      orderBy: { createdAt: "desc" }, // opcional, para orden
+    });
+
+    return {
+      user,
+      products: products.map((p) => ({
+        ...p,
+        isFavorite: session?.user.id ? p.favorites.length > 0 : false,
+      })),
+      total,
+      page,
+      limit,
+    };
+  } catch (error) {
+    console.error(error);
+    return { user: null, products: [], total: 0, page: 1, limit };
   }
 };

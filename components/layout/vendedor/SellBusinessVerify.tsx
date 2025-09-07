@@ -182,6 +182,7 @@ export const SellBusinessVerify = ({ session }: Props) => {
                     Descripción
                     <span className="text-xs text-muted-foreground">
                       Opcional si quieres tener una descripción para tu negocio
+                      (recomendado)
                     </span>
                   </FormLabel>
                   <FormControl>

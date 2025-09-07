@@ -25,8 +25,15 @@ import { useRouter } from "next/navigation";
 import { ProductThumbnails } from "./ProductThumbnails";
 import { ProductType } from "@/types/ProductTypes";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { User } from "@prisma/client";
+import Link from "next/link";
 
 function Detail({
   icon: Icon,
@@ -191,17 +198,28 @@ export const ProductLayout = ({
         {/* Seller Info */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex items-start justify-between gap-4">
               <div className="flex items-center gap-3">
-                <Avatar className="size-12">
-                  <AvatarImage
-                    className="object-cover"
-                    src={vendedor.image || ""}
-                  />
-                  <AvatarFallback>{vendedor.name?.charAt(0)}</AvatarFallback>
-                </Avatar>
+                <Link href={`/tienda/${vendedor.id}`}>
+                  <Avatar className="size-12">
+                    <AvatarImage
+                      className="object-cover"
+                      src={vendedor.image || ""}
+                    />
+                    <AvatarFallback>{vendedor.name?.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                </Link>
                 <div>
-                  <CardTitle className="text-lg">{vendedor.name}</CardTitle>
+                  <Link href={`/tienda/${vendedor.id}`}>
+                    <CardTitle className="text-lg line-clamp-1">
+                      {vendedor.name}
+                    </CardTitle>
+                  </Link>
+                  <Link href={`/tienda/${vendedor.id}`}>
+                    <CardDescription className="text-base text-gray-600 line-clamp-1">
+                      {vendedor.businessName}
+                    </CardDescription>
+                  </Link>
                   <p className="text-sm text-muted-foreground">
                     Vendedor desde{" "}
                     {new Date(vendedor.createdAt).toLocaleDateString("es-AR", {
