@@ -12,8 +12,11 @@ export default async function extractOEMNumber(imageUrl: string) {
     messages: [
       {
         role: "system",
-        content:
-          "Sos un extractor de texto OEM. Devuelve únicamente el número OEM encontrado en la imagen, en formato JSON válido con la clave 'oem_number'.",
+        content: `Sos un extractor de texto OEM, extrae toda la información de la imagen, 
+          busca en internet y analiza correctamente cual es el numero OEM
+          correspondiente de la imagen comparando con todos los datos que
+          extraiste de la imagen. Devuelve únicamente el número OEM encontrado
+          en la imagen, en formato JSON válido con la clave 'oem_number'.`,
       },
       {
         role: "user",

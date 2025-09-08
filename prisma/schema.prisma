@@ -37,6 +37,11 @@ model User {
   /// Relación con favoritos
   favorites          Favorite[]
 
+  /// Relación con ordenes
+  ordersAsBuyer  Orden[] @relation("BuyerOrders")
+  ordersAsVendor Orden[] @relation("VendorOrders")
+
+
   /// Relacion con chats
   roomsAsVendor      Room[]    @relation("VendorRooms")
   roomsAsBuyer       Room[]    @relation("BuyerRooms")
@@ -113,10 +118,54 @@ model Product {
   vendor         User       @relation(fields: [vendorId], references: [id])
   rooms          Room[]
   favorites      Favorite[]
+  orders         Orden[]
 
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 }
+
+// Modelo de orden
+model Orden {
+  id                  String   @id @default(cuid())
+
+  // Relaciones
+  productId           String
+  product             Product  @relation(fields: [productId], references: [id])
+
+  buyerId             String
+  buyer               User     @relation("BuyerOrders", fields: [buyerId], references: [id])
+
+  vendorId            String
+  vendor              User     @relation("VendorOrders", fields: [vendorId], references: [id])
+
+  // Estados de la orden
+  status              String   // "created" | "paid" | "sold" | "shipped" | "delivered" | "completed" | "refunded"
+
+  // Datos de pago (Stripe)
+  stripeSessionId     String?
+  paymentIntentId     String?
+  transferGroup       String?    // para agrupar pagos y transferencias
+  totalAmount         Int        // total en centavos (€12.99 = 1299)
+  productAmount       Int        // subtotal producto
+  shippingAmount      Int        // costo del envío
+  platformFeeAmount   Int        // comisión de la plataforma
+  vendorStripeAccount String?    // acct_xxx de Stripe Connect del vendedor
+
+  // Envíos (Sendcloud)
+  sendcloudShipmentId String?
+  sendcloudLabelUrl   String?
+  shippedAt           DateTime?
+  deliveredAt         DateTime?
+
+  // Liberación de fondos
+  releasedAt          DateTime?
+
+  // Tiempos
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+
 
 /// Modelo de Favoritos
 model Favorite {
