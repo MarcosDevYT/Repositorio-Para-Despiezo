@@ -17,7 +17,6 @@ import {
   ArrowLeft,
   Mail,
   CheckCircle2,
-  Printer,
 } from "lucide-react";
 import {
   Card,
@@ -26,6 +25,8 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import { CrearEtiquetaButton } from "@/components/CrearEtiquetaButton";
+import { ChatCompradorButton } from "@/components/ChatCompradorButton";
 
 export default async function VentasIDOrden({
   params,
@@ -81,10 +82,7 @@ export default async function VentasIDOrden({
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col md:flex-row gap-2">
-          <Button className="flex items-center justify-center gap-2">
-            <Printer className="w-4 h-4" />
-            Generar etiqueta
-          </Button>
+          <CrearEtiquetaButton orden={orden} />
           <Button
             variant="secondary"
             className="flex items-center justify-center gap-2"
@@ -92,13 +90,7 @@ export default async function VentasIDOrden({
             <CheckCircle2 className="w-4 h-4" />
             Marcar como enviado
           </Button>
-          <Button
-            variant="outline"
-            className="flex items-center justify-center gap-2"
-          >
-            <Mail className="w-4 h-4" />
-            Contactar comprador
-          </Button>
+          <ChatCompradorButton orden={orden} />
         </CardContent>
       </Card>
 
@@ -146,18 +138,6 @@ export default async function VentasIDOrden({
                 <div className="flex items-center gap-2">
                   <Truck className="w-4 h-4 text-gray-500" />
                   <span>Proveedor: {orden.shippingProvider}</span>
-                </div>
-              )}
-              {orden.shippingLabelUrl && (
-                <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-gray-500" />
-                  <a
-                    href={orden.shippingLabelUrl}
-                    target="_blank"
-                    className="text-blue-600 underline"
-                  >
-                    Descargar etiqueta
-                  </a>
                 </div>
               )}
             </CardContent>

@@ -29,6 +29,7 @@ export default middleware((req) => {
     "/productos",
     "/productos/[id]",
     "/api/uploadthing",
+    "/api/sendcloud/webhook",
     "/api/stripe",
   ];
 

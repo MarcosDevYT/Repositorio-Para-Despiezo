@@ -4,7 +4,6 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import { baseUrl } from "@/lib/utils";
-import { Address } from "@prisma/client";
 import { redirect } from "next/navigation";
 import type Stripe from "stripe";
 
