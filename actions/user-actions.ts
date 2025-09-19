@@ -2,11 +2,15 @@
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { stripe } from "@/lib/stripe";
+import { baseUrl } from "@/lib/utils";
+import { userContactSchema } from "@/lib/zodSchemas/userContactSchema";
 import {
   editBusinessDataSchema,
   editProfileSchema,
 } from "@/lib/zodSchemas/userSchema";
 import { redirect } from "next/navigation";
+import type Stripe from "stripe";
 import { z } from "zod";
 
 export type EditableField =
@@ -233,5 +237,185 @@ export const toggleFavoriteAction = async (productId: string) => {
       data: { userId, productId },
     });
     return { success: true, isFavorite: true };
+  }
+};
+
+/**
+ * Funcion para obtener el link de stripeAccount
+ */
+export async function createStripeAccountLinkAction() {
+  const session = await auth();
+  if (!session?.user) {
+    throw new Error("No estás autenticado");
+  }
+
+  const data = await prisma.user.findUnique({
+    where: {
+      id: session.user.id,
+    },
+    select: {
+      connectedAccountId: true,
+    },
+  });
+
+  const accountLink = await stripe.accountLinks.create({
+    account: data?.connectedAccountId as string,
+    refresh_url: `${baseUrl}/perfil/configuracion`,
+    return_url: `${baseUrl}/payment/return/${data?.connectedAccountId}`,
+    type: "account_onboarding",
+  });
+
+  return redirect(accountLink.url);
+}
+
+/**
+ * Funcion para obtener el link del dashboard de stripe para el usuario
+ */
+export async function getStripeDashboardLinkAction() {
+  const session = await auth();
+
+  if (!session?.user) {
+    throw new Error("No estás autenticado");
+  }
+
+  try {
+    const data = await prisma.user.findUnique({
+      where: {
+        id: session.user.id,
+      },
+      select: {
+        connectedAccountId: true,
+      },
+    });
+
+    const loginLink = await stripe.accounts.createLoginLink(
+      data?.connectedAccountId as string
+    );
+
+    return redirect(loginLink.url);
+  } catch (error) {
+    console.error("Error liberando el pago:", error);
+    throw new Error("No se pudo liberar el pago al vendedor");
+  }
+}
+
+/**
+ * Funcion para cambiar el estaado de stripeConnect con el webhook
+ */
+export async function updateStripeConnectStatusAction(account: Stripe.Account) {
+  try {
+    const userUpdate = await prisma.user.update({
+      where: {
+        connectedAccountId: account.id,
+      },
+      data: {
+        stripeConnectedLinked:
+          account.capabilities?.transfers === "pending" ||
+          account.capabilities?.transfers === "inactive"
+            ? false
+            : true,
+      },
+    });
+
+    return userUpdate;
+  } catch (error) {
+    console.error("Error liberando el pago:", error);
+    throw new Error("No se pudo liberar el pago al vendedor");
+  }
+}
+
+/**
+ *
+ *  FUNCIONES IMPORTANTES PARA GESTIONAR LAS DIRECCIONES DE ENVIOS
+ *
+ */
+
+/**
+ * Funcion para editar la información de telefono y direcion de envio
+ */
+export const createUserAddress = async (
+  data: z.infer<typeof userContactSchema>,
+  addressId?: string,
+  isEdit?: boolean
+) => {
+  try {
+    const session = await auth();
+
+    if (!session?.user) {
+      return { error: "No estás autenticado" };
+    }
+
+    let address = null;
+
+    // Validar con Zod
+    const validatedData = userContactSchema.parse(data);
+
+    // 2. Crear o actualizar la dirección
+    if (isEdit && addressId) {
+      const updatedAddress = await prisma.address.update({
+        where: { id: addressId },
+        data: {
+          userId: session.user.id,
+          street: validatedData.street,
+          number: validatedData.number,
+          city: validatedData.city,
+          postalCode: validatedData.postalCode,
+          country: validatedData.country,
+          isDefault: true,
+        },
+      });
+
+      address = updatedAddress;
+    } else {
+      const newAddress = await prisma.address.create({
+        data: {
+          userId: session.user.id,
+          street: validatedData.street,
+          number: validatedData.number,
+          city: validatedData.city,
+          postalCode: validatedData.postalCode,
+          country: validatedData.country,
+          isDefault: true,
+        },
+      });
+
+      address = newAddress;
+    }
+
+    if (address === null) return { error: "No se pudo guardar la información" };
+
+    // Opcional: marcar otras direcciones como no default
+    await prisma.address.updateMany({
+      where: {
+        userId: session.user.id,
+        NOT: { id: address.id },
+      },
+      data: { isDefault: false },
+    });
+
+    return { success: true, address };
+  } catch (error) {
+    console.error("Error creando direccion:", error);
+    return { error: "No se pudo guardar la información" };
+  }
+};
+
+export const deletedUserAddress = async (addressId: string) => {
+  try {
+    const session = await auth();
+
+    if (!session?.user) {
+      return { error: "No estás autenticado" };
+    }
+
+    // 2. Crear o actualizar la dirección
+    await prisma.address.delete({
+      where: { id: addressId },
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error creando contacto:", error);
+    return { error: "No se pudo guardar la información" };
   }
 };

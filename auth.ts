@@ -10,6 +10,7 @@ import NextAuth from "next-auth";
 
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
+import { stripe } from "./lib/stripe";
 
 // Configuración de NextAuth
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -35,10 +36,37 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             businessName: true,
             createdAt: true,
             products: true,
+            addresses: true,
+            connectedAccountId: true,
+            stripeConnectedLinked: true,
           },
         });
 
         if (user) {
+          if (!user.connectedAccountId && user.connectedAccountId === null) {
+            const account = await stripe.accounts.create({
+              email: user.email,
+              controller: {
+                losses: {
+                  payments: "application",
+                },
+                fees: {
+                  payer: "application",
+                },
+                stripe_dashboard: {
+                  type: "express",
+                },
+              },
+            });
+
+            await prisma.user.update({
+              where: { id: user.id },
+              data: {
+                connectedAccountId: account.id,
+              },
+            });
+          }
+
           session.user = {
             ...session.user,
             id: user.id,
@@ -54,6 +82,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             businessName: user.businessName,
             createdAt: user.createdAt,
             products: user.products,
+            addresses: user.addresses,
+            connectedAccountId: user.connectedAccountId,
+            stripeConnectedLinked: user.stripeConnectedLinked,
           };
         }
       }

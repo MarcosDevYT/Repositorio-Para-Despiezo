@@ -112,7 +112,7 @@ export const Categories = () => {
                 variant="ghost"
                 asChild
                 className={cn(
-                  "h-11 flex items-center space-x-2 text-sm font-medium hover:bg-blue-500/10 hover:text-blue-500 rounded-full px-4  whitespace-nowrap"
+                  "h-11 flex items-center space-x-2 text-sm font-medium  hover:bg-blue-500/10 hover:text-blue-500 rounded-full px-4  whitespace-nowrap"
                 )}
               >
                 <Link href={"/productos"}>

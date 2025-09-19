@@ -8,12 +8,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { auth } from "@/auth";
-import { User } from "lucide-react";
+import { Monitor, User } from "lucide-react";
 import { LogOutButton } from "./LoginComponents/LogOutButton";
 import Link from "next/link";
 import { Button } from "./ui/button";
 import { DropdownLinks } from "@/data";
 import { Fragment } from "react";
+import { adminEmails } from "@/app/(routes)/admin/page";
 
 /**
  * @description Dropdown con las opciones de navegabilidad o logout del usuario
@@ -51,6 +52,25 @@ export const UserDropdown = async () => {
           </span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+
+        {/* Panel de administrador del usuario */}
+        {adminEmails.includes(session.user.email!) && (
+          <>
+            <DropdownMenuLabel className="flex flex-col gap-1">
+              Admin
+            </DropdownMenuLabel>
+            <DropdownMenuItem className="p-0">
+              <Link
+                className="p-1.5 px-2 h-9 w-full flex items-center justify-start gap-2 text-neutral-900"
+                href={"/admin"}
+              >
+                <Monitor />
+                Panel de administrador
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
 
         {/* Link para el perfil del usuario */}
 

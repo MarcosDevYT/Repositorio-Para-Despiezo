@@ -46,7 +46,7 @@ export const ProfileNav = async () => {
 
         <div className="flex items-center flex-wrap gap-2 my-4">
           {/* categoría si existe */}
-          {user.bussinesCategory ? (
+          {user.bussinesCategory.length > 0 ? (
             <Badge className="h-max text-sm p-0.5 px-2 md:px-3 rounded-full">
               {user.bussinesCategory}
             </Badge>

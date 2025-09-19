@@ -67,6 +67,10 @@ export const SellForm = ({ initialValues, action }: SellFormProps) => {
       condition: "nuevo",
       status: "publicado",
       typeOfPiece: "",
+      weight: undefined,
+      length: undefined,
+      width: undefined,
+      height: undefined,
       images: [],
       location: "",
       offer: false,
@@ -212,6 +216,102 @@ export const SellForm = ({ initialValues, action }: SellFormProps) => {
                 <FormLabel>Tipo de Pieza</FormLabel>
                 <FormControl>
                   <Input {...field} placeholder="Motor, suspensión, etc." />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Peso de la pieza en kg */}
+          <FormField
+            control={form.control}
+            name="weight"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Peso por unidad (kg)</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="30"
+                    type="number"
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      field.onChange(value === "" ? undefined : Number(value));
+                    }}
+                    value={field.value ?? ""}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Largo de la pieza en cm */}
+          <FormField
+            control={form.control}
+            name="length"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Largo (cm)</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="62"
+                    type="number"
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      field.onChange(value === "" ? undefined : Number(value));
+                    }}
+                    value={field.value ?? ""}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Ancho de la pieza en cm*/}
+          <FormField
+            control={form.control}
+            name="width"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Ancho (cm)</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="28"
+                    type="number"
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      field.onChange(value === "" ? undefined : Number(value));
+                    }}
+                    value={field.value ?? ""}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Alto de la pieza en cm */}
+          <FormField
+            control={form.control}
+            name="height"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Alto (cm)</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="24"
+                    type="number"
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      field.onChange(value === "" ? undefined : Number(value));
+                    }}
+                    value={field.value ?? ""}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

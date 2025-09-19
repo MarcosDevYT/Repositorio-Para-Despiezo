@@ -1,3 +1,6 @@
+-- CreateEnum
+CREATE TYPE "OrderStatus" AS ENUM ('created', 'paid', 'shipped', 'delivered', 'completed', 'canceled', 'refunded');
+
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
@@ -12,6 +15,8 @@ CREATE TABLE "User" (
     "location" TEXT,
     "businessName" TEXT,
     "bussinesCategory" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "connectedAccountId" TEXT,
+    "stripeConnectedLinked" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -62,7 +67,7 @@ CREATE TABLE "Product" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT NOT NULL,
-    "price" DECIMAL(10,2) NOT NULL,
+    "price" TEXT NOT NULL,
     "images" TEXT[],
     "oemNumber" TEXT NOT NULL,
     "brand" TEXT NOT NULL,
@@ -76,12 +81,55 @@ CREATE TABLE "Product" (
     "category" TEXT NOT NULL,
     "subcategory" TEXT,
     "offer" BOOLEAN,
-    "offerPrice" DECIMAL(10,2),
+    "offerPrice" TEXT,
+    "weight" DOUBLE PRECISION,
+    "length" DOUBLE PRECISION,
+    "width" DOUBLE PRECISION,
+    "height" DOUBLE PRECISION,
     "vendorId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Product_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Orden" (
+    "id" TEXT NOT NULL,
+    "productId" TEXT NOT NULL,
+    "buyerId" TEXT NOT NULL,
+    "vendorId" TEXT NOT NULL,
+    "stripeSessionId" TEXT NOT NULL,
+    "stripePaymentIntent" TEXT,
+    "amountTotal" INTEGER NOT NULL,
+    "vendorAmount" INTEGER NOT NULL,
+    "feeAmount" INTEGER NOT NULL,
+    "status" "OrderStatus" NOT NULL DEFAULT 'created',
+    "payoutReleased" BOOLEAN NOT NULL DEFAULT false,
+    "trackingNumber" TEXT,
+    "trackingUrl" TEXT,
+    "shippingStatus" TEXT NOT NULL DEFAULT 'pending',
+    "shippingProvider" TEXT,
+    "shippingLabelUrl" TEXT,
+    "shippingName" TEXT,
+    "shippingAddressLine1" TEXT,
+    "shippingAddressLine2" TEXT,
+    "shippingCity" TEXT,
+    "shippingPostalCode" TEXT,
+    "shippingCountry" TEXT,
+    "shippingPhone" TEXT,
+    "releaseAt" TIMESTAMP(3),
+    "releasedAt" TIMESTAMP(3),
+    "stripeTransferId" TEXT,
+    "refundRequested" BOOLEAN NOT NULL DEFAULT false,
+    "refundProcessed" BOOLEAN NOT NULL DEFAULT false,
+    "refundStripeId" TEXT,
+    "buyerNote" TEXT,
+    "vendorNote" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Orden_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -120,10 +168,16 @@ CREATE TABLE "Message" (
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "User_connectedAccountId_key" ON "User"("connectedAccountId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "VerificationToken_identifier_key" ON "VerificationToken"("identifier");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "PasswordResetToken_token_key" ON "PasswordResetToken"("token");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Orden_stripeSessionId_key" ON "Orden"("stripeSessionId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Favorite_userId_productId_key" ON "Favorite"("userId", "productId");
@@ -142,6 +196,15 @@ ALTER TABLE "PasswordResetToken" ADD CONSTRAINT "PasswordResetToken_userId_fkey"
 
 -- AddForeignKey
 ALTER TABLE "Product" ADD CONSTRAINT "Product_vendorId_fkey" FOREIGN KEY ("vendorId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Orden" ADD CONSTRAINT "Orden_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Orden" ADD CONSTRAINT "Orden_buyerId_fkey" FOREIGN KEY ("buyerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Orden" ADD CONSTRAINT "Orden_vendorId_fkey" FOREIGN KEY ("vendorId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Favorite" ADD CONSTRAINT "Favorite_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

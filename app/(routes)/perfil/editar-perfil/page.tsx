@@ -7,11 +7,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { redirect } from "next/navigation";
-import { EditImageProfile } from "./userResume/EditImageProfile";
 import { ButtonBack } from "@/components/ButtonBack";
-import { EditProfileForm } from "./userResume/EditProfileForm";
+import { EditImageProfile } from "@/components/layout/perfil/userResume/EditImageProfile";
+import { EditProfileForm } from "@/components/layout/perfil/userResume/EditProfileForm";
 
-export const ProfileEditarPerfil = async () => {
+export default async function EditarPerfilPage() {
   const session = await auth();
 
   if (!session?.user) {
@@ -35,4 +35,4 @@ export const ProfileEditarPerfil = async () => {
       </CardContent>
     </Card>
   );
-};
+}

@@ -33,7 +33,10 @@ export const sellSchema = z
       .min(1, "El Precio es requerido")
       .max(1000000, "El Precio debe tener menos de 1000000"),
 
-    category: z.enum(categorySlugs),
+    category: z.enum(categorySlugs).refine((val) => val !== "", {
+      message: "Debes seleccionar una categoría",
+    }),
+
     subcategory: z.string().optional(), // 👈 ahora opcional, validamos después
 
     tipoDeVehiculo: z.enum(["coche", "moto", "furgoneta"]),
@@ -56,6 +59,22 @@ export const sellSchema = z
     typeOfPiece: string({ message: "El Tipo de Pieza es requerido" })
       .trim()
       .min(1, "El Tipo de Pieza es requerido"),
+
+    weight: z
+      .number({ message: "El peso es requerido" })
+      .positive("El peso debe ser mayor a 0"),
+
+    length: z
+      .number({ message: "El largo es requerido" })
+      .positive("El largo debe ser mayor a 0"),
+
+    width: z
+      .number({ message: "El ancho es requerido" })
+      .positive("El ancho debe ser mayor a 0"),
+
+    height: z
+      .number({ message: "El alto es requerido" })
+      .positive("El alto debe ser mayor a 0"),
 
     location: string({ message: "La Ubicación es requerida" })
       .trim()

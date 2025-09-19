@@ -16,11 +16,10 @@ export default {
     Google,
     Credentials({
       authorize: async (credentials) => {
+        const { success, data } = loginSchema.safeParse(credentials);
 
-        const { success, data } = loginSchema.safeParse(credentials)
-        
         if (!success) {
-          throw new Error("Credenciales inválidas")
+          throw new Error("Credenciales inválidas");
         }
 
         // Verificamos si el usuario existe en la base de datos
@@ -28,17 +27,17 @@ export default {
           where: {
             email: data.email,
           },
-        })
+        });
 
         if (!user || !user.password) {
-          throw new Error("Usuario no encontrado")
+          throw new Error("Usuario no encontrado");
         }
 
         // Verificar si la contraseña es correcta
-        const isValid = await bcrypt.compare(data.password, user.password)
+        const isValid = await bcrypt.compare(data.password, user.password);
 
         if (!isValid) {
-          throw new Error("Contraseña incorrecta")
+          throw new Error("Contraseña incorrecta");
         }
 
         return user;

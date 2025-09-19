@@ -24,9 +24,12 @@ export default middleware((req) => {
     "/api/auth/signin/google",
     "/api/auth/verify-email",
     "/api/auth/callback/google",
+    "/tienda",
+    "/tienda/[id]",
     "/productos",
     "/productos/[id]",
     "/api/uploadthing",
+    "/api/stripe",
   ];
 
   const isPublic =

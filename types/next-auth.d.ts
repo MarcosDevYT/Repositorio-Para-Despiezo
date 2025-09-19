@@ -2,7 +2,12 @@ import { Prisma } from "@prisma/client";
 import NextAuth from "next-auth";
 
 // Usamos un "payload" que omite campos sensibles como password/hash
-type PrismaUser = Prisma.UserGetPayload<{}>;
+type PrismaUser = Prisma.UserGetPayload<{
+  include: {
+    addresses: true;
+    products: true;
+  };
+}>;
 
 declare module "next-auth" {
   interface Session {

@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  useEffect,
+  useState,
+  useTransition,
+} from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { LocationAutocomplete } from "@/components/LocationSearchInput";
@@ -19,6 +25,7 @@ import { Button } from "@/components/ui/button";
 interface EditableFieldProps {
   label: string;
   value: string | null;
+  setValue?: Dispatch<SetStateAction<string | null>>;
   type?: "text" | "number" | "textarea" | "location" | "select";
   fieldName: EditableField;
   options?: string[]; // solo para select
@@ -28,6 +35,7 @@ export const EditableBusinessField = ({
   label,
   value,
   type = "text",
+  setValue,
   fieldName,
   options = [],
 }: EditableFieldProps) => {
@@ -67,6 +75,9 @@ export const EditableBusinessField = ({
         } else {
           toast.success("Campo actualizado correctamente");
           setOriginalValue(inputValue);
+
+          if (setValue) setValue(inputValue);
+
           setIsEditing(false);
         }
       } catch (err) {

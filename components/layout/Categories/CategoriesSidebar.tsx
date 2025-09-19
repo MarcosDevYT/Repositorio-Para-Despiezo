@@ -106,7 +106,7 @@ export const CategoriesSidebar = ({ open, onOpenChange }: SidebarProps) => {
               className="cursor-pointer w-full text-left p-4 hover:bg-blue-500/10 hover:text-blue-500 flex justify-between items-center text-base font-medium"
             >
               <span className="flex gap-2 items-center">
-                <ShoppingBag className="size-4" />
+                <ShoppingBag className="size-4 text-foreground" />
                 Todos los productos
               </span>
             </button>
@@ -119,7 +119,9 @@ export const CategoriesSidebar = ({ open, onOpenChange }: SidebarProps) => {
               className="cursor-pointer w-full text-left p-4 hover:bg-blue-500/10 hover:text-blue-500 flex justify-between items-center text-base font-medium"
             >
               <span className="flex gap-2 items-center">
-                {category.icon && <category.icon className="size-4" />}
+                {category.icon && (
+                  <category.icon className="size-4 text-foreground" />
+                )}
                 {category.name}
               </span>
               {category.subcategories && category.subcategories.length > 0 && (

@@ -30,7 +30,7 @@ export default function SuccessPage() {
         </Button>
 
         <Button className="rounded-full text-lg" asChild>
-          <Link href={"/"}>
+          <Link href={"/perfil/compras"}>
             <ShoppingBag className="size-5" />
             Ver mis compras
           </Link>

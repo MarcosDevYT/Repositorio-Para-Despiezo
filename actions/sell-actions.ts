@@ -174,14 +174,23 @@ export const getUserProductsAction = async () => {
 };
 
 // Obtener todos los productos
+// Obtener todos los productos publicados
 export const getProductsAction = async () => {
   try {
     const session = await auth();
     const userId = session?.user?.id;
 
     const products = await prisma.product.findMany({
+      where: {
+        status: "publicado", // 🔹 Solo productos publicados
+      },
       include: {
-        favorites: userId ? { where: { userId }, select: { id: true } } : false,
+        favorites: userId
+          ? {
+              where: { userId },
+              select: { id: true },
+            }
+          : false,
       },
     });
 
@@ -195,6 +204,11 @@ export const getProductsAction = async () => {
   }
 };
 
+/**
+ * Funcion para traer los productos por filtro
+ * @param filters Como parametro recibimos los filtros
+ * @returns retornamos los productos con paginacion ya filtrados
+ */
 export const getProductsByFilterAction = async (filters: ProductFilter) => {
   try {
     const session = await auth();
@@ -207,7 +221,9 @@ export const getProductsByFilterAction = async (filters: ProductFilter) => {
       orderDirection = "desc",
     } = filters;
 
-    const where: any = {};
+    const where: any = {
+      status: "publicado",
+    };
 
     // Búsqueda por texto en nombre o descripción
     if (filters.query) {
@@ -315,6 +331,7 @@ export const getFavoriteProductsAction = async () => {
 
     const products = await prisma.product.findMany({
       where: {
+        status: "publicado",
         favorites: {
           some: { userId },
         },
@@ -395,7 +412,7 @@ export const getVendedorProductsAndInfo = async (
 
     // productos paginados
     const products = await prisma.product.findMany({
-      where: { vendorId: userId },
+      where: { status: "publicado", vendorId: userId },
       skip: (page - 1) * limit,
       take: limit,
       include: {

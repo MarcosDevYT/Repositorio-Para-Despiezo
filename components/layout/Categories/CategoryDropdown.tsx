@@ -55,7 +55,11 @@ export const CategoryDropdown = ({
                 : `/productos?categoria=${category.slug}`
             }
           >
-            {category.icon && <category.icon className="size-4" />}
+            {category.icon && category.isLocalIcon ? (
+              <category.icon />
+            ) : (
+              <category.icon className="size-4 text-foreground" />
+            )}
             {category.name}
           </Link>
         </Button>

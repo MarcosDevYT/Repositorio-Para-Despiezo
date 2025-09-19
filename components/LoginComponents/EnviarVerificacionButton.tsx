@@ -40,7 +40,7 @@ export default function EmailVerificationStatus({
     <button
       onClick={handleSendVerification}
       disabled={isPending}
-      className="bg-blue-600 hover:bg-blue-700 text-white text-sm p-0.5 px-3 rounded-full"
+      className="bg-blue-600 hover:bg-blue-700 text-white text-sm p-0.5 px-3 rounded-full cursor-pointer"
     >
       {isPending ? "Enviando..." : "Verificar correo"}
     </button>

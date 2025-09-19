@@ -35,7 +35,6 @@ import {
 } from "@/components/ui/card";
 import { User } from "@prisma/client";
 import Link from "next/link";
-import { buyProductActions } from "@/actions/buy-actions";
 
 function Detail({
   icon: Icon,
@@ -66,7 +65,7 @@ export const ProductLayout = ({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isFavoritePending, startFavoriteTransition] = useTransition();
-  const [isPaymentPending, startPaymentTransition] = useTransition();
+
   const [isFavorite, setIsFavorite] = useState(product.isFavorite ?? false);
 
   const handleFavorite = () => {
@@ -78,24 +77,6 @@ export const ProductLayout = ({
         }
       } catch (error) {
         console.error("Error al marcar como favorito:", error);
-      }
-    });
-  };
-
-  // Funcion para iniciar la compra por stripe
-  const handlePayment = () => {
-    startPaymentTransition(async () => {
-      try {
-        const res = await buyProductActions(product.id);
-
-        if (res.error || !res.url) {
-          toast.error(res.error);
-          return;
-        }
-
-        window.location.href = res.url;
-      } catch (error) {
-        toast.error("Error iniciando el checkout");
       }
     });
   };
@@ -212,17 +193,13 @@ export const ProductLayout = ({
 
           <CardContent className="flex flex-col gap-3">
             <Button
-              onClick={handlePayment}
-              disabled={isPaymentPending}
+              asChild
               className="w-full rounded-full bg-blue-500 text-white hover:bg-blue-600"
             >
-              {isPaymentPending ? (
-                <Loader2 className="size-5 animate-spin" />
-              ) : (
-                <>
-                  <ShoppingCart className="size-5" /> Comprar ahora
-                </>
-              )}
+              <Link href={`/productos/${product.id}/checkout`}>
+                <ShoppingCart className="size-5" />
+                Comprar ahora
+              </Link>
             </Button>
           </CardContent>
         </Card>

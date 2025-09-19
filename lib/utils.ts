@@ -37,15 +37,12 @@ export const baseUrl =
     ? "http://localhost:3000"
     : `${process.env.NEXT_PUBLIC_BASE_URL}`;
 
-// Funcion para verificar al vendedor
 export const verifySeller = (session: Session): boolean => {
-  if (!session) return false;
+  if (!session?.user) return false;
 
-  if (!session.user) return false;
+  const hasLinkingStripeAccount = session.user.stripeConnectedLinked === true;
 
-  const hasValidEmailVerification =
-    typeof session.user.phoneNumber === "string" &&
-    session.user.phoneNumber.trim() !== "";
+  const hasValidEmailVerification = session.user.emailVerified !== null;
 
   const hasValidPhoneNumber =
     typeof session.user.phoneNumber === "string" &&
@@ -59,13 +56,13 @@ export const verifySeller = (session: Session): boolean => {
     typeof session.user.businessName === "string" &&
     session.user.businessName.trim() !== "";
 
-  const isUserFullyVerified =
+  return (
+    hasLinkingStripeAccount &&
     hasValidEmailVerification &&
     hasValidPhoneNumber &&
     hasValidLocation &&
-    hasValidBusinessName;
-
-  return isUserFullyVerified;
+    hasValidBusinessName
+  );
 };
 
 export const hasAnyFilter = (filters: FilterCheck): boolean => {

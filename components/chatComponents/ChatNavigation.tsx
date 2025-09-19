@@ -4,14 +4,13 @@ import { getChats } from "@/actions/chat-actions";
 import { useState, useTransition, useEffect } from "react";
 import { toast } from "sonner";
 import { Menu } from "lucide-react";
-import { useSession } from "next-auth/react";
 import { Chat } from "@/types/chatTypes";
 import { ChatList } from "./ChatList";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../ui/sheet";
 import { Button } from "../ui/button";
+import { Session } from "next-auth";
 
-export const ChatNavigation = () => {
-  const { data: session } = useSession();
+export const ChatNavigation = ({ session }: { session: Session | null }) => {
   const [chats, setChats] = useState<Chat[]>([]);
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();

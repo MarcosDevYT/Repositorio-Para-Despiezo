@@ -12,43 +12,48 @@ generator client {
 
 /// Modelos para el usuario 
 model User {
-  id                 String               @id @default(cuid())
-  email              String               @unique
-  password           String?
-  accounts           Account[]
-  passwordResetToken PasswordResetToken[]
+  id                      String               @id @default(cuid())
+  email                   String               @unique
+  password                String?
+  accounts                Account[]
+  passwordResetToken      PasswordResetToken[]
 
   /// Campos editables por el usuario
-  name               String?
-  description        String?
-  image              String?
-  phoneNumber        String?
+  name                    String?
+  description             String?
+  image                   String?
+  phoneNumber             String?
+  addresses               Address[]
 
   /// Campos necesarios para Vender
-  emailVerified      DateTime?
-  phoneVerified      DateTime?
-  location           String?
-  businessName       String?
-  bussinesCategory   String[] @default([])
+  emailVerified           DateTime?
+  phoneVerified           DateTime?
+  location                String?
+  businessName            String?
+  bussinesCategory        String[] @default([])
+
+  // Stripe Connect
+  connectedAccountId      String? @unique
+  stripeConnectedLinked   Boolean @default(false)
 
   /// Productos del usuario
-  products           Product[]
+  products                Product[]
 
   /// Relación con favoritos
-  favorites          Favorite[]
+  favorites               Favorite[]
 
   /// Relación con ordenes
-  ordersAsBuyer  Orden[] @relation("BuyerOrders")
-  ordersAsVendor Orden[] @relation("VendorOrders")
+  ordersAsBuyer           Orden[] @relation("BuyerOrders")
+  ordersAsVendor          Orden[] @relation("VendorOrders")
 
 
   /// Relacion con chats
-  roomsAsVendor      Room[]    @relation("VendorRooms")
-  roomsAsBuyer       Room[]    @relation("BuyerRooms")
-  messages           Message[]
+  roomsAsVendor           Room[]    @relation("VendorRooms")
+  roomsAsBuyer            Room[]    @relation("BuyerRooms")
+  messages                Message[]
 
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
 }
 
 model Account {
@@ -91,7 +96,22 @@ model PasswordResetToken {
   createdAt DateTime @default(now())
 }
 
-// Modelo para los productos
+// Modelo de direccion del usuario
+model Address {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  street    String
+  number    String
+  city      String
+  postalCode String
+  country   String
+
+  isDefault Boolean  @default(false)
+}
+
+// Modelo de producto
 model Product {
   id             String    @id @default(uuid())
   name           String
@@ -113,6 +133,12 @@ model Product {
   offer          Boolean?
   offerPrice     String?
 
+  // campos de medidas
+  weight         Float?     // Peso en kg
+  length         Float?     // Largo en cm
+  width          Float?     // Ancho en cm
+  height         Float?     // Alto en cm
+
   // Relaciones
   vendorId       String
   vendor         User       @relation(fields: [vendorId], references: [id])
@@ -131,41 +157,68 @@ model Orden {
   // Relaciones
   productId           String
   product             Product  @relation(fields: [productId], references: [id])
-
   buyerId             String
   buyer               User     @relation("BuyerOrders", fields: [buyerId], references: [id])
-
   vendorId            String
   vendor              User     @relation("VendorOrders", fields: [vendorId], references: [id])
 
-  // Estados de la orden
-  status              String   // "created" | "paid" | "sold" | "shipped" | "delivered" | "completed" | "refunded"
+  // Stripe
+  stripeSessionId     String   @unique
+  stripePaymentIntent String?
 
-  // Datos de pago (Stripe)
-  stripeSessionId     String?
-  paymentIntentId     String?
-  transferGroup       String?    // para agrupar pagos y transferencias
-  totalAmount         Int        // total en centavos (€12.99 = 1299)
-  productAmount       Int        // subtotal producto
-  shippingAmount      Int        // costo del envío
-  platformFeeAmount   Int        // comisión de la plataforma
-  vendorStripeAccount String?    // acct_xxx de Stripe Connect del vendedor
+  // Dinero
+  amountTotal         Int
+  vendorAmount        Int
+  feeAmount           Int
 
-  // Envíos (Sendcloud)
-  sendcloudShipmentId String?
-  sendcloudLabelUrl   String?
-  shippedAt           DateTime?
-  deliveredAt         DateTime?
+  // Estado de la orden
+  status              OrderStatus @default(created)
+  payoutReleased      Boolean @default(false)
 
-  // Liberación de fondos
+  // Envío y logística
+  trackingNumber      String?
+  trackingUrl         String?
+  shippingStatus      String @default("pending")
+  shippingProvider    String?
+  shippingLabelUrl    String?
+
+  // Dirección de envío
+  shippingName        String?
+  shippingAddressLine1 String?
+  shippingAddressLine2 String?
+  shippingCity        String?
+  shippingPostalCode  String?
+  shippingCountry     String?
+  shippingPhone       String?
+
+  // Control de tiempo
+  releaseAt           DateTime?
   releasedAt          DateTime?
+  stripeTransferId    String?
+
+  // Devoluciones
+  refundRequested     Boolean @default(false)
+  refundProcessed     Boolean @default(false)
+  refundStripeId      String?
+
+  // Notas
+  buyerNote           String?
+  vendorNote          String?
 
   // Tiempos
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 }
 
-
+enum OrderStatus {
+  created
+  paid
+  shipped
+  delivered
+  completed
+  canceled
+  refunded
+}
 
 /// Modelo de Favoritos
 model Favorite {

@@ -34,7 +34,7 @@ export const ProductCategories = () => {
               <Link className="h-full w-full px-2 py-4" href={"/productos"}>
                 <CardContent className="p-6 text-center">
                   <div
-                    className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center bg-slate-50 text-slate-600 group-hover:scale-110 transition-transform duration-300`}
+                    className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center bg-sky-100 group-hover:scale-110 transition-transform duration-300`}
                   >
                     <ShoppingBag className="size-8" />
                   </div>
@@ -64,7 +64,7 @@ export const ProductCategories = () => {
                   >
                     <CardContent className="p-6 text-center">
                       <div
-                        className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${category.color} group-hover:scale-110 transition-transform duration-300`}
+                        className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center bg-sky-100 justify-center group-hover:scale-110 transition-transform duration-300`}
                       >
                         <Icon className="size-8" />
                       </div>
@@ -83,12 +83,12 @@ export const ProductCategories = () => {
         </Swiper>
       </div>
 
-      <div className="hidden lg:grid lg:grid-cols-4 2xl:grid-cols-7 gap-4">
+      <div className="hidden lg:grid lg:grid-cols-4 2xl:grid-cols-5 gap-4">
         <Card className="group cursor-pointer hover:shadow-hover transition-all duration-300 hover:scale-105 bg-background border border-border p-0">
           <Link className="h-full w-full px-2 py-4" href={"/productos"}>
             <CardContent className="p-6 text-center">
               <div
-                className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center bg-slate-50 text-slate-600 group-hover:scale-110 transition-transform duration-300`}
+                className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center bg-sky-100 group-hover:bg-primary/30 group-hover:scale-110 transition-all duration-300`}
               >
                 <ShoppingBag className="size-8" />
               </div>
@@ -117,7 +117,7 @@ export const ProductCategories = () => {
               >
                 <CardContent className="p-6 text-center">
                   <div
-                    className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${category.color} group-hover:scale-110 transition-transform duration-300`}
+                    className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center bg-sky-100 group-hover:bg-primary/30 group-hover:scale-110 transition-all duration-300`}
                   >
                     <Icon className="size-8" />
                   </div>

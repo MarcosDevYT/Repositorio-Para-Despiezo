@@ -1,12 +1,12 @@
 import { ProductType } from "./ProductTypes";
 
 export interface UseMarketplaceChatProps {
-  roomId: string;
-  userId: string;
-  userName: string;
+  roomId?: string;
+  userId?: string;
 }
 
 export interface MarketplaceChatMessage {
+  roomId: string;
   id: string;
   content: string;
   senderId: string;

@@ -15,7 +15,11 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-import { editProfileAction } from "@/actions/user-actions";
+import {
+  createStripeAccountLinkAction,
+  editProfileAction,
+  getStripeDashboardLinkAction,
+} from "@/actions/user-actions";
 
 import { useState, useTransition } from "react";
 import { Loader2 } from "lucide-react";
@@ -27,6 +31,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import EmailVerificationStatus from "@/components/LoginComponents/EnviarVerificacionButton";
+import { SubmitButton } from "@/components/SubmitButton";
 
 interface Props {
   session: Session;
@@ -36,6 +41,8 @@ export const SellBusinessVerify = ({ session }: Props) => {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+
+  const isConnected = session.user.stripeConnectedLinked;
 
   // Valores por defecto del formulario
   const form = useForm<z.infer<typeof editBusinessDataSchema>>({
@@ -101,6 +108,27 @@ export const SellBusinessVerify = ({ session }: Props) => {
         </p>
       </CardHeader>
       <CardContent>
+        {/* Vinculación con Stripe Connect */}
+        <div className="mb-6">
+          <h2 className="text-lg font-bold">Vincula tu cuenta con stripe</h2>
+          <p className="text-sm text-muted-foreground mb-2">
+            {isConnected
+              ? "Tu cuenta de Stripe está conectada"
+              : "Conecta tu cuenta de Stripe para empezar a recibir pagos"}
+          </p>
+          {session.user.stripeConnectedLinked === false && (
+            <form action={createStripeAccountLinkAction}>
+              <SubmitButton title="Vincula tu Cuenta con stripe" />
+            </form>
+          )}
+
+          {session.user.stripeConnectedLinked === true && (
+            <form action={getStripeDashboardLinkAction}>
+              <SubmitButton title="Ver Panel de Control" />
+            </form>
+          )}
+        </div>
+
         {/* Verificación del email */}
         <div className="mb-6">
           <h2 className="text-lg font-bold">Verifica tu email</h2>

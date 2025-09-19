@@ -14,6 +14,8 @@ import { AuthError } from "next-auth";
 import { z } from "zod";
 
 import bcrypt from "bcryptjs";
+import { stripe } from "@/lib/stripe";
+import { revalidatePath } from "next/cache";
 
 /**
  * Función para hacer el login con los datos del formulario utilizando next-auth
@@ -73,12 +75,28 @@ export const registerAction = async (
     // Hash de la contraseña
     const passwordHash = await bcrypt.hash(data.password, 10);
 
-    // En caso de que todo este correcto, creamos el usuario
+    // En caso de que todo este correcto, creamos el usuario de stripe y el usuario de nextauth
+    const account = await stripe.accounts.create({
+      email: data.email,
+      controller: {
+        losses: {
+          payments: "application",
+        },
+        fees: {
+          payer: "application",
+        },
+        stripe_dashboard: {
+          type: "express",
+        },
+      },
+    });
+
     await prisma.user.create({
       data: {
         name: data.name,
         email: data.email,
         password: passwordHash,
+        connectedAccountId: account.id,
       },
     });
 

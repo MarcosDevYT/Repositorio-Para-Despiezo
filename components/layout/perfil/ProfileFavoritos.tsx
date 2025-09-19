@@ -8,15 +8,24 @@ export const ProfileFavoritos = ({ products }: { products: ProductType[] }) => {
         Tus Favoritos
       </h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {products.map((product) => (
-          <ProductCard
-            key={product.id}
-            product={product}
-            isFavorite={product.isFavorite}
-          />
-        ))}
-      </div>
+      {products.length === 0 ? (
+        <div className="p-6 text-center text-gray-500 border border-dashed rounded-xl bg-gray-50">
+          <p className="text-lg">No tienes productos favoritos aún.</p>
+          <p className="text-sm mt-2">
+            Explora nuestra tienda y agrega tus favoritos para verlos aquí.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {products.map((product) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              isFavorite={product.isFavorite}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

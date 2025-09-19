@@ -260,13 +260,6 @@ export const TiendaLayout = ({
                 ? new Date(vendedorInfo.createdAt).toLocaleDateString()
                 : "—"}
             </p>
-            {vendedorInfo.phoneNumber && (
-              <p className="flex items-center gap-2">
-                <Phone className="size-5 text-gray-500" />
-                <span className="font-medium">Teléfono:</span>{" "}
-                {vendedorInfo.phoneNumber}
-              </p>
-            )}
           </div>
         </div>
       </section>

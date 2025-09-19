@@ -10,6 +10,7 @@ export interface Category {
   id: number | string;
   name: string;
   slug: string;
-  icon?: LucideIcon;
+  isLocalIcon?: boolean;
+  icon?: LucideIcon | any;
   subcategories?: Category[];
 }

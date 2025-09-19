@@ -1,3 +1,4 @@
+import { getVendedorOrdens } from "@/actions/order-actions";
 import { auth } from "@/auth";
 import { SalesProducts } from "@/components/layout/vendedor/SalesProducts";
 import { verifySeller } from "@/lib/utils";
@@ -14,5 +15,7 @@ export default async function SalesPage() {
     redirect("/vendedor/negocio");
   }
 
-  return <SalesProducts />;
+  const ordenes = await getVendedorOrdens(session.user.id);
+
+  return <SalesProducts orders={ordenes} />;
 }
