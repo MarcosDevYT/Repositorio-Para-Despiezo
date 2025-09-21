@@ -142,18 +142,6 @@ export default async function CompradorDetalleOrden({
               <span>Proveedor: {orden.shippingProvider}</span>
             </div>
           )}
-          {orden.shippingLabelUrl && (
-            <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4 text-gray-500" />
-              <a
-                href={orden.shippingLabelUrl}
-                target="_blank"
-                className="text-blue-600 underline"
-              >
-                Descargar etiqueta
-              </a>
-            </div>
-          )}
         </CardContent>
       </Card>
 

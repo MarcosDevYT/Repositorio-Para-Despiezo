@@ -27,6 +27,10 @@ export default {
           where: {
             email: data.email,
           },
+          include: {
+            addresses: true,
+            products: true,
+          },
         });
 
         if (!user || !user.password) {
