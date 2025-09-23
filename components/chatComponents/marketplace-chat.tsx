@@ -29,7 +29,6 @@ export const MarketplaceChat = ({
     useMarketplaceChat({
       roomId,
       userId,
-      userName,
     });
 
   // Setear nuevos mensajes

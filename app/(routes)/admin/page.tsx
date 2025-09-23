@@ -20,7 +20,10 @@ import {
 } from "@/components/ui/table";
 import { ReleasePaidButton } from "@/components/ReleasePaidButton";
 
-export const adminEmails = ["marcosmoruadev@gmail.com"];
+export const adminEmails = [
+  "marcosmoruadev@gmail.com",
+  "nacho.cervantes2@gmail.com",
+];
 
 export default async function AdminPage({
   searchParams,
