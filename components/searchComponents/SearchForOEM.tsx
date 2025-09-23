@@ -12,7 +12,7 @@ import { SearchForm } from "./SearchForm";
 
 export const SearchForOEM = () => {
   return (
-    <Card className="w-[290px] md:w-full group bg-gradient-to-br from-blue-500/5 to-blue-500/10 border border-blue-500/20 gap-2">
+    <Card className="group hover:shadow-lg flex flex-col gap-4 p-6 border rounded-2xl shadow-md w-full max-w-lg mx-auto transition-all">
       <CardHeader className="text-center pb-4">
         <div className="w-16 h-16 mx-auto mb-4 bg-blue-500/10 rounded-full flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
           <Search className="h-8 w-8 text-blue-500" />

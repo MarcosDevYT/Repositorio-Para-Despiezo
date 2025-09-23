@@ -6,7 +6,11 @@ import { Input } from "../ui/input";
 
 import Form from "next/form";
 
-export const SearchOEMAndMatricula = () => {
+export const SearchOEMAndVehiculo = ({
+  tipoDeVehiculo,
+}: {
+  tipoDeVehiculo: "coche" | "moto" | "furgoneta";
+}) => {
   const [query, setQuery] = useState("");
 
   return (
@@ -26,13 +30,18 @@ export const SearchOEMAndMatricula = () => {
         className="max-w-2xl w-full bg-white p-2 rounded-lg"
       >
         <div className="flex space-x-2 items-center w-full">
+          {/* Input de búsqueda */}
           <Input
-            name="matriculaoem"
+            name="oem"
             autoComplete="off"
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Ej: matrícula '1234ABC' o referencia OEM"
+            placeholder="Referencia OEM"
             className="flex-1 h-10 text-sm text-gray-700"
           />
+
+          {/* Input oculto para el tipo de vehículo */}
+          <input type="hidden" name="tipoDeVehiculo" value={tipoDeVehiculo} />
+
           <Button type="submit" disabled={!query.trim()} className="px-8">
             <Search className="size-5" />
             <span className="hidden md:flex">Buscar</span>

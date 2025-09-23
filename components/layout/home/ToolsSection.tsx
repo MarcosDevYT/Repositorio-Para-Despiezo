@@ -1,4 +1,4 @@
-import { OCRVision } from "@/components/OCRVision";
+import { OCRgpt } from "@/components/OCRgpt";
 import { SearchForOEM } from "@/components/searchComponents/SearchForOEM";
 
 export const ToolsSection = () => {
@@ -15,7 +15,7 @@ export const ToolsSection = () => {
         {/* OEM Search Tool */}
         <SearchForOEM />
         {/* OCR Scanner Tool */}
-        <OCRVision />
+        <OCRgpt />
       </div>
     </section>
   );

@@ -1,10 +1,10 @@
 import { getProductByIdAction } from "@/actions/sell-actions";
-import { auth } from "@/auth";
 import { ProductCheckout } from "@/components/layout/ProductComponents/ProductCheckout";
-import { Button } from "@/components/ui/button";
 import { ShoppingBag, X } from "lucide-react";
-import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { auth } from "@/auth";
+import Link from "next/link";
 import React from "react";
 
 export default async function CheckoutPage({
@@ -37,8 +37,6 @@ export default async function CheckoutPage({
         </div>
       </div>
     );
-
-  console.log(session);
 
   return <ProductCheckout session={session} product={product} />;
 }

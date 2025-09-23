@@ -320,8 +320,9 @@ export const ProductFilters = ({
           <CardTitle className="text-lg">Filtros</CardTitle>
           {hayFiltros && (
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
+              className="rounded-full"
               onClick={() => router.push("/productos")}
             >
               Limpiar todo

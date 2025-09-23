@@ -37,7 +37,7 @@ export const OCRgpt = () => {
   };
 
   return (
-    <div className="group hover:shadow-lg flex flex-col items-center gap-4 p-6 border rounded-2xl shadow-md w-full max-w-lg mx-auto">
+    <div className="group hover:shadow-lg flex flex-col items-center gap-4 p-6 border rounded-2xl shadow-md w-full max-w-lg mx-auto transition-all">
       <div className="text-center pb-4">
         <div className="w-16 h-16 mx-auto mb-4 bg-blue-500/10 rounded-full flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
           <ScanLine className="h-8 w-8 text-blue-500" />

@@ -12,8 +12,6 @@ export default async function SellBusinessPage() {
 
   const isVerify = verifySeller(session);
 
-  console.log(session.user);
-
   if (isVerify) {
     return <SellBusinessUser session={session} />;
   } else {

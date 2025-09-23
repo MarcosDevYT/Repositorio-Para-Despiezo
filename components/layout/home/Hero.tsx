@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SearchOEMAndMatricula } from "@/components/searchComponents/SearchOEMAndMatricula";
+import { SearchOEMAndVehiculo } from "@/components/searchComponents/SearchOEMAndVehiculo";
 
 const heroInfo = {
   id: 1,
@@ -25,13 +25,13 @@ const heroInfo = {
 
 export function Hero() {
   const [selectedVehicleType, setSelectedVehicleType] = useState<
-    "car" | "truck" | "motorcycle"
-  >("car");
+    "coche" | "moto" | "furgoneta"
+  >("coche");
 
   const vehicleTypes = [
-    { id: "car" as const, label: "Coche", icon: Car },
-    { id: "truck" as const, label: "Furgoneta", icon: Truck },
-    { id: "motorcycle" as const, label: "Moto", icon: Bike },
+    { id: "coche" as const, label: "Coche", icon: Car },
+    { id: "furgoneta" as const, label: "Furgoneta", icon: Truck },
+    { id: "moto" as const, label: "Moto", icon: Bike },
   ];
 
   return (
@@ -58,7 +58,7 @@ export function Hero() {
           <div className="md:hidden">
             <Select
               value={selectedVehicleType}
-              onValueChange={(value: "car" | "truck" | "motorcycle") =>
+              onValueChange={(value: "coche" | "moto" | "furgoneta") =>
                 setSelectedVehicleType(value)
               }
             >
@@ -103,7 +103,7 @@ export function Hero() {
         </Card>
       </div>
       {/* Buscador principal */}
-      <SearchOEMAndMatricula />
+      <SearchOEMAndVehiculo tipoDeVehiculo={selectedVehicleType} />
     </section>
   );
 }
