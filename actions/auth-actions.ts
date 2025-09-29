@@ -15,7 +15,6 @@ import { z } from "zod";
 
 import bcrypt from "bcryptjs";
 import { stripe } from "@/lib/stripe";
-import { revalidatePath } from "next/cache";
 
 /**
  * Función para hacer el login con los datos del formulario utilizando next-auth

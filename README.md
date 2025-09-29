@@ -1,4 +1,25 @@
-# Esquema de trabajo para Despiezo
+# Despiezo - Marketplace de Autopartes
+
+Plataforma de compraventa de piezas de automóvil que conecta desguaces, talleres y particulares con compradores que buscan repuestos específicos.
+
+## 🚀 Estado Actual vs. Roadmap
+
+### ✅ Implementado
+
+- Autenticación con NextAuth.js (email + Google OAuth)
+- CRUD básico de productos
+- Sistema de chat en tiempo real
+- Integración con Stripe para pagos
+- OCR para reconocimiento de números OEM
+- Upload de imágenes con UploadThing
+- Base de datos con Prisma + Supabase
+
+### 🔄 En Desarrollo
+
+- Mejoras de UX según documento de especificaciones
+- Sistema de búsqueda inteligente
+- Panel de control avanzado
+- Validación por comunidad
 
 ## Stack Tecnológico
 
@@ -6,101 +27,268 @@
 
 - **Next.js 15** - Framework de React (SSR/SSG)
 - **React 19** - Librería JavaScript
-- **TypeScript** - Tipado seguro aprueba de errores
+- **TypeScript** - Tipado seguro
 - **Tailwind CSS** - Framework de estilos
-- **Framer Motion** - Librería de animaciones
-- **Three.js** - Librería para renderizado de modelos 3D
-- **Shadcn/ui** - Librería de componentes reutilizables personalizables
+- **Framer Motion** - Animaciones
+- **Shadcn/ui** - Componentes UI
 
-### Autenticación
+### Backend & Base de Datos
 
-- **NextAuth.js v5** - Autenticación con email y Google OAuth
+- **Supabase** - PostgreSQL + Real-time
+- **Prisma ORM** - Gestión de base de datos
+- **NextAuth.js v5** - Autenticación
 
-### Base de Datos & Backend
+### Integraciones
 
-- **Supabase** - Base de datos relacional PostgreSQL
-- **Prisma ORM** - Conexión y migración de modelos para la base de datos
-
-### Funcionalidades
-
-- **Tesseract.js** - OCR para reconocimiento de números OEM
-- **Socket.io** - Para crear la comunicacion de chats en tiempo real
-- **UploadThing** – Para cargar imágenes de los productos
 - **Stripe** - Pasarela de pagos
 - **Sendcloud API** - Gestión de envíos
+- **UploadThing** - Gestión de archivos
+- **Socket.io** - Chat en tiempo real
+- **Tesseract.js** - OCR para números OEM
 
-### Hosting & Deployment
+### Deployment
 
-- **Vercel** - Hosting y deployment automático
-- **GitHub** - Control de versiones (repositorio privado)
+- **Vercel** - Hosting y CI/CD
+- **GitHub** - Control de versiones
 
-## Estructura del Proyecto
+## 📋 Funcionalidades Pendientes (Roadmap Detallado)
 
+### 🏠 1. Transformación de la Página de Inicio
+
+- **Estado: Pendiente**
+
+#### Nuevas Secciones a Implementar
+
+- [ ] **Recomendaciones para ti** - Algoritmo de sugerencias basado en historial
+- [ ] **Lo más buscado** - Carrusel con búsquedas populares
+- [ ] **Recién llegados** - Últimas piezas subidas
+- [ ] **Productos Destacados** - Anuncios de pago con etiqueta "Patrocinado"
+- [ ] Reorganizar "Vistos recientemente" con las nuevas secciones
+
+### 🔍 2. Sistema de Búsqueda Inteligente
+
+- **Estado: Crítico - Alta Prioridad**
+
+#### Autocompletado Inteligente
+
+- [ ] Sugerencias mixtas: modelos populares + números OEM + búsquedas populares
+- [ ] Chips visuales para diferenciar tipos de sugerencia
+- [ ] Tolerancia a errores tipográficos
+- [ ] Cambiar "VIN" por "número de referencia" en toda la UI
+
+#### Filtros Persistentes
+
+- [ ] Filtros "sticky" que permanecen visibles al hacer scroll
+- [ ] Mantener estado al cambiar páginas/ordenar
+- [ ] Componente pegajoso en lateral (desktop) y barra horizontal (móvil)
+
+### 🏷️ 3. Badges de Confianza y Métricas
+
+- **Estado: Pendiente**
+
+#### En Tarjetas de Producto
+
+- [ ] Badge "Envío rápido" (basado en métricas reales)
+- [ ] Badge "Responde rápido" (tiempo de respuesta en chat)
+- [ ] Badge "Garantía de devolución"
+- [ ] Botón "Chat/Preguntar" directo en tarjeta
+
+#### Datos Necesarios
+
+- [ ] Tracking de tiempo de despacho por vendedor
+- [ ] Métricas de tiempo de respuesta en chat
+- [ ] Sistema de políticas de garantía por anuncio
+
+### 📊 4. Panel de Control Inteligente
+
+- **Estado: Pendiente**
+
+#### Para Compradores
+
+- [ ] **Rastreo integrado** - Timeline completo sin enlaces externos
+- [ ] Estados: Confirmado → Preparación → Enviado → Reparto → Entregado
+- [ ] Porcentaje de avance visual
+- [ ] Botones "Hablar con vendedor" y "Abrir incidencia"
+- [ ] Notificaciones push/email en cambios de estado
+
+#### Para Vendedores PRO
+
+- [ ] **Métricas de rendimiento**:
+  - Tiempo de respuesta (gráficas semanales)
+  - Velocidad de preparación/envío
+  - Top piezas por beneficio y volumen
+  - Tasa de devoluciones y motivos
+  - Mapa de demanda por provincia
+- [ ] Export CSV de métricas
+- [ ] Dashboard con gráficas interactivas
+
+### 👥 5. Validación por la Comunidad
+
+- **Estado: Muy Importante - Alta Prioridad**
+
+#### Sistema de Validación
+
+- [ ] **Post-compra**: Pregunta si la pieza encajó (Sí/No)
+- [ ] **Registro de compatibilidad**: Modelo/año/versión del vehículo
+- [ ] **Mostrar en ficha**: "Validado por X usuarios en [Modelo/Año]"
+- [ ] **Penalización**: Bajar ranking a vendedores con alta tasa de "No encajó"
+- [ ] **Anti-fraude**: Solo compradores pueden validar, 1 por pedido
+
+#### Modelo de Datos Necesario
+
+```sql
+reference_validations:
+- order_id, user_id, reference_id, vehicle_id
+- fit: boolean, reason: text, created_at
 ```
+
+### 🏪 6. Monetización y Funciones PRO
+
+- **Estado: Pendiente**
+
+#### Productos Destacados
+
+- [ ] Sistema de anuncios de pago
+- [ ] Etiquetas "Destacado/Patrocinado"
+- [ ] Posicionamiento preferente en resultados
+
+#### Kits de Productos
+
+- [ ] Agrupar piezas complementarias
+- [ ] CRUD para crear/gestionar kits
+- [ ] Precio conjunto con descuento
+
+#### Cuotas PRO
+
+- [ ] Suscripción mensual para profesionales
+- [ ] Subida masiva por CSV
+- [ ] Análisis de mercado avanzado
+
+### 💳 7. Mejoras de Pago y Confianza
+
+- **Estado: Pendiente**
+
+#### Pagos Rápidos
+
+- [ ] Integración Apple Pay
+- [ ] Integración Google Pay
+- [ ] Reducir fricción en checkout
+
+#### Perfil de Vendedor Transparente
+
+- [ ] Valoraciones detalladas por criterios
+- [ ] Métricas de rendimiento visibles
+- [ ] Historial de ventas y respuestas
+
+### 📱 8. Mejoras de UX/UI
+
+- **Estado: Pendiente**
+
+#### Navegación Móvil
+
+- [ ] Barra inferior fija: Inicio | Búsqueda | Subir | Chat | Perfil
+- [ ] Navegación fluida optimizada para móvil
+
+#### Footer Completo
+
+- [ ] Enlaces: Acerca de, Soporte, Legal, Cuentas PRO
+- [ ] Redes sociales y enlaces a apps
+- [ ] Información de contacto y transparencia
+
+### 🏷️ 9. Estados de Productos y Contadores
+
+- **Estado: Pendiente**
+
+#### Estados Definidos
+
+- [ ] **Nuevo** - Nunca usado
+- [ ] **Como nuevo** - Perfectas condiciones
+- [ ] **En buen estado** - Usado pero bien conservado
+- [ ] **En condiciones aceptables** - Con signos de desgaste
+- [ ] **Lo ha dado todo** - Puede necesitar reparación
+
+#### Implementación
+
+- [ ] Contadores visibles en filtros y cabecera
+- [ ] Desglose numérico por estado en resultados
+- [ ] Badge "caja abierta" cuando aplique
+- [ ] Filtro por "mejor estado"
+
+### 🔧 10. Integraciones y APIs
+
+- **Estado: Preparado para Futuro**
+
+#### Sendcloud
+
+- [ ] Webhooks para actualización automática de estados
+- [ ] API integrada para tracking interno
+- [ ] Gestión de incidencias
+
+#### Preparación DAT Ibérica
+
+- [ ] Estructura de API preparada
+- [ ] Cache de consultas de matrículas
+- [ ] Interfaz de búsqueda por matrícula
+
+## 🎯 Criterios de Aceptación (QA)
+
+### Búsqueda
+
+- ✅ Autocompletado con mezcla de modelos, referencias y búsquedas populares
+- ✅ Chips identificativos por tipo de sugerencia
+- ✅ Filtros sticky y persistentes
+
+### Productos
+
+- ✅ Tarjetas con badges funcionales
+- ✅ Botón de chat sin abrir ficha
+- ✅ Contadores por estado en resultados
+
+### Panel de Usuario
+
+- ✅ Timeline interno sin enlaces externos
+- ✅ Porcentaje de avance visual
+- ✅ Dashboard PRO con KPIs y gráficas
+
+### Validación Comunitaria
+
+- ✅ Solo compradores pueden validar
+- ✅ Desglose por modelo/año visible
+- ✅ Sistema anti-fraude implementado
+
+### Home
+
+- ✅ Secciones: Recomendaciones + Lo más buscado + Recién llegados + Destacados
+
+## 📁 Estructura del Proyecto
+
+```typescript
 despiezo/
+├── 📁 .kiro/specs/          # Especificaciones de funcionalidades
 ├── 📁 prisma/
 │   ├── schema.prisma
-│   ├── migrations/
-│   └── seed.ts
-├── 📁 public/
-│   ├── models-3d/           # Archivos .glb de vehículos
-│   ├── icons/
-│   └── images/
-├── 📁 src/
-│   ├── 📁 app/              # Next.js App Router
-│   │   ├── (auth)/
-│   │   │   ├── login/
-│   │   │   └── register/
-│   │   ├── (dashboard)/
-│   │   │   ├── profile/
-│   │   │   ├── products/
-│   │   │   ├── messages/
-│   │   │   └── orders/
-│   │   ├── search/
-│   │   ├── product/
-│   │   │   └── [id]/
-│   │   ├── api/
-│   │   │   ├── auth/
-│   │   │   ├── products/
-│   │   │   ├── ocr/
-│   │   │   ├── stripe/
-|   |   |   ├── uploadthing/
-│   │   │   ├── sendcloud/
-│   │   │   └── dat-iberica/  # Preparado para integración
-│   │   ├── globals.css
-│   │   ├── layout.tsx
-│   │   └── page.tsx
-│   ├── 📁 components/
-│   │   ├── ui/              # Shadcn/ui components
-│   │   ├── auth/
-│   │   ├── products/
-│   │   ├── search/
-│   │   ├── chat/
-│   │   ├── 3d-viewer/       # Componentes Three.js
-│   │   └── ocr/
-|   |
-│   ├── 📁 lib/
-│   │   ├── prisma.ts
-│   │   ├── supabase.ts
-│   │   ├── auth.ts          # NextAuth config
-│   │   ├── stripe.ts
-│   │   ├── sendcloud.ts
-|   |   ├── uploadthing.ts
-│   │   ├── dat-iberica.ts   # Preparado para API DAT
-│   │   └── utils.ts
-|   |
-│   ├── 📁 hooks/
-│   ├── 📁 types/
-│   └── 📁 utils/
-|
-├── .env.local
-├── .env.example
-├── auth.ts
-├── middleware.ts
-├── next.config.js
-├── tailwind.config.js
-├── package.json
-└── README.md
+│   └── migrations/
+├── 📁 app/
+│   ├── (auth)/
+│   ├── (routes)/
+│   ├── api/
+│   ├── globals.css
+│   ├── layout.tsx
+│   └── page.tsx
+├── 📁 components/
+│   ├── ui/                  # Shadcn/ui components
+│   ├── searchComponents/
+│   ├── chatComponents/
+│   └── LoginComponents/
+├── 📁 lib/
+│   ├── prisma.ts
+│   ├── stripe.ts
+│   ├── utils.ts
+│   └── zodSchemas/
+├── 📁 actions/              # Server actions
+├── 📁 hooks/                # Custom hooks
+├── 📁 types/                # TypeScript types
+└── 📁 public/               # Static assets
 ```
 
 ## Plan de Desarrollo por Fases
@@ -108,13 +296,11 @@ despiezo/
 ### Fase 1: Maquetacion de la estructura inicial
 
 1. **Setup inicial del proyecto**
-
    - Configuración Next.js + TypeScript
    - Setup Tailwind CSS y Shadcn/ui
    - Configuración Supabase + Prisma
 
 2. **Sistema de autenticación**
-
    - NextAuth con email y Google
    - Páginas de login/registro
    - Middleware de protección de rutas
@@ -128,13 +314,11 @@ despiezo/
 ### Fase 2: Crud de productos
 
 1. **Gestión de productos**
-
    - CRUD de productos con validación OEM obligatoria
    - Upload de imágenes
    - Sistema de categorías
 
 2. **Buscador avanzado**
-
    - Filtros por marca, modelo, año, estado, etc.
    - Búsqueda por número OEM
    - Preparación para búsqueda por matrícula
@@ -146,18 +330,11 @@ despiezo/
 ### Fase 3: Funcionalidades Avanzadas
 
 1. **Escáner OCR**
-
    - Implementación Tesseract.js
    - Reconocimiento de números OEM por cámara
    - Búsqueda automática post-reconocimiento
 
-2. **Visor 3D**
-
-   - Integración Three.js
-   - Carga de modelos .glb
-   - Sistema de resaltado de zonas
-
-3. **Chat en tiempo real**
+2. **Chat en tiempo real**
    - Socket.io para mensajería instantánea
    - Interface estilo Wallapop
    - Notificaciones push
@@ -165,13 +342,11 @@ despiezo/
 ### Fase 4: Integracion de pagos y envios
 
 1. **Integración Stripe**
-
    - Procesamiento de pagos (modo test)
    - Gestión de transacciones
    - Webhooks para estados de pedido
 
 2. **Integración Sendcloud**
-
    - Generación de etiquetas (modo test)
    - Tracking de envíos
    - Gestión de direcciones
@@ -184,7 +359,6 @@ despiezo/
 ### Fase 5: Preparación DAT Ibérica
 
 1. **Estructura para integración DAT**
-
    - API endpoints preparados
    - Cache de consultas de matrículas
    - Interfaz de búsqueda por matrícula
@@ -241,3 +415,197 @@ despiezo/
 ---
 
 Esta estructura está diseñada para ser escalable y permitir la integración futura de IA para sugerencias automáticas de compatibilidades, basándose en la base de datos orgánica que se construirá con las subidas de los usuarios.
+
+## 🚀 Plan de Implementación por Prioridades
+
+### 🔥 Prioridad CRÍTICA (Implementar Primero)
+
+#### 1. Sistema de Búsqueda Inteligente
+
+- **Autocompletado con sugerencias mixtas**
+- **Filtros persistentes (sticky)**
+- **Cambio de "VIN" a "número de referencia"**
+
+#### 2. Validación por la Comunidad
+
+- **Sistema post-compra de validación**
+- **Modelo de datos reference_validations**
+- **Mostrar validaciones en fichas de producto**
+
+#### 3. Contadores de Estado en Resultados
+
+- **Mostrar "X Nuevas, Y Como nuevas, Z Usadas"**
+- **Filtros por estado con contadores**
+- **Estados claramente definidos**
+
+### ⚡ Prioridad ALTA (Siguiente Sprint)
+
+#### 4. Transformación del Home
+
+- **Secciones: Recomendaciones + Lo más buscado + Recién llegados**
+- **Productos destacados/patrocinados**
+- **Algoritmo de recomendaciones básico**
+
+#### 5. Badges de Confianza
+
+- **Badges en tarjetas: envío rápido, respuesta rápida, garantía**
+- **Botón de chat directo en tarjeta**
+- **Métricas de vendedor**
+
+#### 6. Panel de Control Inteligente
+
+- **Timeline de pedidos interno**
+- **Dashboard PRO con métricas**
+- **Notificaciones de estado**
+
+### 📈 Prioridad MEDIA (Siguientes Iteraciones)
+
+#### 7. Monetización
+
+- **Sistema de productos destacados**
+- **Kits de productos**
+- **Cuotas PRO**
+
+#### 8. Mejoras de Pago
+
+- **Apple Pay / Google Pay**
+- **Perfil de vendedor transparente**
+
+#### 9. UX/UI
+
+- **Barra de navegación móvil**
+- **Footer completo**
+
+### 🔮 Prioridad BAJA (Futuro)
+
+#### 10. Integraciones Avanzadas
+
+- **Webhooks Sendcloud**
+- **Preparación DAT Ibérica**
+- **Analytics avanzados**
+
+## 🛠️ Guía de Implementación Técnica
+
+### Cambios Inmediatos Requeridos
+
+#### 1. Terminología
+
+```typescript
+// ❌ Cambiar esto:
+"VIN" → "Número de referencia"
+
+// ✅ Por esto en toda la UI:
+"Número de referencia (OEM)"
+```
+
+#### 2. Modelo de Datos - Validación Comunitaria
+
+```sql
+-- Nueva tabla requerida:
+CREATE TABLE reference_validations (
+  id SERIAL PRIMARY KEY,
+  order_id INTEGER REFERENCES orders(id),
+  user_id INTEGER REFERENCES users(id),
+  reference_id INTEGER REFERENCES products(id),
+  vehicle_id INTEGER REFERENCES vehicles(id),
+  fit BOOLEAN NOT NULL,
+  reason TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+#### 3. Endpoints de API Necesarios
+
+```typescript
+// Autocompletado inteligente
+GET /api/search/suggest?q=golf
+// Respuesta: {type: 'model'|'reference'|'popular', label: string}[]
+
+// Contadores por estado
+GET /api/products/search?filters=...
+// Respuesta: {results: Product[], counts_by_condition: {new: 15, like_new: 450, ...}}
+
+// Métricas de vendedor
+GET /api/sellers/:id/metrics
+// Respuesta: {response_time: number, shipping_speed: number, ...}
+```
+
+### Componentes UI Prioritarios
+
+#### 1. SearchAutocomplete
+
+- Sugerencias mixtas con chips
+- Tolerancia a errores tipográficos
+- Histórico de búsquedas populares
+
+#### 2. StickyFilters
+
+- Componente pegajoso en scroll
+- Persistencia de estado en URL
+- Responsive (lateral desktop, horizontal móvil)
+
+#### 3. ProductCard con Badges
+
+- Badges de confianza
+- Botón de chat directo
+- Estados claramente visibles
+
+#### 4. OrderTimeline
+
+- Timeline visual de estados
+- Porcentaje de progreso
+- Acciones contextuales
+
+## 📊 Métricas y KPIs a Trackear
+
+### Para Vendedores
+
+- Tiempo medio de respuesta en chat
+- Velocidad de preparación/envío (% <24h)
+- Tasa de "no encajó" por referencia
+- Valoraciones por criterio
+
+### Para la Plataforma
+
+- Búsquedas populares (para autocompletado)
+- Tasa de conversión por tipo de badge
+- Engagement en secciones del home
+- Validaciones comunitarias por producto
+
+## 🎯 Criterios de Éxito
+
+### Busqueda
+
+- ✅ Autocompletado responde <200ms
+- ✅ Filtros mantienen estado al navegar
+- ✅ 0 referencias a "VIN" en UI
+
+### Validacion Comunitaria
+
+- ✅ >70% de compradores validan compatibilidad
+- ✅ Reducción 30% en devoluciones por incompatibilidad
+- ✅ Aumento confianza del comprador
+
+### Home Dinámico
+
+- ✅ Aumento 25% tiempo en página
+- ✅ Mejora 15% tasa de clics a productos
+- ✅ Sensación de "marketplace activo"
+
+### Panel de Control
+
+- ✅ Reducción 50% consultas de "¿dónde está mi pedido?"
+- ✅ Vendedores PRO usan métricas semanalmente
+- ✅ 0 enlaces externos para tracking
+
+## 🚨 Notas Importantes para Desarrollo
+
+1. **Modularidad**: Mantener código preparado para reactivar funciones futuras
+2. **Performance**: Cachear búsquedas populares y sugerencias
+3. **SEO**: URLs amigables con filtros persistentes
+4. **Analytics**: Trackear todas las interacciones para optimizar algoritmos
+5. **Testing**: Priorizar tests en búsqueda y validación comunitaria
+
+---
+
+**Próximo paso**: Comenzar con el sistema de búsqueda inteligente y autocompletado, ya que es la base para muchas otras funcionalidades.

@@ -16,7 +16,7 @@ export default async function ProductsPage({ searchParams }: any) {
     priceMax,
     page = "1",
     limit = "20",
-  } = searchParams;
+  } = await searchParams;
 
   const params = {
     query,

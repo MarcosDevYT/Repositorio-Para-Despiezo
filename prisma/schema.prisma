@@ -46,6 +46,9 @@ model User {
   ordersAsBuyer           Orden[] @relation("BuyerOrders")
   ordersAsVendor          Orden[] @relation("VendorOrders")
 
+  /// Relacion con searchHistory
+  searchHistory           SearchHistory[]
+
 
   /// Relacion con chats
   roomsAsVendor           Room[]    @relation("VendorRooms")
@@ -133,11 +136,13 @@ model Product {
   offer          Boolean?
   offerPrice     String?
 
-  // campos de medidas
+  // Campos de medidas
   weight         Float?     // Peso en kg
   length         Float?     // Largo en cm
   width          Float?     // Ancho en cm
   height         Float?     // Alto en cm
+
+  // Campos para destacar Producto
 
   // Relaciones
   vendorId       String
@@ -233,6 +238,16 @@ model Favorite {
 
   @@unique([userId, productId]) 
 }
+
+/// Modelo para almacenar las busquedas
+model SearchHistory {
+  id        String   @id @default(cuid())
+  query     String 
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
 
 // Modelos de chat en tiempo real
 /// Conversaciones (chat)

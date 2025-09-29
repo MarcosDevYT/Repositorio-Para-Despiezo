@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { Button } from "../ui/button";
 import { Suspense, useState } from "react";
 import { Skeleton } from "../ui/skeleton";
+import { searchHistoryCreate } from "@/actions/user-actions";
 
 export const SearchProducts = () => {
   const searchParams = useSearchParams();
@@ -22,8 +23,7 @@ export const SearchProducts = () => {
       }
     >
       <Form
-        action={"/productos"}
-        scroll={false}
+        action={searchHistoryCreate}
         className="flex items-center w-full relative"
       >
         <input

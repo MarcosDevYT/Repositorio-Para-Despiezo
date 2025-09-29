@@ -173,7 +173,6 @@ export const getUserProductsAction = async () => {
   }
 };
 
-// Obtener todos los productos
 // Obtener todos los productos publicados
 export const getProductsAction = async () => {
   try {

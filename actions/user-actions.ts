@@ -9,6 +9,7 @@ import {
   editBusinessDataSchema,
   editProfileSchema,
 } from "@/lib/zodSchemas/userSchema";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type Stripe from "stripe";
 import { z } from "zod";
@@ -300,7 +301,7 @@ export async function getStripeDashboardLinkAction() {
 }
 
 /**
- * Funcion para cambiar el estaado de stripeConnect con el webhook
+ * Funcion para cambiar el estado de stripeConnect con el webhook
  */
 export async function updateStripeConnectStatusAction(account: Stripe.Account) {
   try {
@@ -418,4 +419,23 @@ export const deletedUserAddress = async (addressId: string) => {
     console.error("Error creando contacto:", error);
     return { error: "No se pudo guardar la información" };
   }
+};
+
+// Funcion para almacenar una busqueda en el historial
+export const searchHistoryCreate = async (formData: FormData) => {
+  const query = formData.get("query")?.toString() ?? "";
+  const session = await auth();
+
+  await prisma.searchHistory.create({
+    data: {
+      query,
+      userId: session?.user?.id ?? null,
+    },
+  });
+
+  console.log("Busqueda almacenada: ", query);
+
+  // 🔄 Revalida y redirige a /productos con querystring
+  revalidatePath("/productos");
+  redirect(`/productos?query=${encodeURIComponent(query)}`);
 };
