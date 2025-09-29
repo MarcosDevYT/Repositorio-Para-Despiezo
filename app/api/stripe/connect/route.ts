@@ -5,7 +5,7 @@ import { updateStripeConnectStatusAction } from "@/actions/user-actions";
 import type Stripe from "stripe";
 
 export async function POST(req: Request) {
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const webhookSecret = process.env.STRIPE_WEBHOOK_CONNECT_SECRET;
   if (!webhookSecret) {
     console.error("No STRIPE_WEBHOOK_SECRET in env");
     return NextResponse.json(
