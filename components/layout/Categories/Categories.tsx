@@ -9,8 +9,9 @@ import { categories } from "@/data";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { SearchIndex } from "@/components/searchComponents/SearchIndex";
 
-export const Categories = () => {
+export const Categories = ({ userId }: { userId?: string }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
   const viewAllRef = useRef<HTMLDivElement>(null);
@@ -154,7 +155,8 @@ export const Categories = () => {
       <CategoriesSidebar open={isSidebarOpen} onOpenChange={setIsSidebarOpen} />
 
       <div className="flex items-center gap-2 md:hidden">
-        <SearchProducts />
+        {/* <SearchProducts /> */}
+        <SearchIndex />
 
         <Button
           onClick={handleOpenSidebar}

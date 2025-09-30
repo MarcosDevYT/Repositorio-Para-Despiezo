@@ -173,6 +173,12 @@ export const getUserProductsAction = async () => {
   }
 };
 
+/**
+ * ACTIONS PARA
+ * MOSTRAR LOS PRODUCTOS EN EL HOME
+ * ULTIMOS, DESTACADOS, RECOMENDADOS, HISTORIAL, MAS BUSCADOS
+ */
+
 // Obtener todos los productos publicados
 export const getProductsAction = async () => {
   try {
@@ -183,6 +189,7 @@ export const getProductsAction = async () => {
       where: {
         status: "publicado", // 🔹 Solo productos publicados
       },
+      take: 10,
       include: {
         favorites: userId
           ? {
@@ -202,6 +209,15 @@ export const getProductsAction = async () => {
     return [];
   }
 };
+
+// Obtener los productos
+// const featuredProducts = await prisma.product.findMany({
+//   where: {
+//     featuredUntil: { gte: new Date() }, // solo los que aún no vencieron
+//   },
+//   take: 10,
+//   orderBy: { featuredUntil: "desc" },
+// });
 
 /**
  * Funcion para traer los productos por filtro
@@ -435,3 +451,40 @@ export const getVendedorProductsAndInfo = async (
     return { user: null, products: [], total: 0, page: 1, limit };
   }
 };
+
+/**
+ *  Action para incrementar clicks de un producto
+ */
+export async function incrementClicksProduct(productId: string) {
+  const product = await prisma.product.update({
+    where: { id: productId },
+    data: { clicks: { increment: 1 } },
+  });
+
+  if (!product) return { success: false };
+
+  return { success: true };
+}
+
+/**
+ * Action para registrar el producto que vio el usuario
+ */
+export async function registerUserProductView(
+  userId: string,
+  productId: string
+) {
+  const existing = await prisma.userProductView.findUnique({
+    where: { userId_productId: { userId, productId } },
+  });
+
+  if (existing) {
+    return await prisma.userProductView.update({
+      where: { userId_productId: { userId, productId } },
+      data: { viewedAt: new Date() },
+    });
+  } else {
+    return await prisma.userProductView.create({
+      data: { userId, productId },
+    });
+  }
+}

@@ -63,6 +63,20 @@ CREATE TABLE "PasswordResetToken" (
 );
 
 -- CreateTable
+CREATE TABLE "Address" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "street" TEXT NOT NULL,
+    "number" TEXT NOT NULL,
+    "city" TEXT NOT NULL,
+    "postalCode" TEXT NOT NULL,
+    "country" TEXT NOT NULL,
+    "isDefault" BOOLEAN NOT NULL DEFAULT false,
+
+    CONSTRAINT "Address_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Product" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -86,11 +100,23 @@ CREATE TABLE "Product" (
     "length" DOUBLE PRECISION,
     "width" DOUBLE PRECISION,
     "height" DOUBLE PRECISION,
+    "featuredUntil" TIMESTAMP(3),
+    "clicks" INTEGER NOT NULL DEFAULT 0,
     "vendorId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Product_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "UserProductView" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "productId" TEXT NOT NULL,
+    "viewedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "UserProductView_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -143,6 +169,25 @@ CREATE TABLE "Favorite" (
 );
 
 -- CreateTable
+CREATE TABLE "SearchHistory" (
+    "id" TEXT NOT NULL,
+    "query" TEXT NOT NULL,
+    "userId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "SearchHistory_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "SearchLog" (
+    "id" TEXT NOT NULL,
+    "query" TEXT NOT NULL,
+    "clicks" INTEGER NOT NULL DEFAULT 0,
+
+    CONSTRAINT "SearchLog_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Room" (
     "id" TEXT NOT NULL,
     "productId" TEXT,
@@ -177,10 +222,22 @@ CREATE UNIQUE INDEX "VerificationToken_identifier_key" ON "VerificationToken"("i
 CREATE UNIQUE INDEX "PasswordResetToken_token_key" ON "PasswordResetToken"("token");
 
 -- CreateIndex
+CREATE INDEX "UserProductView_userId_idx" ON "UserProductView"("userId");
+
+-- CreateIndex
+CREATE INDEX "UserProductView_productId_idx" ON "UserProductView"("productId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "UserProductView_userId_productId_key" ON "UserProductView"("userId", "productId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Orden_stripeSessionId_key" ON "Orden"("stripeSessionId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Favorite_userId_productId_key" ON "Favorite"("userId", "productId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "SearchLog_query_key" ON "SearchLog"("query");
 
 -- CreateIndex
 CREATE INDEX "Message_roomId_idx" ON "Message"("roomId");
@@ -195,7 +252,16 @@ ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId"
 ALTER TABLE "PasswordResetToken" ADD CONSTRAINT "PasswordResetToken_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "Address" ADD CONSTRAINT "Address_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "Product" ADD CONSTRAINT "Product_vendorId_fkey" FOREIGN KEY ("vendorId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "UserProductView" ADD CONSTRAINT "UserProductView_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "UserProductView" ADD CONSTRAINT "UserProductView_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Orden" ADD CONSTRAINT "Orden_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -211,6 +277,9 @@ ALTER TABLE "Favorite" ADD CONSTRAINT "Favorite_userId_fkey" FOREIGN KEY ("userI
 
 -- AddForeignKey
 ALTER TABLE "Favorite" ADD CONSTRAINT "Favorite_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "SearchHistory" ADD CONSTRAINT "SearchHistory_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Room" ADD CONSTRAINT "Room_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE SET NULL ON UPDATE CASCADE;

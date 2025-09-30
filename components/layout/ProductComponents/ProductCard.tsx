@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import Link from "next/link";
-import Image from "next/image";
 import { Heart, Star, MapPin, Car } from "lucide-react";
+
+import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { getConditionColor } from "@/lib/utils";
 import { toggleFavoriteAction } from "@/actions/user-actions";
 import { ProductType } from "@/types/ProductTypes";
+import { incrementClicksProduct } from "@/actions/sell-actions";
+import { useRouter } from "next/navigation";
 
 export const ProductCard = ({
   product,
@@ -21,6 +23,7 @@ export const ProductCard = ({
 }) => {
   const [isFavorite, setIsFavorite] = useState(initialFavorite ?? false);
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   const handleFavorite = () => {
     startTransition(async () => {
@@ -33,6 +36,17 @@ export const ProductCard = ({
         console.error("Error al marcar como favorito:", error);
       }
     });
+  };
+
+  const handleClickProduct = async () => {
+    try {
+      await incrementClicksProduct(product.id);
+    } catch (error) {
+      console.error("Error incrementando clicks:", error);
+    }
+
+    // Navega al detalle del producto
+    router.push(`/productos/${product.id}`);
   };
 
   const conditionColor = getConditionColor(product.condition);
@@ -61,16 +75,17 @@ export const ProductCard = ({
           />
         </Button>
 
-        <div className="relative h-60 md:h-64 rounded-lg">
-          <Link href={`/productos/${product.id}`}>
-            <Image
-              src={product.images[0]}
-              alt={product.name}
-              width={500}
-              height={500}
-              className="object-contain w-full h-full "
-            />
-          </Link>
+        <div
+          className="relative h-60 md:h-64 rounded-lg cursor-pointer"
+          onClick={handleClickProduct}
+        >
+          <Image
+            src={product.images[0]}
+            alt={product.name}
+            width={500}
+            height={500}
+            className="object-contain w-full h-full "
+          />
         </div>
       </CardHeader>
 
@@ -144,10 +159,10 @@ export const ProductCard = ({
 
           <Button
             className="px-4 py-2 text-sm rounded-full"
+            onClick={handleClickProduct}
             variant={"card"}
-            asChild
           >
-            <Link href={`/productos/${product.id}`}>Ver detalles</Link>
+            Ver detalles
           </Button>
         </div>
       </CardContent>

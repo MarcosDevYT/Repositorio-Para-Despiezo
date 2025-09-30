@@ -270,7 +270,7 @@ export async function createStripeAccountLinkAction() {
 }
 
 /**
- * Funcion para obtener el link del dashboard de stripe para el usuario
+ * Función para obtener el link del dashboard de Stripe para el usuario
  */
 export async function getStripeDashboardLinkAction() {
   const session = await auth();
@@ -279,25 +279,23 @@ export async function getStripeDashboardLinkAction() {
     throw new Error("No estás autenticado");
   }
 
-  try {
-    const data = await prisma.user.findUnique({
-      where: {
-        id: session.user.id,
-      },
-      select: {
-        connectedAccountId: true,
-      },
-    });
+  // Buscar el connectedAccountId del usuario
+  const userData = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { connectedAccountId: true },
+  });
 
-    const loginLink = await stripe.accounts.createLoginLink(
-      data?.connectedAccountId as string
-    );
-
-    return redirect(loginLink.url);
-  } catch (error) {
-    console.error("Error liberando el pago:", error);
-    throw new Error("No se pudo liberar el pago al vendedor");
+  if (!userData?.connectedAccountId) {
+    throw new Error("El usuario no tiene una cuenta de Stripe conectada");
   }
+
+  // Crear link de login al dashboard de Stripe
+  const loginLink = await stripe.accounts.createLoginLink(
+    userData.connectedAccountId
+  );
+
+  // Redirigir al usuario al dashboard
+  return redirect(loginLink.url);
 }
 
 /**
@@ -320,8 +318,8 @@ export async function updateStripeConnectStatusAction(account: Stripe.Account) {
 
     return userUpdate;
   } catch (error) {
-    console.error("Error liberando el pago:", error);
-    throw new Error("No se pudo liberar el pago al vendedor");
+    console.error("Error intentando hacer el update de StripeConnect:", error);
+    throw new Error("Error intentando hacer el update de StripeConnect");
   }
 }
 
@@ -421,21 +419,36 @@ export const deletedUserAddress = async (addressId: string) => {
   }
 };
 
-// Funcion para almacenar una busqueda en el historial
+// Función para almacenar una búsqueda en el historial
 export const searchHistoryCreate = async (formData: FormData) => {
-  const query = formData.get("query")?.toString() ?? "";
-  const session = await auth();
+  const query = formData.get("query")?.toString().trim() ?? "";
+  if (!query) return; // no guardamos queries vacías
 
+  const session = await auth();
+  const userId = session?.user?.id ?? null;
+
+  if (userId) {
+    // Buscamos si ya existe la búsqueda del mismo usuario
+    const exists = await prisma.searchHistory.findFirst({
+      where: {
+        userId,
+        query: query,
+      },
+    });
+
+    if (exists) {
+      console.log("Busqueda ya existe en historial: ", query);
+      return; // no la guardamos de nuevo
+    }
+  }
+
+  // Guardamos la búsqueda
   await prisma.searchHistory.create({
     data: {
       query,
-      userId: session?.user?.id ?? null,
+      userId,
     },
   });
 
   console.log("Busqueda almacenada: ", query);
-
-  // 🔄 Revalida y redirige a /productos con querystring
-  revalidatePath("/productos");
-  redirect(`/productos?query=${encodeURIComponent(query)}`);
 };

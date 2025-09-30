@@ -71,9 +71,9 @@ Plataforma de compraventa de piezas de automóvil que conecta desguaces, tallere
 
 #### Autocompletado Inteligente
 
-- [ ] Sugerencias mixtas: modelos populares + números OEM + búsquedas populares
-- [ ] Chips visuales para diferenciar tipos de sugerencia
-- [ ] Tolerancia a errores tipográficos
+- [x] Sugerencias mixtas: modelos populares + números OEM + búsquedas populares
+- [x] Chips visuales para diferenciar tipos de sugerencia
+- [x] Tolerancia a errores tipográficos
 - [ ] Cambiar "VIN" por "número de referencia" en toda la UI
 
 #### Filtros Persistentes

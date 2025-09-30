@@ -4,6 +4,7 @@ import { Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/auth";
 import Link from "next/link";
+import { SearchIndex } from "@/components/searchComponents/SearchIndex";
 
 /**
  * @description Componente de la barra de navegacion
@@ -25,7 +26,8 @@ export const Navbar = async () => {
 
           {/* Buscador */}
           <div className="hidden md:block w-full max-w-3xl">
-            <SearchProducts />
+            {/* <SearchProducts /> */}
+            <SearchIndex userId={session?.user.id} />
           </div>
 
           {/* User Dropdown */}

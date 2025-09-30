@@ -49,6 +49,9 @@ model User {
   /// Relacion con searchHistory
   searchHistory           SearchHistory[]
 
+   // Relación con productos vistos
+  viewedProducts          UserProductView[] 
+
 
   /// Relacion con chats
   roomsAsVendor           Room[]    @relation("VendorRooms")
@@ -143,6 +146,10 @@ model Product {
   height         Float?     // Alto en cm
 
   // Campos para destacar Producto
+  featuredUntil  DateTime?                   // hasta qué fecha se mantiene destacado
+
+  // Analíticas
+  clicks         Int       @default(0)       // cantidad de clics
 
   // Relaciones
   vendorId       String
@@ -151,9 +158,28 @@ model Product {
   favorites      Favorite[]
   orders         Orden[]
 
+  // Relación inversa con vistas de usuarios
+  userViews      UserProductView[]
+
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 }
+
+// Modelo de productos que vio el usuario
+model UserProductView {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  viewedAt  DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId]) // un producto por usuario, se puede actualizar clicks
+  @@index([userId])
+  @@index([productId])
+}
+
 
 // Modelo de orden
 model Orden {
@@ -239,6 +265,8 @@ model Favorite {
   @@unique([userId, productId]) 
 }
 
+/// Modelos de tablas para busquedas indexadas
+
 /// Modelo para almacenar las busquedas
 model SearchHistory {
   id        String   @id @default(cuid())
@@ -246,6 +274,13 @@ model SearchHistory {
   userId    String?
   user      User?    @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
+}
+
+/// Modelo de busquedas populares
+model SearchLog {
+  id     String @id @default(uuid())
+  query  String @unique
+  clicks Int    @default(0)
 }
 
 

@@ -13,7 +13,11 @@ import "swiper/css/navigation";
 
 import Link from "next/link";
 
-export const RecentProducts = ({ products }: { products: ProductType[] }) => {
+export const RecommendedProducts = ({
+  products,
+}: {
+  products: ProductType[];
+}) => {
   if (!products || products.length <= 0) return null;
 
   const prevRef = useRef<HTMLButtonElement>(null);
@@ -22,7 +26,7 @@ export const RecentProducts = ({ products }: { products: ProductType[] }) => {
   return (
     <section className="py-8">
       <article className="flex flex-col md:flex-row items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold">Recien Llegados</h2>
+        <h2 className="text-2xl font-bold">Recomendaciones para ti</h2>
 
         <Button
           asChild

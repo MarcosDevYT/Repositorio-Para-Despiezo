@@ -31,6 +31,7 @@ export default middleware((req) => {
     "/api/uploadthing",
     "/api/sendcloud/webhook",
     "/api/stripe",
+    "/api/stripe/connect",
   ];
 
   const isPublic =
