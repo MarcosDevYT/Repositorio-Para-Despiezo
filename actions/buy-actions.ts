@@ -70,6 +70,7 @@ export async function buyProductActions(
         userAddressId: userAddressId,
         userPhoneNumber: session.user.phoneNumber,
         userName: session.user.name,
+        typeOfBuy: "COMPRAR",
       },
       line_items: [
         {
@@ -98,16 +99,104 @@ export async function buyProductActions(
 }
 
 /**
+ * Función para armar el checkout de stripe con los datos del producto a comprar
+ * @param productId Id del producto a comprar
+ * @returns Retornamos la url del checkout de stripe
+ */
+export async function destacarProductAction(
+  productId: string,
+  price: number,
+  days: string
+) {
+  try {
+    const session = await auth();
+
+    // Si el usuario no esta logeado redirigir
+    if (!session?.user) redirect("/login");
+
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+    });
+
+    // Si no hay producto devolvemos el error
+    if (!product) return { error: "Producto no encontrado" };
+
+    // Si el comprador es el mismo vendedor dar aviso
+    if (product.vendorId !== session.user.id)
+      return { error: "No puedes destacar el producto de otra persona." };
+
+    // Si el producto no esta disponible devolvemos el error
+    if (product.status === "vendido" || product.status === "cancelado")
+      return { error: "Producto no disponible" };
+
+    const stripePrice = Math.round(price * 100);
+
+    // Checkout session
+    const stripeSession = await stripe.checkout.sessions.create({
+      mode: "payment",
+      customer_email: session.user.email,
+      metadata: {
+        productId: product.id,
+        vendedorId: product.id,
+        userName: session.user.name,
+        typeOfBuy: "DESTACAR",
+        days: days,
+      },
+      line_items: [
+        {
+          price_data: {
+            currency: "eur",
+            unit_amount: stripePrice,
+            product_data: {
+              name: `Destacar por ${days} dias ${product.name}`,
+              description: product.description,
+              images: [product.images[0]],
+            },
+          },
+
+          quantity: 1,
+        },
+      ],
+      success_url: `${baseUrl}/payment/success`,
+      cancel_url: `${baseUrl}/payment/cancel`,
+    });
+
+    return { url: stripeSession.url as string };
+  } catch (error) {
+    console.log("Error iniciando checkout: ", error);
+    throw new Error("Error al comprar el producto");
+  }
+}
+
+/**
  * Maneja checkout.session.completed
- * Para poder crear una orden de producto
- * - Recibe sessionObj (Stripe.Checkout.Session)
  */
 export async function handleCheckoutCompleted(
   sessionObj: Stripe.Checkout.Session
 ) {
   console.log("Iniciando handleCheckoutSessionCompleted");
 
-  // datos desde metadata
+  const typeOfBuy = sessionObj.metadata?.typeOfBuy;
+
+  if (!typeOfBuy) {
+    throw new Error("No se encontró el tipo de compra en metadata");
+  }
+
+  if (typeOfBuy === "COMPRAR") {
+    return await handleProductPurchase(sessionObj);
+  }
+
+  if (typeOfBuy === "DESTACAR") {
+    return await handleProductDestacar(sessionObj);
+  }
+
+  throw new Error(`Tipo de compra desconocido: ${typeOfBuy}`);
+}
+
+/**
+ * Manejo de compra de producto
+ */
+async function handleProductPurchase(sessionObj: Stripe.Checkout.Session) {
   const userId = sessionObj.metadata?.buyerId;
   const vendedorId = sessionObj.metadata?.vendedorId;
   const productId = sessionObj.metadata?.productId;
@@ -134,36 +223,33 @@ export async function handleCheckoutCompleted(
   }
 
   try {
-    // calcular montos
-    const amountTotal = Number(productPrice); // viene en centavos
-    const feeAmount = Number(applicationFee) * 100; // acá lo pasamos a centavos
+    const amountTotal = Number(productPrice);
+    const feeAmount = Number(applicationFee) * 100; // centavos
     const vendorAmount = amountTotal - feeAmount;
 
-    // calcular fecha de release (20 días después del pago)
+    // Release en 20 días
     const releaseAt = new Date();
     releaseAt.setDate(releaseAt.getDate() + 20);
 
-    // Cambiar el estado del producto como vendido
+    // Cambiar estado del producto
     await prisma.product.update({
       where: { id: productId },
       data: { status: "vendido" },
     });
 
-    // Obtener la direccion del usuario
+    // Obtener dirección
     const userAddress = await prisma.address.findUnique({
       where: { id: userAddressId },
     });
 
     if (!userAddress) {
-      throw new Error(
-        "Error al crear la orden: no se encontro la dirección del usuario"
-      );
+      throw new Error("No se encontró la dirección del usuario");
     }
 
-    // crear la orden en DB
+    // Crear orden
     const orden = await prisma.orden.create({
       data: {
-        productId: productId,
+        productId,
         buyerId: userId,
         vendorId: vendedorId,
         stripeSessionId: sessionObj.id,
@@ -174,7 +260,6 @@ export async function handleCheckoutCompleted(
         status: "paid",
         releaseAt,
 
-        // Datos del envio
         shippingCountry: userAddress.country,
         shippingCity: userAddress.city,
         shippingPostalCode: userAddress.postalCode,
@@ -188,8 +273,48 @@ export async function handleCheckoutCompleted(
     console.log("Orden creada correctamente:", orden.id);
     return orden;
   } catch (error) {
-    console.error("Error creando orden en DB:", error);
-    throw new Error("Error creando la orden en DB");
+    console.error("Error creando orden:", error);
+    throw error;
+  }
+}
+
+/**
+ * Manejo de destacar producto
+ */
+async function handleProductDestacar(sessionObj: Stripe.Checkout.Session) {
+  const { productId, days } = sessionObj.metadata || {};
+
+  if (!productId || !days) {
+    throw new Error("Error al destacar: faltan datos en metadata");
+  }
+
+  const daysNumber = Number(days);
+  if (!Number.isInteger(daysNumber) || daysNumber <= 0) {
+    throw new Error("Los días deben ser un número entero positivo");
+  }
+
+  try {
+    // Fecha de vencimiento = hoy + days
+    const featuredUntil = new Date();
+    featuredUntil.setDate(featuredUntil.getDate() + daysNumber);
+
+    const product = await prisma.product.update({
+      where: { id: productId },
+      data: {
+        featuredUntil,
+        // se marca cuándo fue destacado
+        featuredAt: new Date(),
+      },
+    });
+
+    console.log(
+      `✅ Producto ${product.id} destacado hasta ${featuredUntil.toISOString()}`
+    );
+
+    return product;
+  } catch (error) {
+    console.error("❌ Error destacando producto:", error);
+    throw error;
   }
 }
 

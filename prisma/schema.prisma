@@ -147,6 +147,7 @@ model Product {
 
   // Campos para destacar Producto
   featuredUntil  DateTime?                   // hasta qué fecha se mantiene destacado
+  featuredAt     DateTime?
 
   // Analíticas
   clicks         Int       @default(0)       // cantidad de clics
@@ -281,6 +282,8 @@ model SearchLog {
   id     String @id @default(uuid())
   query  String @unique
   clicks Int    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 

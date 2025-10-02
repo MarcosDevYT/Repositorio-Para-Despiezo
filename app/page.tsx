@@ -4,7 +4,13 @@ import { RecentProducts } from "@/components/layout/home/RecentProducts";
 import { ProductCategories } from "@/components/layout/home/ProductCategories";
 import { ToolsSection } from "@/components/layout/home/ToolsSection";
 import { Categories } from "@/components/layout/Categories/Categories";
-import { getProductsAction } from "@/actions/sell-actions";
+import {
+  getFeaturedProducts,
+  getLastViewedProducts,
+  getPopularProductsFromSearchLogs,
+  getProductsAction,
+  getRecommendedProductsForUser,
+} from "@/actions/sell-actions";
 import { auth } from "@/auth";
 import { FeaturedProducts } from "@/components/layout/home/FeaturedProducts";
 import { MostSearchProducts } from "@/components/layout/home/MostSearchProducts copy";
@@ -16,6 +22,21 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   const session = await auth();
 
+  // Ultimos productos vistos por el usuario
+  const lastProductView = await getLastViewedProducts(session?.user.id);
+
+  // Productos recomendados para el usuario
+  const recommendedProductsByUser = await getRecommendedProductsForUser(
+    session?.user.id
+  );
+
+  // Productos destacados
+  const featuredProducts = await getFeaturedProducts();
+
+  // Productos mas buscados
+  const popularProducts = await getPopularProductsFromSearchLogs();
+
+  // Productos recientes
   const products = await getProductsAction();
 
   return (
@@ -28,19 +49,19 @@ export default async function Home() {
 
       <div className="container mx-auto px-4 pt-4">
         {/* Ultimos productos vistos */}
-        <HistoryProducts products={products} />
+        <HistoryProducts products={lastProductView} />
 
         {/* Productos recomendados vistos */}
-        <RecommendedProducts products={products} />
+        <RecommendedProducts products={recommendedProductsByUser} />
 
         {/* Categorias */}
         <ProductCategories />
 
         {/* Productos recomendados vistos */}
-        <FeaturedProducts products={products} />
+        <FeaturedProducts products={featuredProducts} />
 
         {/* Productos recomendados vistos */}
-        <MostSearchProducts products={products} />
+        <MostSearchProducts products={popularProducts} />
 
         {/* Herramienta para buscar */}
         <ToolsSection />

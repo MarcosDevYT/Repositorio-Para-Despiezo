@@ -19,7 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ProductType } from "@/types/ProductTypes";
-import { Edit, MoreVertical, Trash } from "lucide-react";
+import { Edit, MoreVertical, Star, Trash } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -93,6 +93,16 @@ export const SellTable = ({
                           >
                             <Edit className="size-4 text-neutral-900" />
                             Editar
+                          </Link>
+                        </DropdownMenuItem>
+
+                        <DropdownMenuItem className="p-0">
+                          <Link
+                            href={`/vendedor/destacar/${product.id}`}
+                            className="p-1.5 px-2 h-9 w-full flex items-center justify-start gap-2 text-neutral-900"
+                          >
+                            <Star className="size-4 text-neutral-900" />
+                            Destacar
                           </Link>
                         </DropdownMenuItem>
 

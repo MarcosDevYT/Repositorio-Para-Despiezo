@@ -210,14 +210,224 @@ export const getProductsAction = async () => {
   }
 };
 
-// Obtener los productos
-// const featuredProducts = await prisma.product.findMany({
-//   where: {
-//     featuredUntil: { gte: new Date() }, // solo los que aún no vencieron
-//   },
-//   take: 10,
-//   orderBy: { featuredUntil: "desc" },
-// });
+// Obtener los últimos productos vistos
+export async function getLastViewedProducts(userId?: string) {
+  if (!userId) return [];
+
+  const views = await prisma.userProductView.findMany({
+    where: { userId },
+    orderBy: { viewedAt: "desc" }, // lo más reciente primero
+    take: 10,
+    include: {
+      product: true, // trae los datos del producto relacionado
+    },
+  });
+
+  if (views.length === 0) {
+    return [];
+  }
+
+  // Si solo te interesa el producto y no la metadata de la vista:
+  return views.map((view) => view.product);
+}
+
+/**
+ * Obtiene los productos destacados vigentes
+ * @param limit Cantidad de productos a traer (default = 10)
+ */
+export async function getFeaturedProducts(limit = 10) {
+  const featured = await prisma.product.findMany({
+    where: {
+      // solo los que aún no vencieron
+      featuredUntil: { gte: new Date() },
+    },
+    // los más recientemente destacados primero
+    orderBy: { featuredAt: "desc" },
+    take: limit,
+  });
+
+  if (featured.length === 0) {
+    return [];
+  }
+
+  return featured;
+}
+
+/**
+ * Obtiene hasta `limit` productos (objetos Product completos) en base a los search logs más populares.
+ * Devuelve un array plano de Product; si no hay resultados devuelve [].
+ */
+export async function getPopularProductsFromSearchLogs(
+  limit = 10
+): Promise<Product[]> {
+  // 1) traer los 5 search logs más populares
+  const logs = await prisma.searchLog.findMany({
+    orderBy: { clicks: "desc" },
+    take: 5,
+  });
+
+  if (!logs || logs.length === 0) return [];
+
+  // ids únicos en orden de relevancia
+  const idsOrdered: string[] = [];
+  const seen = new Set<string>();
+
+  for (const log of logs) {
+    const query = (log.query || "").trim();
+    if (!query) continue;
+
+    const tsQuery = query
+      .split(/\s+/)
+      .map((word) => `${word}:*`)
+      .join(" & ");
+
+    const productsPartial = await prisma.$queryRawUnsafe<any[]>(
+      `
+      SELECT id, "name", "brand", "model", "year", "oemNumber",
+             ts_rank_cd(search_vector, to_tsquery('spanish', $1)) AS rank,
+             GREATEST(
+               similarity(LOWER("name"), LOWER($2)),
+               similarity(LOWER("brand"), LOWER($2)),
+               similarity(LOWER("model"), LOWER($2)),
+               similarity(LOWER("oemNumber"), LOWER($2))
+             ) AS sim
+      FROM "Product"
+      WHERE search_vector @@ to_tsquery('spanish', $1)
+         OR similarity(LOWER("name"), LOWER($2)) > 0.2
+         OR similarity(LOWER("brand"), LOWER($2)) > 0.2
+         OR similarity(LOWER("model"), LOWER($2)) > 0.2
+         OR similarity(LOWER("oemNumber"), LOWER($2)) > 0.2
+      ORDER BY sim DESC, rank DESC
+      LIMIT $3;
+    `,
+      tsQuery,
+      query,
+      limit
+    );
+
+    for (const p of productsPartial) {
+      if (seen.has(p.id)) continue;
+      seen.add(p.id);
+      idsOrdered.push(p.id);
+      if (idsOrdered.length >= limit) break;
+    }
+
+    if (idsOrdered.length >= limit) break;
+  }
+
+  if (idsOrdered.length === 0) return [];
+
+  // 2) Traer los productos completos por ids
+  const fullProducts = await prisma.product.findMany({
+    where: { id: { in: idsOrdered } },
+  });
+
+  // 3) Mapear por id para reordenar según idsOrdered
+  const byId = new Map(fullProducts.map((fp) => [fp.id, fp]));
+
+  // Type guard para filtrar undefined y mantener el tipo Product
+  const orderedProducts = idsOrdered
+    .map((id) => byId.get(id))
+    .filter((p): p is Product => p !== undefined)
+    .slice(0, limit);
+
+  return orderedProducts;
+}
+
+/**
+ * Obtiene hasta 10 productos recomendados para un usuario específico.
+ *
+ * - Si no se pasa userId, devuelve [].
+ * - Usa las últimas búsquedas (`SearchHistory`) y productos vistos (`UserProductView`) del usuario.
+ * - Devuelve productos completos (`Product[]`) en un array plano, máximo 10.
+ * - Si no encuentra productos, devuelve [].
+ */
+export async function getRecommendedProductsForUser(
+  userId?: string,
+  limit = 10
+): Promise<Product[]> {
+  if (!userId) return [];
+
+  // 1) Traer últimas búsquedas del usuario (máx 5)
+  const searchLogs = await prisma.searchHistory.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    take: 5,
+  });
+
+  // 2) Traer últimos productos vistos por el usuario (máx 5)
+  const viewedProducts = await prisma.userProductView.findMany({
+    where: { userId },
+    orderBy: { viewedAt: "desc" },
+    take: 5,
+    select: { productId: true },
+  });
+
+  const queries: string[] = searchLogs
+    .map((s) => s.query.trim())
+    .filter((q) => q);
+  const productIdsFromViews = viewedProducts.map((v) => v.productId);
+
+  if (queries.length === 0 && productIdsFromViews.length === 0) return [];
+
+  const productsSet = new Map<string, Product>();
+
+  // 3) Buscar productos por query (similar a full-text + similitud)
+  for (const query of queries) {
+    const tsQuery = query
+      .split(/\s+/)
+      .map((word) => `${word}:*`)
+      .join(" & ");
+
+    const productsPartial = await prisma.$queryRawUnsafe<any[]>(
+      `
+      SELECT id, "name", "description", "price", "images", "oemNumber",
+             "brand", "model", "year", "tipoDeVehiculo", "condition", "status",
+             "typeOfPiece", "location", "category", "subcategory", "offer", "offerPrice",
+             "weight", "length", "width", "height", "featuredUntil", "featuredAt",
+             "clicks", "vendorId", "createdAt", "updatedAt",
+             ts_rank_cd(search_vector, to_tsquery('spanish', $1)) AS rank,
+             GREATEST(
+               similarity(LOWER("name"), LOWER($2)),
+               similarity(LOWER("brand"), LOWER($2)),
+               similarity(LOWER("model"), LOWER($2)),
+               similarity(LOWER("oemNumber"), LOWER($2))
+             ) AS sim
+      FROM "Product"
+      WHERE search_vector @@ to_tsquery('spanish', $1)
+         OR similarity(LOWER("name"), LOWER($2)) > 0.2
+         OR similarity(LOWER("brand"), LOWER($2)) > 0.2
+         OR similarity(LOWER("model"), LOWER($2)) > 0.2
+         OR similarity(LOWER("oemNumber"), LOWER($2)) > 0.2
+      ORDER BY sim DESC, rank DESC
+      LIMIT $3;
+    `,
+      tsQuery,
+      query,
+      limit
+    );
+
+    for (const p of productsPartial) {
+      if (!productsSet.has(p.id) && productsSet.size < limit) {
+        productsSet.set(p.id, p);
+      }
+    }
+
+    if (productsSet.size >= limit) break;
+  }
+
+  // 4) Agregar productos de vistas si aún no llegamos al límite
+  for (const pid of productIdsFromViews) {
+    if (!productsSet.has(pid) && productsSet.size < limit) {
+      const prod = await prisma.product.findUnique({ where: { id: pid } });
+      if (prod) productsSet.set(prod.id, prod);
+    }
+    if (productsSet.size >= limit) break;
+  }
+
+  // 5) Devolver productos como array completo, máximo `limit`
+  return Array.from(productsSet.values()).slice(0, limit);
+}
 
 /**
  * Funcion para traer los productos por filtro
@@ -473,18 +683,11 @@ export async function registerUserProductView(
   userId: string,
   productId: string
 ) {
-  const existing = await prisma.userProductView.findUnique({
-    where: { userId_productId: { userId, productId } },
-  });
+  if (!userId) return;
 
-  if (existing) {
-    return await prisma.userProductView.update({
-      where: { userId_productId: { userId, productId } },
-      data: { viewedAt: new Date() },
-    });
-  } else {
-    return await prisma.userProductView.create({
-      data: { userId, productId },
-    });
-  }
+  const view = await prisma.userProductView.upsert({
+    where: { userId_productId: { userId, productId } },
+    update: { viewedAt: new Date() }, // si ya existe, actualiza
+    create: { userId, productId }, // si no existe, lo crea
+  });
 }
