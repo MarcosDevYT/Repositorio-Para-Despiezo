@@ -72,7 +72,7 @@ export const DestacarProductIndex = ({ product }: { product: ProductType }) => {
         const res = await destacarProductAction(
           product.id,
           selectedPlan.price,
-          selectedPlan.days
+          selectedPlan.id
         );
 
         if (!res?.url) {

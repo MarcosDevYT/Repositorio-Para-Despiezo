@@ -108,8 +108,8 @@ export const ProductsPageClient = ({ params, initialFilters }: Props) => {
         />
       </div>
 
-      <div className="flex gap-4">
-        <aside className="hidden lg:flex w-72">
+      <div className="flex gap-4 relative">
+        <aside className="hidden lg:flex w-72 h-max sticky top-20 left-0 right-0 ">
           <ProductFilters {...initialFilters} />
         </aside>
 

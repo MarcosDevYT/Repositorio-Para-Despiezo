@@ -59,11 +59,11 @@ Plataforma de compraventa de piezas de automóvil que conecta desguaces, tallere
 
 #### Nuevas Secciones a Implementar
 
-- [ ] **Recomendaciones para ti** - Algoritmo de sugerencias basado en historial
-- [ ] **Lo más buscado** - Carrusel con búsquedas populares
-- [ ] **Recién llegados** - Últimas piezas subidas
-- [ ] **Productos Destacados** - Anuncios de pago con etiqueta "Patrocinado"
-- [ ] Reorganizar "Vistos recientemente" con las nuevas secciones
+- [x] **Recomendaciones para ti** - Algoritmo de sugerencias basado en historial
+- [x] **Lo más buscado** - Carrusel con búsquedas populares
+- [x] **Recién llegados** - Últimas piezas subidas
+- [x] **Productos Destacados** - Anuncios de pago con etiqueta "Patrocinado"
+- [x] Reorganizar "Vistos recientemente" con las nuevas secciones
 
 ### 🔍 2. Sistema de Búsqueda Inteligente
 

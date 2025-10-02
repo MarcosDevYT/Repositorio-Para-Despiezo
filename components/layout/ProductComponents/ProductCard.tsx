@@ -49,6 +49,8 @@ export const ProductCard = ({
     router.push(`/productos/${product.id}`);
   };
 
+  console.log("producto info: ", product);
+
   const conditionColor = getConditionColor(product.condition);
 
   return (
