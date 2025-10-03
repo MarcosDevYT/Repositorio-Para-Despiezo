@@ -7,11 +7,11 @@ import { ProductPagination } from "@/components/layout/ProductComponents/Product
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 import { getProductsByFilterAction } from "@/actions/sell-actions";
-import { Product } from "@prisma/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ProductFilterSheet } from "./ProductFilterSheet";
+import { ProductType } from "@/types/ProductTypes";
 
 type Props = {
   params: {
@@ -53,7 +53,7 @@ export const ProductsPageClient = ({ params, initialFilters }: Props) => {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductType[]>([]);
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(pageNumber);
 
@@ -109,19 +109,19 @@ export const ProductsPageClient = ({ params, initialFilters }: Props) => {
       </div>
 
       <div className="flex gap-4 relative">
-        <aside className="hidden lg:flex w-72 h-max sticky top-20 left-0 right-0 ">
+        <aside className="hidden lg:flex w-72 h-[80vh] sticky top-20 left-0 right-0 ">
           <ProductFilters {...initialFilters} />
         </aside>
 
         <section className="flex flex-col gap-4 flex-1 min-h-screen">
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 pb-4 w-full">
+          <div className="sticky top-20 pt-2 left-0 right-0 lg:static lg:pt-0 bg-slate-50 z-20 flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-gray-200 pb-4 w-full">
             <h1 className="text-xl font-bold">
               {initialFilters.query
                 ? `Resultados para: ${initialFilters.query}`
                 : "Todos los productos"}
             </h1>
 
-            <div className="flex flex-row items-center gap-2">
+            <div className="flex flex-row w-full lg:w-max justify-between items-center gap-2">
               {isPending ? (
                 <Skeleton className="w-28 h-5 rounded-full" />
               ) : (
@@ -141,9 +141,12 @@ export const ProductsPageClient = ({ params, initialFilters }: Props) => {
           </div>
 
           {isPending ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 place-content-center place-items-center gap-4">
               {Array.from({ length: 6 }).map((_, index) => (
-                <Card key={index} className="space-y-4 bg-white p-4 shadow-sm">
+                <Card
+                  key={index}
+                  className="space-y-4 bg-white p-4 shadow-sm w-full max-w-72 h-[410px]"
+                >
                   <Skeleton className="h-60 md:h-64 w-full rounded-lg" />
 
                   <div className="space-y-2">
@@ -165,7 +168,7 @@ export const ProductsPageClient = ({ params, initialFilters }: Props) => {
               ))}
             </div>
           ) : (
-            <article className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <article className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 place-content-center place-items-center gap-4">
               {products.map((product) => (
                 <ProductCard
                   key={product.id}

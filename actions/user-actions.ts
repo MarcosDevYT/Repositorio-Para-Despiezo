@@ -449,6 +449,4 @@ export const searchHistoryCreate = async (formData: FormData) => {
       userId,
     },
   });
-
-  console.log("Busqueda almacenada: ", query);
 };

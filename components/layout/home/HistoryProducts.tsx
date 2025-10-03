@@ -55,8 +55,9 @@ export const HistoryProducts = ({ products }: { products: ProductType[] }) => {
           breakpoints={{
             0: { slidesPerView: 1 },
             768: { slidesPerView: 2 },
-            1280: { slidesPerView: 3 },
-            1536: { slidesPerView: 4 },
+            1024: { slidesPerView: 3 },
+            1280: { slidesPerView: 4 },
+            1536: { slidesPerView: 5 },
           }}
           spaceBetween={0}
           modules={[Navigation]}
@@ -74,8 +75,13 @@ export const HistoryProducts = ({ products }: { products: ProductType[] }) => {
           className="mySwiper"
         >
           {products.map((product) => (
-            <SwiperSlide key={product.id} className="p-2">
-              <ProductCard product={product} isFavorite={product.isFavorite} />
+            <SwiperSlide key={product.id} className="p-2 flex">
+              <div className="w-full h-full flex flex-col items-center ">
+                <ProductCard
+                  product={product}
+                  isFavorite={product.isFavorite}
+                />
+              </div>
             </SwiperSlide>
           ))}
         </Swiper>

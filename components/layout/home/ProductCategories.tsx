@@ -23,7 +23,7 @@ export const ProductCategories = () => {
         <Swiper
           breakpoints={{
             0: { slidesPerView: 1 },
-            400: { slidesPerView: 2 },
+            480: { slidesPerView: 2 },
             768: { slidesPerView: 3 },
           }}
           spaceBetween={0}

@@ -47,17 +47,13 @@ export const createProductAction = async (data: z.infer<typeof sellSchema>) => {
     // Validar los datos del formulario
     const validatedData = sellSchema.parse(data);
 
-    console.log("Datos validados", validatedData);
-
     // Crear el producto
-    const product = await prisma.product.create({
+    await prisma.product.create({
       data: {
         ...validatedData,
         vendorId: session.user.id,
       },
     });
-
-    console.log("Producto creado", product);
 
     return {
       success: "Producto creado correctamente",
@@ -87,8 +83,6 @@ export async function updateProductAction(
 
     // Validar los datos del formulario
     const validatedData = sellSchema.parse(data);
-
-    console.log("Datos validados", validatedData);
 
     await prisma.product.update({
       where: { id },
@@ -187,7 +181,7 @@ export const getProductsAction = async () => {
 
     const products = await prisma.product.findMany({
       where: {
-        status: "publicado", // 🔹 Solo productos publicados
+        status: "publicado",
       },
       take: 10,
       include: {
@@ -198,6 +192,7 @@ export const getProductsAction = async () => {
             }
           : false,
       },
+      orderBy: { createdAt: "desc" },
     });
 
     return products.map((p) => ({
@@ -215,11 +210,24 @@ export async function getLastViewedProducts(userId?: string) {
   if (!userId) return [];
 
   const views = await prisma.userProductView.findMany({
-    where: { userId },
-    orderBy: { viewedAt: "desc" }, // lo más reciente primero
+    where: {
+      userId,
+      product: {
+        status: "publicado",
+      },
+    },
+    // lo más reciente primero
+    orderBy: { viewedAt: "desc" },
     take: 10,
     include: {
-      product: true, // trae los datos del producto relacionado
+      product: {
+        include: {
+          favorites: {
+            where: { userId },
+            select: { id: true },
+          },
+        },
+      },
     },
   });
 
@@ -227,39 +235,56 @@ export async function getLastViewedProducts(userId?: string) {
     return [];
   }
 
-  // Si solo te interesa el producto y no la metadata de la vista:
-  return views.map((view) => view.product);
+  // devolvemos los productos con su estado de favorito
+  return views.map((view) => ({
+    ...view.product,
+    isFavorite: view.product.favorites.length > 0,
+  }));
 }
 
 /**
  * Obtiene los productos destacados vigentes
  * @param limit Cantidad de productos a traer (default = 10)
  */
-export async function getFeaturedProducts(limit = 10) {
+export async function getFeaturedProducts() {
+  const session = await auth();
+  const userId = session?.user?.id;
+
   const featured = await prisma.product.findMany({
     where: {
-      // solo los que aún no vencieron
-      featuredUntil: { gte: new Date() },
+      status: "publicado",
+      featuredUntil: { gte: new Date() }, // solo los vigentes
     },
-    // los más recientemente destacados primero
-    orderBy: { featuredAt: "desc" },
-    take: limit,
+    orderBy: { featuredAt: "desc" }, // prioridad a los más nuevos
+    take: 10,
+    include: {
+      favorites: userId
+        ? {
+            where: { userId },
+            select: { id: true },
+          }
+        : false,
+    },
   });
 
-  if (featured.length === 0) {
-    return [];
-  }
+  if (featured.length === 0) return [];
 
-  return featured;
+  return featured.map((p) => ({
+    ...p,
+    isFavorite: userId ? p.favorites.length > 0 : false,
+  }));
 }
 
 /**
  * Obtiene hasta `limit` productos (objetos Product completos) en base a los search logs más populares.
- * Devuelve un array plano de Product; si no hay resultados devuelve [].
+ * Solo devuelve productos con status = "publicado" y añade `isFavorite`.
  */
 export async function getPopularProductsFromSearchLogs(
   limit = 10
-): Promise<Product[]> {
+): Promise<(Product & { isFavorite: boolean })[]> {
+  const session = await auth();
+  const userId = session?.user?.id;
+
   // 1) traer los 5 search logs más populares
   const logs = await prisma.searchLog.findMany({
     orderBy: { clicks: "desc" },
@@ -268,7 +293,6 @@ export async function getPopularProductsFromSearchLogs(
 
   if (!logs || logs.length === 0) return [];
 
-  // ids únicos en orden de relevancia
   const idsOrdered: string[] = [];
   const seen = new Set<string>();
 
@@ -283,21 +307,24 @@ export async function getPopularProductsFromSearchLogs(
 
     const productsPartial = await prisma.$queryRawUnsafe<any[]>(
       `
-      SELECT id, "name", "brand", "model", "year", "oemNumber",
-             ts_rank_cd(search_vector, to_tsquery('spanish', $1)) AS rank,
-             GREATEST(
-               similarity(LOWER("name"), LOWER($2)),
-               similarity(LOWER("brand"), LOWER($2)),
-               similarity(LOWER("model"), LOWER($2)),
-               similarity(LOWER("oemNumber"), LOWER($2))
-             ) AS sim
+      SELECT id, "name", "brand", "model", "year", "oemNumber"
       FROM "Product"
-      WHERE search_vector @@ to_tsquery('spanish', $1)
-         OR similarity(LOWER("name"), LOWER($2)) > 0.2
-         OR similarity(LOWER("brand"), LOWER($2)) > 0.2
-         OR similarity(LOWER("model"), LOWER($2)) > 0.2
-         OR similarity(LOWER("oemNumber"), LOWER($2)) > 0.2
-      ORDER BY sim DESC, rank DESC
+      WHERE status = 'publicado'
+        AND (
+          search_vector @@ to_tsquery('spanish', $1)
+          OR similarity(LOWER("name"), LOWER($2)) > 0.2
+          OR similarity(LOWER("brand"), LOWER($2)) > 0.2
+          OR similarity(LOWER("model"), LOWER($2)) > 0.2
+          OR similarity(LOWER("oemNumber"), LOWER($2)) > 0.2
+        )
+      ORDER BY
+        GREATEST(
+          similarity(LOWER("name"), LOWER($2)),
+          similarity(LOWER("brand"), LOWER($2)),
+          similarity(LOWER("model"), LOWER($2)),
+          similarity(LOWER("oemNumber"), LOWER($2))
+        ) DESC,
+        ts_rank_cd(search_vector, to_tsquery('spanish', $1)) DESC
       LIMIT $3;
     `,
       tsQuery,
@@ -317,35 +344,38 @@ export async function getPopularProductsFromSearchLogs(
 
   if (idsOrdered.length === 0) return [];
 
-  // 2) Traer los productos completos por ids
+  // 2) Traer los productos completos con favoritos
   const fullProducts = await prisma.product.findMany({
-    where: { id: { in: idsOrdered } },
+    where: { id: { in: idsOrdered }, status: "publicado" },
+    include: {
+      favorites: userId ? { where: { userId }, select: { id: true } } : false,
+    },
   });
 
-  // 3) Mapear por id para reordenar según idsOrdered
-  const byId = new Map(fullProducts.map((fp) => [fp.id, fp]));
+  const byId = new Map(
+    fullProducts.map((fp) => [
+      fp.id,
+      {
+        ...fp,
+        isFavorite: userId ? fp.favorites.length > 0 : false,
+      },
+    ])
+  );
 
-  // Type guard para filtrar undefined y mantener el tipo Product
-  const orderedProducts = idsOrdered
+  return idsOrdered
     .map((id) => byId.get(id))
-    .filter((p): p is Product => p !== undefined)
+    .filter((p): p is Product & { isFavorite: boolean } => !!p)
     .slice(0, limit);
-
-  return orderedProducts;
 }
 
 /**
  * Obtiene hasta 10 productos recomendados para un usuario específico.
- *
- * - Si no se pasa userId, devuelve [].
- * - Usa las últimas búsquedas (`SearchHistory`) y productos vistos (`UserProductView`) del usuario.
- * - Devuelve productos completos (`Product[]`) en un array plano, máximo 10.
- * - Si no encuentra productos, devuelve [].
+ * Solo devuelve productos con status = "publicado" y añade `isFavorite`.
  */
 export async function getRecommendedProductsForUser(
   userId?: string,
   limit = 10
-): Promise<Product[]> {
+): Promise<(Product & { isFavorite: boolean })[]> {
   if (!userId) return [];
 
   // 1) Traer últimas búsquedas del usuario (máx 5)
@@ -355,7 +385,7 @@ export async function getRecommendedProductsForUser(
     take: 5,
   });
 
-  // 2) Traer últimos productos vistos por el usuario (máx 5)
+  // 2) Traer últimos productos vistos (máx 5)
   const viewedProducts = await prisma.userProductView.findMany({
     where: { userId },
     orderBy: { viewedAt: "desc" },
@@ -370,9 +400,10 @@ export async function getRecommendedProductsForUser(
 
   if (queries.length === 0 && productIdsFromViews.length === 0) return [];
 
-  const productsSet = new Map<string, Product>();
+  const idsOrdered: string[] = [];
+  const seen = new Set<string>();
 
-  // 3) Buscar productos por query (similar a full-text + similitud)
+  // 3) Buscar productos por query
   for (const query of queries) {
     const tsQuery = query
       .split(/\s+/)
@@ -381,25 +412,24 @@ export async function getRecommendedProductsForUser(
 
     const productsPartial = await prisma.$queryRawUnsafe<any[]>(
       `
-      SELECT id, "name", "description", "price", "images", "oemNumber",
-             "brand", "model", "year", "tipoDeVehiculo", "condition", "status",
-             "typeOfPiece", "location", "category", "subcategory", "offer", "offerPrice",
-             "weight", "length", "width", "height", "featuredUntil", "featuredAt",
-             "clicks", "vendorId", "createdAt", "updatedAt",
-             ts_rank_cd(search_vector, to_tsquery('spanish', $1)) AS rank,
-             GREATEST(
-               similarity(LOWER("name"), LOWER($2)),
-               similarity(LOWER("brand"), LOWER($2)),
-               similarity(LOWER("model"), LOWER($2)),
-               similarity(LOWER("oemNumber"), LOWER($2))
-             ) AS sim
+      SELECT id
       FROM "Product"
-      WHERE search_vector @@ to_tsquery('spanish', $1)
-         OR similarity(LOWER("name"), LOWER($2)) > 0.2
-         OR similarity(LOWER("brand"), LOWER($2)) > 0.2
-         OR similarity(LOWER("model"), LOWER($2)) > 0.2
-         OR similarity(LOWER("oemNumber"), LOWER($2)) > 0.2
-      ORDER BY sim DESC, rank DESC
+      WHERE status = 'publicado'
+        AND (
+          search_vector @@ to_tsquery('spanish', $1)
+          OR similarity(LOWER("name"), LOWER($2)) > 0.2
+          OR similarity(LOWER("brand"), LOWER($2)) > 0.2
+          OR similarity(LOWER("model"), LOWER($2)) > 0.2
+          OR similarity(LOWER("oemNumber"), LOWER($2)) > 0.2
+        )
+      ORDER BY
+        GREATEST(
+          similarity(LOWER("name"), LOWER($2)),
+          similarity(LOWER("brand"), LOWER($2)),
+          similarity(LOWER("model"), LOWER($2)),
+          similarity(LOWER("oemNumber"), LOWER($2))
+        ) DESC,
+        ts_rank_cd(search_vector, to_tsquery('spanish', $1)) DESC
       LIMIT $3;
     `,
       tsQuery,
@@ -408,25 +438,45 @@ export async function getRecommendedProductsForUser(
     );
 
     for (const p of productsPartial) {
-      if (!productsSet.has(p.id) && productsSet.size < limit) {
-        productsSet.set(p.id, p);
-      }
+      if (seen.has(p.id)) continue;
+      seen.add(p.id);
+      idsOrdered.push(p.id);
+      if (idsOrdered.length >= limit) break;
     }
 
-    if (productsSet.size >= limit) break;
+    if (idsOrdered.length >= limit) break;
   }
 
-  // 4) Agregar productos de vistas si aún no llegamos al límite
+  // 4) Agregar productos vistos si falta
   for (const pid of productIdsFromViews) {
-    if (!productsSet.has(pid) && productsSet.size < limit) {
-      const prod = await prisma.product.findUnique({ where: { id: pid } });
-      if (prod) productsSet.set(prod.id, prod);
+    if (!seen.has(pid) && idsOrdered.length < limit) {
+      idsOrdered.push(pid);
+      seen.add(pid);
     }
-    if (productsSet.size >= limit) break;
+    if (idsOrdered.length >= limit) break;
   }
 
-  // 5) Devolver productos como array completo, máximo `limit`
-  return Array.from(productsSet.values()).slice(0, limit);
+  if (idsOrdered.length === 0) return [];
+
+  // 5) Traer productos completos con favoritos
+  const fullProducts = await prisma.product.findMany({
+    where: { id: { in: idsOrdered }, status: "publicado" },
+    include: {
+      favorites: { where: { userId }, select: { id: true } },
+    },
+  });
+
+  const byId = new Map(
+    fullProducts.map((fp) => [
+      fp.id,
+      { ...fp, isFavorite: fp.favorites.length > 0 },
+    ])
+  );
+
+  return idsOrdered
+    .map((id) => byId.get(id))
+    .filter((p): p is Product & { isFavorite: boolean } => !!p)
+    .slice(0, limit);
 }
 
 /**
@@ -450,7 +500,9 @@ export const getProductsByFilterAction = async (filters: ProductFilter) => {
       status: "publicado",
     };
 
-    // Búsqueda por texto en nombre o descripción
+    // --------------------------
+    // Filtros dinámicos
+    // --------------------------
     if (filters.query) {
       where.OR = [
         { name: { contains: filters.query, mode: "insensitive" } },
@@ -461,7 +513,6 @@ export const getProductsByFilterAction = async (filters: ProductFilter) => {
       ];
     }
 
-    // Búsqueda combinada categoría + subcategoría
     if (filters.categoria && filters.subcategoria) {
       where.AND = [
         { category: filters.categoria },
@@ -476,15 +527,12 @@ export const getProductsByFilterAction = async (filters: ProductFilter) => {
     if (filters.oem) where.oemNumber = filters.oem;
     if (filters.marca)
       where.brand = { contains: filters.marca, mode: "insensitive" };
-
     if (filters.modelo)
       where.model = { contains: filters.modelo, mode: "insensitive" };
-
     if (filters.estado) where.condition = filters.estado;
     if (filters.año) where.year = filters.año;
     if (filters.tipoDeVehiculo) where.tipoDeVehiculo = filters.tipoDeVehiculo;
 
-    // Filtrado por precio (recordar que price es string)
     if (filters.priceMin !== undefined || filters.priceMax !== undefined) {
       where.OR = [
         {
@@ -512,20 +560,46 @@ export const getProductsByFilterAction = async (filters: ProductFilter) => {
       ];
     }
 
+    // --------------------------
     // Conteo total para paginación
+    // --------------------------
     const total = await prisma.product.count({ where });
 
-    // Productos con paginación y orden
-    const products = await prisma.product.findMany({
+    // --------------------------
+    // Traer productos sin ordenar por destacado aún
+    // --------------------------
+    const productsRaw = await prisma.product.findMany({
       where,
       skip: (page - 1) * limit,
       take: limit,
-      orderBy: { [orderBy]: orderDirection },
       include: {
         favorites: userId ? { where: { userId }, select: { id: true } } : false,
       },
     });
 
+    const now = new Date();
+
+    // --------------------------
+    // Ordenar en memoria: destacados vigentes primero
+    // --------------------------
+    const products = productsRaw.sort((a, b) => {
+      const aFeatured = a.featuredUntil && a.featuredUntil >= now ? 1 : 0;
+      const bFeatured = b.featuredUntil && b.featuredUntil >= now ? 1 : 0;
+
+      if (aFeatured !== bFeatured) return bFeatured - aFeatured; // destacados vigentes arriba
+
+      // Dentro del mismo grupo, orden por tu campo
+      const aValue = a[orderBy];
+      const bValue = b[orderBy];
+
+      if (aValue === bValue) return 0;
+      if (orderDirection === "asc") return aValue > bValue ? 1 : -1;
+      return aValue < bValue ? 1 : -1;
+    });
+
+    // --------------------------
+    // Devolver productos con estado de favorito
+    // --------------------------
     return {
       total,
       page,

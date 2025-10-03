@@ -168,8 +168,6 @@ export async function createEtiqueta(parcelData: ParcelType) {
     // Obtener el JSON de la respuesta
     const data: SendcloudResponse = await response.json();
 
-    console.log("Etiqueta respuesta JSON: ", data);
-
     // Actualizar la orden con la info de la etiqueta
     await prisma.orden.update({
       where: { id: parcelData.parcel.order_number },

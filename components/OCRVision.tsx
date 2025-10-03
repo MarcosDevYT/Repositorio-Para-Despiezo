@@ -63,7 +63,7 @@ export const OCRVision = () => {
   };
 
   return (
-    <Card className="w-[290px] md:w-full group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-blue-500/5 to-blue-500/10 border border-blue-500/20 gap-2">
+    <Card className="w-full max-w-[310px] md:max-w-lg group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-blue-500/5 to-blue-500/10 border border-blue-500/20 gap-2">
       <CardHeader className="text-center pb-4">
         <div className="w-16 h-16 mx-auto mb-4 bg-blue-500/10 rounded-full flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
           <ScanLine className="h-8 w-8 text-blue-500" />

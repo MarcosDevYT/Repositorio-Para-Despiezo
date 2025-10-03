@@ -33,13 +33,13 @@ export const ProductThumbnails = ({ product }: { product: ProductType }) => {
     <div className="flex flex-col gap-4 w-full">
       {/* Modal */}
       {openImagesModal && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/90">
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80">
           {/* Botón de cerrar */}
           <button
             onClick={handleCloseModal}
-            className="absolute top-4 right-4 z-50 text-white p-2 rounded-full bg-black/50 hover:bg-black"
+            className="cursor-pointer absolute top-4 right-4 z-50 text-white p-2 rounded-full bg-black "
           >
-            <X size={24} />
+            <X size={32} />
           </button>
 
           {/* Swiper fullscreen */}
@@ -78,7 +78,7 @@ export const ProductThumbnails = ({ product }: { product: ProductType }) => {
         onSwiper={(swiper) => (swiperRef.current = swiper)}
         spaceBetween={20}
         loop
-        className="rounded-lg w-full border border-border h-[400px] md:h-[500px]"
+        className="rounded-lg w-full border border-border h-[400px] md:h-[500px] bg-white"
       >
         {product.images.map((image, index) => (
           <SwiperSlide

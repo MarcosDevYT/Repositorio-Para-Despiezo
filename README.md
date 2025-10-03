@@ -78,9 +78,10 @@ Plataforma de compraventa de piezas de automóvil que conecta desguaces, tallere
 
 #### Filtros Persistentes
 
-- [ ] Filtros "sticky" que permanecen visibles al hacer scroll
-- [ ] Mantener estado al cambiar páginas/ordenar
-- [ ] Componente pegajoso en lateral (desktop) y barra horizontal (móvil)
+- [x] Filtros "sticky" que permanecen visibles al hacer scroll
+- [x] Mantener estado al cambiar páginas/ordenar
+- [x] Componente pegajoso en lateral (desktop) y barra horizontal (móvil)
+- [x] Hacer en pantallas chicas el filtro sticky para poder abrir el sheet
 
 ### 🏷️ 3. Badges de Confianza y Métricas
 
@@ -91,7 +92,7 @@ Plataforma de compraventa de piezas de automóvil que conecta desguaces, tallere
 - [ ] Badge "Envío rápido" (basado en métricas reales)
 - [ ] Badge "Responde rápido" (tiempo de respuesta en chat)
 - [ ] Badge "Garantía de devolución"
-- [ ] Botón "Chat/Preguntar" directo en tarjeta
+- [x] Botón "Chat/Preguntar" directo en tarjeta
 
 #### Datos Necesarios
 
@@ -148,9 +149,10 @@ reference_validations:
 
 #### Productos Destacados
 
-- [ ] Sistema de anuncios de pago
-- [ ] Etiquetas "Destacado/Patrocinado"
-- [ ] Posicionamiento preferente en resultados
+- [x] Sistema de anuncios de pago
+- [x] Etiquetas "Destacado/Patrocinado"
+- [x] Posicionamiento preferente en resultados
+- [ ] Identificador de destacado
 
 #### Kits de Productos
 

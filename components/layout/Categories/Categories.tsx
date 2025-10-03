@@ -154,7 +154,7 @@ export const Categories = ({ userId }: { userId?: string }) => {
       {/* CategoriesSidebar */}
       <CategoriesSidebar open={isSidebarOpen} onOpenChange={setIsSidebarOpen} />
 
-      <div className="flex items-center gap-2 md:hidden">
+      <div className="flex items-center gap-2 w-full md:hidden">
         {/* <SearchProducts /> */}
         <SearchIndex />
 

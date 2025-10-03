@@ -314,8 +314,8 @@ export const ProductFilters = ({
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
+    <Card className="w-full h-full gap-0">
+      <CardHeader className="border-b [.border-b]:pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">Filtros</CardTitle>
           {hayFiltros && (
@@ -330,7 +330,7 @@ export const ProductFilters = ({
           )}
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 filter-class overflow-y-auto pt-4">
         {/* Categoría */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">Categoría</Label>

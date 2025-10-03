@@ -270,7 +270,6 @@ async function handleProductPurchase(sessionObj: Stripe.Checkout.Session) {
       },
     });
 
-    console.log("Orden creada correctamente:", orden.id);
     return orden;
   } catch (error) {
     console.error("Error creando orden:", error);

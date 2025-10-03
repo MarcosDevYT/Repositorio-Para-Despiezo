@@ -49,36 +49,20 @@ export const ProductCard = ({
     router.push(`/productos/${product.id}`);
   };
 
-  console.log("producto info: ", product);
-
   const conditionColor = getConditionColor(product.condition);
 
   return (
-    <Card className="w-full rounded-2xl pb-0 gap-0 border border-transparent shadow-sm overflow-hidden bg-white">
+    <Card className="w-full max-w-72 h-[410px] rounded-2xl py-0 gap-0 border border-transparent shadow-sm overflow-hidden bg-white">
       {/* Imagen + acciones */}
       <CardHeader className="relative">
         {product.offer && (
-          <span className="absolute top-0 left-3 z-10 px-3 py-1 text-xs font-medium rounded-full bg-red-500/90 text-white shadow-md">
+          <span className="absolute top-3 right-3 z-10 px-3 py-1 text-xs font-medium rounded-full bg-red-500/90 text-white shadow-md">
             Oferta
           </span>
         )}
 
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleFavorite}
-          disabled={isPending}
-          className="absolute -top-2 right-3 z-10 rounded-full backdrop-blur-md shadow-sm bg-white hover:bg-white"
-        >
-          <Heart
-            className={`size-5 transition-colors 
-              ${isPending ? "animate-pulse" : ""}
-              ${isFavorite ? "fill-red-500 text-red-500" : "text-gray-600"}`}
-          />
-        </Button>
-
         <div
-          className="relative h-60 md:h-64 rounded-lg cursor-pointer"
+          className="relative h-40 rounded-lg cursor-pointer"
           onClick={handleClickProduct}
         >
           <Image
@@ -86,35 +70,42 @@ export const ProductCard = ({
             alt={product.name}
             width={500}
             height={500}
-            className="object-contain w-full h-full "
+            className="object-contain w-full h-full"
           />
         </div>
       </CardHeader>
 
       {/* Contenido */}
-      <CardContent className="p-5 space-y-4">
+      <CardContent className="p-4 space-y-3 h-full flex flex-col justify-between">
         {/* Nombre y rating */}
-        <div className="flex flex-col gap-1 justify-between items-start">
-          <div className="flex items-center justify-between w-full">
-            <div className="flex items-center text-yellow-500 text-sm">
-              <Star className="size-4 fill-yellow-500" />
-              <span className="ml-1 font-medium">5.0</span>
-            </div>
-
-            <Badge
-              variant="outline"
-              className={`${conditionColor} rounded-full text-xs px-3`}
-            >
-              {product.condition}
-            </Badge>
-          </div>
-          <h3 className="font-semibold text-lg text-gray-900 line-clamp-2">
+        <div className="flex flex-row items-center justify-between gap-4">
+          <h3 className="font-semibold text-gray-900 line-clamp-2">
             {product.name}
           </h3>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleFavorite}
+            disabled={isPending}
+            className="rounded-full backdrop-blur-md shadow-sm bg-white hover:bg-white"
+          >
+            <Heart
+              className={`size-5 transition-colors 
+              ${isPending ? "animate-pulse" : ""}
+              ${isFavorite ? "fill-red-500 text-red-500" : "text-gray-600"}`}
+            />
+          </Button>
         </div>
 
         {/* Badges técnicos */}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1">
+          <Badge
+            variant="outline"
+            className={`${conditionColor} rounded-full text-xs px-3 capitalize`}
+          >
+            {product.condition}
+          </Badge>
           <Badge variant="outline" className="rounded-full text-xs px-3">
             {product.brand}
           </Badge>
@@ -133,12 +124,6 @@ export const ProductCard = ({
             <span className="line-clamp-1">
               Numero OEM: {product.oemNumber}
             </span>
-          </div>
-
-          {/* Ubicación */}
-          <div className="flex items-center">
-            <MapPin className="size-4 min-w-4 mr-1" />
-            <span className="line-clamp-1">{product.location}</span>
           </div>
         </div>
 

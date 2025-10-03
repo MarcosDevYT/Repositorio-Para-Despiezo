@@ -175,7 +175,7 @@ export const SearchIndex = ({ userId }: { userId?: string }) => {
   }, []);
 
   return (
-    <div ref={wrapperRef} className="relative">
+    <div ref={wrapperRef} className="relative w-full">
       <div className="flex items-center w-full relative z-10">
         <input
           type="text"

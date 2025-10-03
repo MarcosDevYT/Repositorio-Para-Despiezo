@@ -17,6 +17,7 @@ import {
   Factory,
   Circle,
   Loader2,
+  Truck,
 } from "lucide-react";
 import { useState, useTransition } from "react";
 import { toggleFavoriteAction } from "@/actions/user-actions";
@@ -97,18 +98,18 @@ export const ProductLayout = ({
   const hasOffer = product.offer && product.offerPrice;
 
   return (
-    <section className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-12">
+    <section className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-12">
       {/* Gallery & Info */}
       <article className="relative flex flex-col gap-6 w-full lg:w-3/5">
         <Button
           size="icon"
           variant="outline"
-          className="absolute top-2 right-2 rounded-full"
+          className="z-10 absolute top-2 right-2 rounded-full size-10"
           disabled={isFavoritePending}
           onClick={handleFavorite}
         >
           <Heart
-            className={`size-5 ${isFavorite ? "fill-current text-red-500" : ""}`}
+            className={`size-6 ${isFavorite ? "fill-current text-red-500" : ""}`}
           />
         </Button>
 
@@ -206,53 +207,50 @@ export const ProductLayout = ({
 
         {/* Seller Info */}
         <Card>
-          <CardHeader>
+          <CardHeader className="gap-4">
             <div className="flex items-start justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <Link href={`/tienda/${vendedor.id}`}>
-                  <Avatar className="size-12">
-                    <AvatarImage
-                      className="object-cover"
-                      src={vendedor.image || ""}
-                    />
-                    <AvatarFallback>{vendedor.name?.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                </Link>
-                <div>
-                  <Link href={`/tienda/${vendedor.id}`}>
-                    <CardTitle className="text-lg line-clamp-1">
-                      {vendedor.name}
-                    </CardTitle>
-                  </Link>
-                  <Link href={`/tienda/${vendedor.id}`}>
-                    <CardDescription className="text-base text-gray-600 line-clamp-1">
-                      {vendedor.businessName}
-                    </CardDescription>
-                  </Link>
-                  <p className="text-sm text-muted-foreground">
-                    Vendedor desde{" "}
-                    {new Date(vendedor.createdAt).toLocaleDateString("es-AR", {
-                      year: "numeric",
-                      month: "short",
-                    })}
-                  </p>
-                </div>
-              </div>
+              <Button className="cursor-auto font-semibold rounded-full border border-blue-400 text-blue-600 bg-blue-50 hover:bg-blue-50">
+                <Truck className="size-5" /> Envío rápido
+              </Button>
 
               <Button
                 onClick={handleInitChat}
                 disabled={isPending}
                 variant="outline"
-                className="w-24 rounded-full border-green-500 text-green-600 hover:text-green-700 hover:bg-green-50"
+                className="w-40 rounded-full border-green-500 text-green-600 hover:text-green-700 hover:bg-green-50"
               >
                 {isPending ? (
                   <Loader2 className="size-4 animate-spin" />
                 ) : (
                   <>
-                    <MessageCircle className="size-5" /> Chat
+                    <MessageCircle className="size-5" /> Chat/Preguntar
                   </>
                 )}
               </Button>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Link href={`/tienda/${vendedor.id}`}>
+                <Avatar className="size-12">
+                  <AvatarImage
+                    className="object-cover"
+                    src={vendedor.image || ""}
+                  />
+                  <AvatarFallback>{vendedor.name?.charAt(0)}</AvatarFallback>
+                </Avatar>
+              </Link>
+              <div>
+                <Link href={`/tienda/${vendedor.id}`}>
+                  <CardTitle className="text-lg line-clamp-1">
+                    {vendedor.name}
+                  </CardTitle>
+                </Link>
+                <Link href={`/tienda/${vendedor.id}`}>
+                  <CardDescription className="text-base text-gray-600 line-clamp-1">
+                    {vendedor.businessName}
+                  </CardDescription>
+                </Link>
+              </div>
             </div>
           </CardHeader>
 
@@ -261,6 +259,17 @@ export const ProductLayout = ({
               <Star className="size-5 text-yellow-500 fill-yellow-500" />
               <span className="font-medium">5.0</span>
               <span className="text-muted-foreground">(16 reseñas)</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Calendar className="size-5 text-primary" />
+              <span className="font-medium">
+                Vendedor desde{" "}
+                {new Date(vendedor.createdAt).toLocaleDateString("es-AR", {
+                  year: "numeric",
+                  month: "short",
+                })}
+              </span>
             </div>
 
             {product.location && (
