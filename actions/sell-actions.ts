@@ -35,16 +35,36 @@ type ProductFilter = {
 // Crear un producto
 export const createProductAction = async (data: z.infer<typeof sellSchema>) => {
   try {
-    // Verificar si el usuario está autenticado
     const session = await auth();
 
     if (!session?.user) {
+      return { error: "No estás autenticado" };
+    }
+
+    // Traer al usuario con sus productos
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      include: { products: true },
+    });
+
+    if (!user) {
+      return { error: "Usuario no encontrado" };
+    }
+
+    // Filtrar solo productos que NO estén vendidos
+    const activeProducts = user.products.filter(
+      (product) => product.status !== "vendido"
+    );
+
+    // Si no es pro y ya tiene 40 productos activos → error
+    if (!user.pro && activeProducts.length >= 40) {
       return {
-        error: "No estás autenticado",
+        error:
+          "Has alcanzado el límite de 40 productos. Actualiza a Pro para publicar más.",
       };
     }
 
-    // Validar los datos del formulario
+    // Validar datos
     const validatedData = sellSchema.parse(data);
 
     // Crear el producto
@@ -55,14 +75,10 @@ export const createProductAction = async (data: z.infer<typeof sellSchema>) => {
       },
     });
 
-    return {
-      success: "Producto creado correctamente",
-    };
+    return { success: "Producto creado correctamente" };
   } catch (error) {
     console.log(error);
-    return {
-      error: "Error al crear el producto",
-    };
+    return { error: "Error al crear el producto" };
   }
 };
 
@@ -72,16 +88,29 @@ export async function updateProductAction(
   data: z.infer<typeof sellSchema>
 ) {
   try {
-    // Verificar si el usuario está autenticado
     const session = await auth();
 
     if (!session?.user) {
-      return {
-        error: "No estás autenticado",
-      };
+      return { error: "No estás autenticado" };
     }
 
-    // Validar los datos del formulario
+    const product = await prisma.product.findUnique({
+      where: { id },
+    });
+
+    if (!product) {
+      return { error: "El producto no existe" };
+    }
+
+    if (product.vendorId !== session.user.id) {
+      return { error: "No tienes permisos para editar este producto" };
+    }
+
+    // Si el producto ya está vendido → no se puede editar
+    if (product.status === "vendido") {
+      return { error: "No puedes editar un producto vendido" };
+    }
+
     const validatedData = sellSchema.parse(data);
 
     await prisma.product.update({
@@ -100,31 +129,27 @@ export async function updateProductAction(
 // Eliminar un producto
 export async function deleteProductAction(id: string) {
   try {
-    // Verificar si el usuario está autenticado
     const session = await auth();
 
     if (!session?.user) {
-      return {
-        error: "No estás autenticado",
-      };
+      return { error: "No estás autenticado" };
     }
 
-    // Verificar si el producto existe
     const product = await prisma.product.findUnique({
       where: { id },
     });
 
     if (!product) {
-      return {
-        error: "El producto no existe",
-      };
+      return { error: "El producto no existe" };
     }
 
-    // Verificar si el usuario es el dueño del producto
     if (product.vendorId !== session.user.id) {
-      return {
-        error: "No tienes permisos para eliminar este producto",
-      };
+      return { error: "No tienes permisos para eliminar este producto" };
+    }
+
+    // Si el producto ya está vendido → no se puede eliminar
+    if (product.status === "vendido") {
+      return { error: "No puedes eliminar un producto vendido" };
     }
 
     await prisma.product.delete({

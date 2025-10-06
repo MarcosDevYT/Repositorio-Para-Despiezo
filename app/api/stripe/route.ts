@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import type Stripe from "stripe";
-import { handleCheckoutCompleted } from "@/actions/buy-actions";
+import {
+  handleCheckoutCompleted,
+  handleCustomerSubscriptionDeleted,
+} from "@/actions/buy-actions";
 import { updateStripeConnectStatusAction } from "@/actions/user-actions";
 
 export async function POST(req: Request) {
@@ -32,9 +35,14 @@ export async function POST(req: Request) {
   try {
     switch (event.type) {
       case "checkout.session.completed": {
-        const session = event.data.object as Stripe.Checkout.Session;
+        // const stripeSession = event.data.object as Stripe.Checkout.Session
+        const session = await stripe.checkout.sessions.retrieve(
+          event.data.object.id,
+          { expand: ["line_items"] }
+        );
+        const stripeSession = session as Stripe.Checkout.Session;
 
-        const orden = await handleCheckoutCompleted(session);
+        const orden = await handleCheckoutCompleted(stripeSession);
 
         console.log(orden);
 
@@ -45,7 +53,9 @@ export async function POST(req: Request) {
         break;
       }
       case "customer.subscription.deleted": {
-        console.log("customer.subscription.deleted");
+        const customer = event.data.object as Stripe.Customer.Shipping;
+
+        handleCustomerSubscriptionDeleted(customer);
         break;
       }
       case "customer.subscription.updated":

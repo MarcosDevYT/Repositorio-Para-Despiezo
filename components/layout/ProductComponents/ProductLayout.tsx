@@ -36,6 +36,9 @@ import {
 } from "@/components/ui/card";
 import { User } from "@prisma/client";
 import Link from "next/link";
+import Image from "next/image";
+import { Session } from "next-auth";
+import { differenceInDays, differenceInHours } from "date-fns";
 
 function Detail({
   icon: Icon,
@@ -59,9 +62,11 @@ function Detail({
 export const ProductLayout = ({
   product,
   vendedor,
+  session,
 }: {
   product: ProductType;
   vendedor: User;
+  session?: Session | null;
 }) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -101,6 +106,18 @@ export const ProductLayout = ({
     <section className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-12">
       {/* Gallery & Info */}
       <article className="relative flex flex-col gap-6 w-full lg:w-3/5">
+        {product.featuredUntil &&
+          new Date(product.featuredUntil) > new Date() && (
+            <div className="absolute top-3 left-3 z-10 p-0.5 rounded-full shadow-md bg-white">
+              <Image
+                src={"/destacado-icon-green.png"}
+                alt="Icono de Patrocinado"
+                width={48}
+                height={48}
+              />
+            </div>
+          )}
+
         <Button
           size="icon"
           variant="outline"
@@ -195,13 +212,61 @@ export const ProductLayout = ({
           <CardContent className="flex flex-col gap-3">
             <Button
               asChild
-              className="w-full rounded-full bg-blue-500 text-white hover:bg-blue-600"
+              className="text-base w-full rounded-full bg-blue-500 text-white hover:bg-blue-600"
             >
               <Link href={`/productos/${product.id}/checkout`}>
-                <ShoppingCart className="size-5" />
+                <ShoppingCart className="size-6" />
                 Comprar ahora
               </Link>
             </Button>
+
+            {session?.user.id === vendedor.id && (
+              <div className="flex flex-col gap-2">
+                {product.featuredUntil &&
+                new Date(product.featuredUntil) > new Date() ? (
+                  <div className="flex flex-row gap-2 w-full">
+                    {/* Botón informativo: días u horas restantes */}
+                    <Button className="w-1/2 rounded-full cursor-default">
+                      <Star className="w-4 h-4" />
+                      {differenceInDays(
+                        new Date(product.featuredUntil),
+                        new Date()
+                      ) >= 1
+                        ? `Destacado por ${differenceInDays(
+                            new Date(product.featuredUntil),
+                            new Date()
+                          )} días`
+                        : `Destacado por ${differenceInHours(
+                            new Date(product.featuredUntil),
+                            new Date()
+                          )} horas`}
+                    </Button>
+
+                    {/* Botón para extender destacado */}
+                    <Button
+                      asChild
+                      className="w-1/2 rounded-full bg-green-500 text-white hover:bg-green-600"
+                    >
+                      <Link href={`/vendedor/destacar/${product.id}`}>
+                        <Star className="w-4 h-4" />
+                        Extender Destacado
+                      </Link>
+                    </Button>
+                  </div>
+                ) : (
+                  // Botón normal para destacar si no está destacado
+                  <Button
+                    asChild
+                    className="w-full rounded-full bg-blue-500 text-white hover:bg-blue-600"
+                  >
+                    <Link href={`/vendedor/destacar/${product.id}`}>
+                      <Star className="w-4 h-4" />
+                      Destacar
+                    </Link>
+                  </Button>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
 

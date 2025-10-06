@@ -217,30 +217,34 @@ export const ProductCheckout = ({
                       </div>
 
                       <div
-                        className="bg-white rounded-xl border border-border p-3 flex flex-col"
+                        className="bg-white rounded-xl border border-border p-3 flex flex-col h-44"
                         onClick={() => setCheckoutAddress(address.id)}
                       >
-                        <div>
+                        <div className="flex flex-col justify-between h-full">
                           <h2 className="text-xl font-semibold mb-2">
                             Información de envio
                           </h2>
 
-                          <div className="text-base font-semibold">
-                            Pais: {address?.country}
+                          <div className="space-y-1">
+                            <div className="text-base font-semibold">
+                              Pais: {address?.country}
+                            </div>
+
+                            <p className="text-sm">
+                              Dirrección: {address?.city}, {address?.street}{" "}
+                              {address?.number}
+                            </p>
+                            <p className="text-sm">Telefono: {phoneNumber}</p>
+                            <p className="text-sm">
+                              Codigo Postal: {address?.postalCode}
+                            </p>
                           </div>
-
-                          <p className="text-sm">
-                            Dirrección: {address?.city}, {address?.street}{" "}
-                            {address?.number}
-                          </p>
-                          <p className="text-sm">Telefono: {phoneNumber}</p>
-                          <p className="text-sm">
-                            Codigo Postal: {address?.postalCode}
-                          </p>
-                        </div>
-
-                        <div className="flex w-full items-end justify-end">
-                          <RadioGroupItem value={address.id} id={address.id} />
+                          <div className="absolute bottom-2 right-3 flex w-full items-end justify-end">
+                            <RadioGroupItem
+                              value={address.id}
+                              id={address.id}
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -248,7 +252,7 @@ export const ProductCheckout = ({
 
                 <div
                   onClick={() => setShowForm(true)}
-                  className="bg-accent/50 hover:bg-accent cursor-pointer transition-colors rounded-xl border border-border p-3 flex flex-col justify-center items-center gap-2 text-gray-600"
+                  className="h-44 bg-accent/50 hover:bg-accent cursor-pointer transition-colors rounded-xl border border-border p-3 flex flex-col justify-center items-center gap-2 text-gray-600"
                 >
                   <p className="text-lg">Añade otra dirección</p>
                   <PlusIcon className="size-6" />

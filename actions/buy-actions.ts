@@ -1,9 +1,11 @@
 "use server";
 
 import { auth } from "@/auth";
+import { stripePlans } from "@/data";
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import { baseUrl } from "@/lib/utils";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type Stripe from "stripe";
 
@@ -169,6 +171,66 @@ export async function destacarProductAction(
 }
 
 /**
+ *  Action para cancelar las subscripciones de stripe
+ */
+export const handleCancelStripeSubscription = async (
+  subscriptionId: string
+) => {
+  try {
+    const canceledSubscription =
+      await stripe.subscriptions.cancel(subscriptionId);
+
+    console.log("Subscripcion cancelada: ", canceledSubscription.id);
+
+    revalidatePath("/payment/subscriptions");
+
+    return { success: true, message: "Subscripcion Cancelada con Exito!!" };
+  } catch (error) {
+    console.error("Error al cancelar:", error);
+    return { error: "Error al cancelar la suscripción" };
+  }
+};
+
+/**
+ *  Maneja el customer.subscription.deleted
+ */
+export const handleCustomerSubscriptionDeleted = async (
+  sessionObj: Stripe.Customer.Shipping
+) => {
+  try {
+    console.log("Iniciando handleCustomerSubscriptionDeleted");
+
+    const subscriptionId = sessionObj.id;
+
+    let user;
+
+    if (subscriptionId) {
+      user = await prisma.user.findFirst({
+        where: { subscriptionId: subscriptionId },
+      });
+
+      if (user) {
+        const updateUser = await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            pro: false,
+            customerId: null,
+            subscriptionId: null,
+            priceId: null,
+          },
+        });
+
+        console.log("Usuario actualizado a Pro:", updateUser);
+        return updateUser;
+      }
+    }
+  } catch (error) {
+    console.error("Error al cancelar:", error);
+    return { error: "Error al cancelar la suscripción" };
+  }
+};
+
+/**
  * Maneja checkout.session.completed
  */
 export async function handleCheckoutCompleted(
@@ -176,8 +238,19 @@ export async function handleCheckoutCompleted(
 ) {
   console.log("Iniciando handleCheckoutSessionCompleted");
 
-  const typeOfBuy = sessionObj.metadata?.typeOfBuy;
+  // 1️⃣ Si es suscripción → no necesitamos metadata.typeOfBuy
+  if (sessionObj.mode === "subscription" && sessionObj.customer) {
+    const priceId = sessionObj.line_items?.data[0].price?.id;
+    const plan = stripePlans.find((p) => p.priceId === priceId);
 
+    if (plan) {
+      console.log("➡ Se detectó un plan Pro (suscripción)");
+      return await handlePlanProUser(sessionObj, priceId!);
+    }
+  }
+
+  // 2️⃣ Compras normales requieren typeOfBuy
+  const typeOfBuy = sessionObj.metadata?.typeOfBuy;
   if (!typeOfBuy) {
     throw new Error("No se encontró el tipo de compra en metadata");
   }
@@ -274,6 +347,54 @@ async function handleProductPurchase(sessionObj: Stripe.Checkout.Session) {
   } catch (error) {
     console.error("Error creando orden:", error);
     throw error;
+  }
+}
+
+/**
+ * Manejo para agregar el plan pro a un usuario
+ */
+async function handlePlanProUser(
+  sessionObj: Stripe.Checkout.Session,
+  priceId: string
+) {
+  try {
+    const customerId = sessionObj.customer as string;
+    const customer = await stripe.customers.retrieve(customerId);
+
+    console.log("Se obtuvo el customer: ", customer);
+
+    const plan = stripePlans.find((p) => p.priceId === priceId);
+    if (!plan) {
+      throw new Error("El priceId no corresponde a ningún plan válido");
+    }
+
+    let user;
+
+    if ("email" in customer && customer.email) {
+      user = await prisma.user.findUnique({
+        where: { email: customer.email },
+      });
+
+      if (user) {
+        const updateUser = await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            pro: true,
+            customerId: customerId,
+            subscriptionId: sessionObj.subscription?.toString(),
+            priceId: plan.priceId,
+          },
+        });
+
+        console.log("Usuario actualizado a Pro:", updateUser);
+        return updateUser;
+      }
+    }
+
+    throw new Error("No se encontró el usuario para este customer");
+  } catch (err) {
+    console.error("❌ Error en handlePlanProUser:", err);
+    throw err;
   }
 }
 

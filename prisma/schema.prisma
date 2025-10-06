@@ -10,7 +10,6 @@ generator client {
   provider = "prisma-client-js"
 }
 
-/// Modelos para el usuario 
 model User {
   id                      String               @id @default(cuid())
   email                   String               @unique
@@ -49,18 +48,24 @@ model User {
   /// Relacion con searchHistory
   searchHistory           SearchHistory[]
 
-   // Relación con productos vistos
+  // Relación con productos vistos
   viewedProducts          UserProductView[] 
-
 
   /// Relacion con chats
   roomsAsVendor           Room[]    @relation("VendorRooms")
   roomsAsBuyer            Room[]    @relation("BuyerRooms")
   messages                Message[]
 
+  /// Plan de suscripción
+  pro                     Boolean   @default(false)
+  priceId                 String?
+  customerId              String?   @unique
+  subscriptionId          String?
+
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 }
+
 
 model Account {
   userId            String

@@ -31,5 +31,11 @@ export default async function ProductPage({
     await registerUserProductView(session.user.id, product.id);
   }
 
-  return <ProductLayout product={product} vendedor={vendedor.user} />;
+  return (
+    <ProductLayout
+      product={product}
+      vendedor={vendedor.user}
+      session={session}
+    />
+  );
 }

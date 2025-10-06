@@ -1,10 +1,11 @@
 import { SearchProducts } from "@/components/searchComponents/SearchProducts";
 import { UserDropdown } from "@/components/UserDropdown";
-import { Package } from "lucide-react";
+import { Package, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/auth";
 import Link from "next/link";
 import { SearchIndex } from "@/components/searchComponents/SearchIndex";
+import Image from "next/image";
 
 /**
  * @description Componente de la barra de navegacion
@@ -21,7 +22,12 @@ export const Navbar = async () => {
         <div className="container mx-auto flex items-center gap-6 justify-between h-full w-full">
           {/* Logo */}
           <Link href="/">
-            <h1 className="text-2xl font-bold text-blue-500">Despiezo</h1>
+            <Image
+              src={"/despiezo-logo.png"}
+              alt="Logo de Despiezo"
+              width={200}
+              height={50}
+            />
           </Link>
 
           {/* Buscador */}
@@ -40,6 +46,18 @@ export const Navbar = async () => {
                 <Link href="/vendedor">
                   <Package />
                   Vender
+                </Link>
+              </Button>
+            )}
+
+            {isLoggedIn && !session.user.pro && (
+              <Button
+                asChild
+                className="bg-blue-500 hover:bg-blue-600 rounded-full px-6 hidden md:flex items-center gap-2"
+              >
+                <Link href="/payment/subscriptions">
+                  <Zap />
+                  Actualizar a Pro
                 </Link>
               </Button>
             )}

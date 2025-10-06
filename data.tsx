@@ -20,6 +20,62 @@ import {
 } from "lucide-react";
 import { CarIcon, MotorIcon } from "./components/icons/Icons";
 
+//   https://repositorio-para-despiezo.vercel.app/payment/subscriptions
+
+/**
+ * Planes para las subscripciones en stripe
+ */
+export const stripePlans = [
+  {
+    link:
+      process.env.NODE_ENV === "development"
+        ? "https://buy.stripe.com/test_cNi28t4GSdaX0hignL1Fe01"
+        : "https://buy.stripe.com/test_fZu14p0qC3Ane88efD1Fe06",
+    priceId:
+      process.env.NODE_ENV === "development"
+        ? "price_1SEHXaPVulflAmKdeTnhyEG2"
+        : "price_1SF6AEPVulflAmKdiRL78XsA",
+    price: 12,
+    duration: "1 Mes",
+  },
+  {
+    link:
+      process.env.NODE_ENV === "development"
+        ? "https://buy.stripe.com/test_5kQ7sN4GS1sf5BC4F31Fe02"
+        : "https://buy.stripe.com/test_eVq4gB8X8b2P2pqb3r1Fe07",
+    priceId:
+      process.env.NODE_ENV === "development"
+        ? "price_1SEHZMPVulflAmKdo2HRiK80"
+        : "price_1SF6DbPVulflAmKdNalKduj1",
+    price: 30,
+    duration: "3 Mes",
+  },
+  {
+    link:
+      process.env.NODE_ENV === "development"
+        ? "https://buy.stripe.com/test_14AeVfc9k5Iv4xyb3r1Fe05"
+        : "https://buy.stripe.com/test_14A3cxb5g8UH5BCfjH1Fe08",
+    priceId:
+      process.env.NODE_ENV === "development"
+        ? "price_1SF5WlPVulflAmKdgOZxa63z"
+        : "price_1SF6EJPVulflAmKd5jgAr1cQ",
+    price: 54,
+    duration: "6 Mes",
+  },
+  {
+    link:
+      process.env.NODE_ENV === "development"
+        ? "https://buy.stripe.com/test_bJe14p7T43AnaVWefD1Fe04"
+        : "https://buy.stripe.com/test_9B68wRb5gef1aVW3AZ1Fe09",
+    priceId:
+      process.env.NODE_ENV === "development"
+        ? "price_1SEHa6PVulflAmKdWcEp97WU"
+        : "price_1SF6FbPVulflAmKdpxxD3mHN",
+    price: 100,
+    duration: "1 Año",
+  },
+];
+
 /**
  * @description Array de links para el perfil del usuario
  * @info array para el componente ProfileLinks
@@ -110,6 +166,11 @@ export const DropdownLinks = [
   {
     title: "Configuracion",
     links: [
+      {
+        label: "Administrar Plan",
+        href: "/payment/subscriptions",
+        icon: <Zap className="size-4" strokeWidth={2.5} />,
+      },
       {
         label: "Configuracion",
         href: "/perfil/configuracion",

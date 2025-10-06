@@ -61,6 +61,18 @@ export const ProductCard = ({
           </span>
         )}
 
+        {product.featuredUntil &&
+          new Date(product.featuredUntil) > new Date() && (
+            <div className="absolute top-3 left-3 z-10 p-0.5 rounded-full shadow-md bg-white">
+              <Image
+                src={"/destacado-icon-green.png"}
+                alt="Icono de Patrocinado"
+                width={36}
+                height={36}
+              />
+            </div>
+          )}
+
         <div
           className="relative h-40 rounded-lg cursor-pointer"
           onClick={handleClickProduct}

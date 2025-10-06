@@ -39,6 +39,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             addresses: true,
             connectedAccountId: true,
             stripeConnectedLinked: true,
+            pro: true,
+            priceId: true,
+            customerId: true,
+            subscriptionId: true,
           },
         });
 
@@ -85,6 +89,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             addresses: user.addresses,
             connectedAccountId: user.connectedAccountId,
             stripeConnectedLinked: user.stripeConnectedLinked,
+            pro: user.pro,
+            priceId: user.priceId,
+            customerId: user.customerId,
+            subscriptionId: user.subscriptionId,
           };
         }
       }

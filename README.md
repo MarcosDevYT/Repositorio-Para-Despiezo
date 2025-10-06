@@ -44,7 +44,7 @@ Plataforma de compraventa de piezas de automóvil que conecta desguaces, tallere
 - **Sendcloud API** - Gestión de envíos
 - **UploadThing** - Gestión de archivos
 - **Socket.io** - Chat en tiempo real
-- **Tesseract.js** - OCR para números OEM
+- **Chatgpt Image / Google Vision** - OCR para números OEM
 
 ### Deployment
 
