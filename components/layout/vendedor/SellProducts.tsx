@@ -65,7 +65,36 @@ export const SellProducts = () => {
 
       {isPending ? (
         <CardContent>
-          <Skeleton className="w-full h-96" />
+          <div className="w-full h-full grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div
+                key={index}
+                className="p-2 rounded-lg border border-border shadow-md bg-white space-y-6 relative"
+              >
+                {/* Boton para editar */}
+
+                <Skeleton className="rounded-full absolute top-2 right-2 z-10 size-6" />
+
+                <figure className="w-full h-32">
+                  <Skeleton className="w-full h-full" />
+                </figure>
+
+                <div>
+                  <Skeleton className="h-5 w-full mb-1.5" />
+                  <div className="font-medium space-y-1">
+                    <Skeleton className="h-5 w-12" />
+                    <Skeleton className="h-5 w-16" />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 mt-3">
+                    <Skeleton className="h-8 w-full" />
+
+                    <Skeleton className="h-8 w-full" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </CardContent>
       ) : (
         <SellTable products={products} handle={handleDeleteProduct} />

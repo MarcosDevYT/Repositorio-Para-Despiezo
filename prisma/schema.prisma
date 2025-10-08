@@ -51,6 +51,9 @@ model User {
   // Relación con productos vistos
   viewedProducts          UserProductView[] 
 
+  /// Relación con Kits
+  kits Kit[]
+
   /// Relacion con chats
   roomsAsVendor           Room[]    @relation("VendorRooms")
   roomsAsBuyer            Room[]    @relation("BuyerRooms")
@@ -163,6 +166,7 @@ model Product {
   rooms          Room[]
   favorites      Favorite[]
   orders         Orden[]
+  kits           KitProduct[]
 
   // Relación inversa con vistas de usuarios
   userViews      UserProductView[]
@@ -170,6 +174,35 @@ model Product {
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 }
+
+model Kit {
+  id          String     @id @default(uuid())
+  name        String
+  description String?
+  price       Float       // Precio total del kit
+  discount    Float?      // Porcentaje o valor de descuento
+  images      String[]    // Imágenes opcionales del kit
+
+  // Relación con el vendedor
+  vendorId    String
+  vendor      User        @relation(fields: [vendorId], references: [id])
+
+  // Relación con productos
+  products    KitProduct[]
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model KitProduct {
+  id          String     @id @default(uuid())
+  kitId       String
+  productId   String
+
+  kit         Kit        @relation(fields: [kitId], references: [id])
+  product     Product    @relation(fields: [productId], references: [id])
+}
+
 
 // Modelo de productos que vio el usuario
 model UserProductView {

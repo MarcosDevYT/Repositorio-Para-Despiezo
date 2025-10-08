@@ -1,45 +1,28 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ProductCard } from "./ProductCard";
 import { useRef } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { ProductCard } from "../ProductComponents/ProductCard";
 import { ProductType } from "@/types/ProductTypes";
 
 import "swiper/css";
 import "swiper/css/navigation";
 
-import Link from "next/link";
-
-export const MostSearchProducts = ({
+export default function ProductsSlider({
+  navigation = true,
   products,
 }: {
+  navigation?: boolean;
   products: ProductType[];
-}) => {
-  if (!products || products.length <= 0) return null;
+}) {
+  if (navigation) {
+    const prevRef = useRef<HTMLButtonElement>(null);
+    const nextRef = useRef<HTMLButtonElement>(null);
 
-  const prevRef = useRef<HTMLButtonElement>(null);
-  const nextRef = useRef<HTMLButtonElement>(null);
-
-  return (
-    <section className="py-8">
-      <article className="flex flex-col md:flex-row items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold">Lo más buscado</h2>
-
-        <Button
-          asChild
-          variant="ghost"
-          className="rounded-full flex items-center space-x-2 text-primary hover:text-blue-600"
-        >
-          <Link href={"/productos"}>
-            <span>Ver todos</span>
-            <ChevronRight className="h-4 w-4" />
-          </Link>
-        </Button>
-      </article>
-
+    return (
       <div className="relative md:px-12">
         {/* Botones de navegación personalizados */}
         <Button
@@ -79,8 +62,8 @@ export const MostSearchProducts = ({
           className="mySwiper"
         >
           {products.map((product) => (
-            <SwiperSlide key={product.id} className="p-2">
-              <div className="w-full h-full flex flex-col items-center ">
+            <SwiperSlide key={product.id} className="flex">
+              <div className="w-full h-full flex flex-col items-center p-2">
                 <ProductCard
                   product={product}
                   isFavorite={product.isFavorite}
@@ -90,6 +73,31 @@ export const MostSearchProducts = ({
           ))}
         </Swiper>
       </div>
-    </section>
+    );
+  }
+
+  return (
+    <div className="relative">
+      <Swiper
+        breakpoints={{
+          0: { slidesPerView: 1 },
+          768: { slidesPerView: 2 },
+          1024: { slidesPerView: 3 },
+          1280: { slidesPerView: 4 },
+          1536: { slidesPerView: 5 },
+        }}
+        spaceBetween={0}
+        modules={[Navigation]}
+        className="mySwiper"
+      >
+        {products.map((product) => (
+          <SwiperSlide key={product.id} className="p-2 flex">
+            <div className="w-full h-full flex flex-col items-center ">
+              <ProductCard product={product} isFavorite={product.isFavorite} />
+            </div>
+          </SwiperSlide>
+        ))}
+      </Swiper>
+    </div>
   );
-};
+}

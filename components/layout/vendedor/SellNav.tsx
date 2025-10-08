@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Building2, Package, Plus, ShoppingCart } from "lucide-react";
+import { Building2, Layers, Package, Plus, ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -23,9 +23,9 @@ export const SellNav = () => {
         </Button>
       </div>
       <nav className="bg-card text-card-foreground flex items-center justify-between gap-6 rounded-xl border py-3 shadow-sm px-3">
-        <div className="flex flex-row items-center justify-center w-full md:w-max">
+        <div className="flex flex-col sm:flex-row items-center justify-center w-full md:w-max">
           <Button
-            className="flex items-center flex-1"
+            className="flex items-center flex-1 w-full"
             variant={pathname === "/vendedor/negocio" ? "default" : "ghost"}
             asChild
           >
@@ -35,7 +35,7 @@ export const SellNav = () => {
             </Link>
           </Button>
           <Button
-            className="flex items-center flex-1"
+            className="flex items-center flex-1 w-full"
             variant={pathname === "/vendedor" ? "default" : "ghost"}
             asChild
           >
@@ -46,13 +46,24 @@ export const SellNav = () => {
           </Button>
 
           <Button
-            className="flex items-center flex-1"
+            className="flex items-center flex-1 w-full"
             variant={pathname === "/vendedor/ventas" ? "default" : "ghost"}
             asChild
           >
             <Link href="/vendedor/ventas">
               <ShoppingCart />
               Ventas
+            </Link>
+          </Button>
+
+          <Button
+            className="flex items-center flex-1 w-full"
+            variant={pathname === "/vendedor/kits" ? "default" : "ghost"}
+            asChild
+          >
+            <Link href="/vendedor/kits">
+              <Layers />
+              Kits
             </Link>
           </Button>
         </div>

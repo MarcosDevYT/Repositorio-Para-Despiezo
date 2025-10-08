@@ -8,6 +8,8 @@ import "swiper/css";
 import { ProductType } from "@/types/ProductTypes";
 
 export const ProductThumbnails = ({ product }: { product: ProductType }) => {
+  const isSold = product.status === "vendido";
+
   const swiperRef = useRef<SwiperCore>(null);
   const modalSwiperRef = useRef<SwiperCore>(null);
 
@@ -73,30 +75,40 @@ export const ProductThumbnails = ({ product }: { product: ProductType }) => {
         </div>
       )}
 
-      {/* Swiper principal */}
-      <Swiper
-        onSwiper={(swiper) => (swiperRef.current = swiper)}
-        spaceBetween={20}
-        loop
-        className="rounded-lg w-full border border-border h-[400px] md:h-[500px] bg-white"
-      >
-        {product.images.map((image, index) => (
-          <SwiperSlide
-            key={index}
-            className="relative rounded-lg cursor-pointer"
-            onClick={() => handleOpenModal(index)}
-          >
-            <Image
-              src={image}
-              alt={product.name}
-              fill
-              priority={index === 0}
-              sizes="(max-width: 768px) 100vw, 50vw"
-              className="object-contain rounded-lg"
-            />
-          </SwiperSlide>
-        ))}
-      </Swiper>
+      <div className="relative w-full h-[400px] md:h-[500px]">
+        {isSold && (
+          <div className="absolute inset-0 bg-black/70 flex items-center justify-center rounded-md z-10">
+            <span className="text-red-500 font-bold text-6xl md:text-8xl rotate-[30deg]">
+              VENDIDO
+            </span>
+          </div>
+        )}
+
+        {/* Swiper principal */}
+        <Swiper
+          onSwiper={(swiper) => (swiperRef.current = swiper)}
+          spaceBetween={20}
+          loop
+          className="rounded-lg w-full border border-border h-[400px] md:h-[500px] bg-white"
+        >
+          {product.images.map((image, index) => (
+            <SwiperSlide
+              key={index}
+              className="relative rounded-lg cursor-pointer"
+              onClick={() => handleOpenModal(index)}
+            >
+              <Image
+                src={image}
+                alt={product.name}
+                fill
+                priority={index === 0}
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-contain rounded-lg"
+              />
+            </SwiperSlide>
+          ))}
+        </Swiper>
+      </div>
 
       {/* Thumbnails */}
       <div className="w-full flex flex-nowrap gap-4 overflow-x-auto">

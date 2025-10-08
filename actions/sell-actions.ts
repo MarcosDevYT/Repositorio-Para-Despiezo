@@ -192,6 +192,36 @@ export const getUserProductsAction = async () => {
   }
 };
 
+// Obtener los productos del usuario
+export const getUserAvaibleProductsAction = async () => {
+  try {
+    // Verificar si el usuario está autenticado
+    const session = await auth();
+
+    if (!session?.user) {
+      return {
+        error: "No estás autenticado",
+      };
+    }
+
+    // Obtener los productos del usuario
+    const products = await prisma.product.findMany({
+      where: {
+        vendorId: session.user.id,
+        status: "publicado",
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return products;
+  } catch (error) {
+    console.log(error);
+    return {
+      error: "Error al obtener los productos",
+    };
+  }
+};
+
 /**
  * ACTIONS PARA
  * MOSTRAR LOS PRODUCTOS EN EL HOME
@@ -675,6 +705,10 @@ export const getFavoriteProductsAction = async () => {
   }
 };
 
+/**
+ * Funciones para obtener productos teniendo encuenta el id del producto
+ */
+
 // Obtener producto por id
 export const getProductByIdAction = async (id: string) => {
   try {
@@ -701,6 +735,119 @@ export const getProductByIdAction = async (id: string) => {
     return { error: "Error al obtener el producto" };
   }
 };
+
+/**
+ * Obtiene hasta 10 productos similares al producto actual.
+ * Se basa en coincidencias de categoría, marca, modelo, tipoDeVehiculo y condición.
+ * No incluye el mismo producto y solo devuelve productos publicados.
+ * Prioriza productos destacados vigentes (featuredUntil >= now) y agrega favoritos si el usuario está autenticado.
+ */
+export async function getRecommendedProductsByProductId(
+  productId: string,
+  limit = 10
+) {
+  const now = new Date();
+  const session = await auth();
+  const userId = session?.user?.id;
+
+  // 1️⃣ Buscar el producto actual
+  const baseProduct = await prisma.product.findUnique({
+    where: { id: productId },
+  });
+
+  if (!baseProduct) return [];
+
+  // 2️⃣ Buscar productos similares
+  const productsRaw = await prisma.product.findMany({
+    where: {
+      id: { not: productId },
+      status: "publicado",
+      OR: [
+        { category: baseProduct.category },
+        { subcategory: baseProduct.subcategory ?? undefined },
+        { brand: baseProduct.brand },
+        { model: baseProduct.model },
+        { tipoDeVehiculo: baseProduct.tipoDeVehiculo },
+        { condition: baseProduct.condition },
+      ],
+    },
+    include: {
+      favorites: userId
+        ? {
+            where: { userId },
+            select: { id: true },
+          }
+        : false,
+    },
+    orderBy: { createdAt: "desc" },
+    take: limit * 3,
+  });
+
+  // 3️⃣ Ordenar destacados primero
+  const recommended = productsRaw
+    .sort((a, b) => {
+      const aFeatured = a.featuredUntil && a.featuredUntil >= now ? 1 : 0;
+      const bFeatured = b.featuredUntil && b.featuredUntil >= now ? 1 : 0;
+      if (aFeatured !== bFeatured) return bFeatured - aFeatured;
+      return b.createdAt.getTime() - a.createdAt.getTime();
+    })
+    .slice(0, limit)
+    .map((p) => ({
+      ...p,
+      isFavorite: userId ? p.favorites.length > 0 : false,
+    }));
+
+  return recommended;
+}
+
+/**
+ * Obtener hasta 10 productos del mismo vendedor.
+ * Excluye el producto original y prioriza destacados vigentes.
+ * Incluye información de favoritos si el usuario está autenticado.
+ */
+export async function getRelatedProducts(
+  productId: string,
+  vendedorId: string
+) {
+  const now = new Date();
+  const session = await auth();
+  const userId = session?.user?.id;
+
+  // 1️⃣ Traer productos del mismo vendedor
+  const productsRaw = await prisma.product.findMany({
+    where: {
+      vendorId: vendedorId,
+      id: { not: productId },
+      status: "publicado",
+    },
+    include: {
+      favorites: userId
+        ? {
+            where: { userId },
+            select: { id: true },
+          }
+        : false,
+    },
+    orderBy: { createdAt: "desc" },
+    take: 30,
+  });
+
+  // 2️⃣ Ordenar destacados y mapear favoritos
+  const products = productsRaw
+    .sort((a, b) => {
+      const aFeatured = a.featuredUntil && a.featuredUntil >= now ? 1 : 0;
+      const bFeatured = b.featuredUntil && b.featuredUntil >= now ? 1 : 0;
+      if (aFeatured !== bFeatured) return bFeatured - aFeatured;
+      return b.createdAt.getTime() - a.createdAt.getTime();
+    })
+    .slice(0, 10)
+    .map((p) => ({
+      ...p,
+      isFavorite: userId ? p.favorites.length > 0 : false,
+    }));
+
+  return products;
+}
 
 /**
  * Funcion para obtener la informacion de un vendedor para la tienda

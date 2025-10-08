@@ -13,7 +13,7 @@ import {
 } from "@/actions/sell-actions";
 import { auth } from "@/auth";
 import { FeaturedProducts } from "@/components/layout/home/FeaturedProducts";
-import { MostSearchProducts } from "@/components/layout/home/MostSearchProducts copy";
+import { MostSearchProducts } from "@/components/layout/home/MostSearchProducts";
 import { HistoryProducts } from "@/components/layout/home/HistoryProducts";
 import { RecommendedProducts } from "@/components/layout/home/RecommendedProducts";
 

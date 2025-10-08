@@ -53,6 +53,10 @@ Plataforma de compraventa de piezas de automóvil que conecta desguaces, tallere
 
 ## 📋 Funcionalidades Pendientes (Roadmap Detallado)
 
+### 0. Implementar un cron Job
+
+- [ ] **Cron Job para Transferencias** - Crear un cron job que este atento a si pasan 20 dias o se entrego el pedido
+
 ### 🏠 1. Transformación de la Página de Inicio
 
 - **Estado: Pendiente**
@@ -152,7 +156,7 @@ reference_validations:
 - [x] Sistema de anuncios de pago
 - [x] Etiquetas "Destacado/Patrocinado"
 - [x] Posicionamiento preferente en resultados
-- [ ] Identificador de destacado
+- [x] Identificador de destacado
 
 #### Kits de Productos
 
@@ -162,7 +166,7 @@ reference_validations:
 
 #### Cuotas PRO
 
-- [ ] Suscripción mensual para profesionales
+- [x] Suscripción mensual para profesionales
 - [ ] Subida masiva por CSV
 - [ ] Análisis de mercado avanzado
 
@@ -172,9 +176,9 @@ reference_validations:
 
 #### Pagos Rápidos
 
-- [ ] Integración Apple Pay
-- [ ] Integración Google Pay
-- [ ] Reducir fricción en checkout
+- [x] Integración Apple Pay
+- [x] Integración Google Pay
+- [x] Reducir fricción en checkout
 
 #### Perfil de Vendedor Transparente
 
