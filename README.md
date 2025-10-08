@@ -78,7 +78,7 @@ Plataforma de compraventa de piezas de automóvil que conecta desguaces, tallere
 - [x] Sugerencias mixtas: modelos populares + números OEM + búsquedas populares
 - [x] Chips visuales para diferenciar tipos de sugerencia
 - [x] Tolerancia a errores tipográficos
-- [ ] Cambiar "VIN" por "número de referencia" en toda la UI
+- [x] Cambiar "VIN" por "número de referencia" en toda la UI
 
 #### Filtros Persistentes
 
@@ -160,9 +160,10 @@ reference_validations:
 
 #### Kits de Productos
 
-- [ ] Agrupar piezas complementarias
-- [ ] CRUD para crear/gestionar kits
-- [ ] Precio conjunto con descuento
+- [x] Agrupar piezas complementarias
+- [x] CRUD para crear/gestionar kits
+- [x] Precio conjunto con descuento
+- [ ] Agregar Checkout de Stripe
 
 #### Cuotas PRO
 

@@ -70,7 +70,7 @@ export async function buyProductActions(
         vendedorConnectedAccountId: vendedor!.connectedAccountId,
         applicationFee: applicationFee,
         userAddressId: userAddressId,
-        userPhoneNumber: session.user.phoneNumber,
+        userPhoneNumber: userPhoneNumber,
         userName: session.user.name,
         typeOfBuy: "COMPRAR",
       },
@@ -97,6 +97,85 @@ export async function buyProductActions(
   } catch (error) {
     console.log("Error iniciando checkout: ", error);
     throw new Error("Error al comprar el producto");
+  }
+}
+
+/**
+ * Función para armar el checkout de stripe con los datos del kit para comprar
+ * @param productsIds Array de IDs de productos
+ * @returns Retornamos la url del checkout de stripe
+ */
+export async function buyKitProductsActions(
+  productIds: string[],
+  userAddressId: string,
+  userPhoneNumber: string
+) {
+  try {
+    const session = await auth();
+    if (!session?.user) redirect("/login");
+
+    // Buscar productos del kit
+    const products = await prisma.product.findMany({
+      where: { id: { in: productIds }, status: "publicado" },
+    });
+
+    if (products.length === 0)
+      return { error: "No se encontraron productos válidos en el kit" };
+
+    // Validar que el usuario no compre sus propios productos
+    const isOwnProduct = products.some((p) => p.vendorId === session.user.id);
+    if (isOwnProduct) return { error: "No puedes comprar tu propio kit" };
+
+    // Tomamos el vendedor del primer producto (todos pertenecen al mismo vendedor)
+    const vendedor = await prisma.user.findUnique({
+      where: { id: products[0].vendorId },
+      select: { connectedAccountId: true },
+    });
+
+    const totalPrice = products.reduce((acc, p) => {
+      const price = p.offer && p.offerPrice ? +p.offerPrice : +p.price;
+      return acc + price;
+    }, 0);
+
+    const applicationFee = Math.round(totalPrice * 0.1);
+    const stripeLineItems = products.map((p) => ({
+      price_data: {
+        currency: "eur",
+        unit_amount: Math.round(
+          (p.offer && p.offerPrice ? +p.offerPrice : +p.price) * 100
+        ),
+        product_data: {
+          name: p.name,
+          description: p.description,
+          images: [p.images[0]],
+        },
+      },
+      quantity: 1,
+    }));
+
+    const stripeSession = await stripe.checkout.sessions.create({
+      mode: "payment",
+      customer_email: session.user.email,
+      metadata: {
+        buyerId: session.user.id,
+        vendedorId: products[0].vendorId,
+        productIds: JSON.stringify(productIds),
+        vendedorConnectedAccountId: vendedor?.connectedAccountId || "",
+        applicationFee,
+        userAddressId,
+        userPhoneNumber,
+        userName: session.user.name,
+        typeOfBuy: "COMPRAR-KIT",
+      },
+      line_items: stripeLineItems,
+      success_url: `${baseUrl}/payment/success`,
+      cancel_url: `${baseUrl}/payment/cancel`,
+    });
+
+    return { url: stripeSession.url as string };
+  } catch (error) {
+    console.error("Error iniciando checkout del kit:", error);
+    return { error: "Error al comprar el kit" };
   }
 }
 
@@ -255,6 +334,9 @@ export async function handleCheckoutCompleted(
     throw new Error("No se encontró el tipo de compra en metadata");
   }
 
+  if (typeOfBuy === "COMPRAR-KIT") {
+    return await handleKitPurchase(sessionObj);
+  }
   if (typeOfBuy === "COMPRAR") {
     return await handleProductPurchase(sessionObj);
   }
@@ -270,6 +352,90 @@ export async function handleCheckoutCompleted(
  * Manejo de compra de producto
  */
 async function handleProductPurchase(sessionObj: Stripe.Checkout.Session) {
+  const userId = sessionObj.metadata?.buyerId;
+  const vendedorId = sessionObj.metadata?.vendedorId;
+  const productId = sessionObj.metadata?.productId;
+  const vendedorConnectedAccountId =
+    sessionObj.metadata?.vendedorConnectedAccountId;
+  const applicationFee = sessionObj.metadata?.applicationFee;
+  const productPrice = sessionObj.amount_total;
+  const userAddressId = sessionObj.metadata?.userAddressId;
+  const userPhoneNumber = sessionObj.metadata?.userPhoneNumber;
+  const userName = sessionObj.metadata?.userName;
+
+  if (
+    !userId ||
+    !vendedorId ||
+    !productId ||
+    !vendedorConnectedAccountId ||
+    !applicationFee ||
+    !productPrice ||
+    !userAddressId ||
+    !userPhoneNumber ||
+    !userName
+  ) {
+    throw new Error("Error al crear la orden: faltan datos");
+  }
+
+  try {
+    const amountTotal = Number(productPrice);
+    const feeAmount = Number(applicationFee) * 100; // centavos
+    const vendorAmount = amountTotal - feeAmount;
+
+    // Release en 20 días
+    const releaseAt = new Date();
+    releaseAt.setDate(releaseAt.getDate() + 20);
+
+    // Cambiar estado del producto
+    await prisma.product.update({
+      where: { id: productId },
+      data: { status: "vendido" },
+    });
+
+    // Obtener dirección
+    const userAddress = await prisma.address.findUnique({
+      where: { id: userAddressId },
+    });
+
+    if (!userAddress) {
+      throw new Error("No se encontró la dirección del usuario");
+    }
+
+    // Crear orden
+    const orden = await prisma.orden.create({
+      data: {
+        productId,
+        buyerId: userId,
+        vendorId: vendedorId,
+        stripeSessionId: sessionObj.id,
+        stripePaymentIntent: sessionObj.payment_intent as string,
+        amountTotal,
+        vendorAmount,
+        feeAmount,
+        status: "paid",
+        releaseAt,
+
+        shippingCountry: userAddress.country,
+        shippingCity: userAddress.city,
+        shippingPostalCode: userAddress.postalCode,
+        shippingAddressLine1: userAddress.street,
+        shippingAddressLine2: userAddress.number,
+        shippingName: userName,
+        shippingPhone: userPhoneNumber,
+      },
+    });
+
+    return orden;
+  } catch (error) {
+    console.error("Error creando orden:", error);
+    throw error;
+  }
+}
+
+/**
+ * Manejo de compra de kit
+ */
+async function handleKitPurchase(sessionObj: Stripe.Checkout.Session) {
   const userId = sessionObj.metadata?.buyerId;
   const vendedorId = sessionObj.metadata?.vendedorId;
   const productId = sessionObj.metadata?.productId;

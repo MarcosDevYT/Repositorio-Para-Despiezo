@@ -403,7 +403,11 @@ export const ProductLayout = ({
         </article>
       </section>
 
-      <ProductsRelationed productId={product.id} vendedorId={vendedor.id} />
+      <ProductsRelationed
+        productId={product.id}
+        vendedorId={vendedor.id}
+        userId={session?.user.id}
+      />
     </>
   );
 };

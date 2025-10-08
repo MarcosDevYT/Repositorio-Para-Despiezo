@@ -18,26 +18,25 @@ import { HistoryProducts } from "@/components/layout/home/HistoryProducts";
 import { RecommendedProducts } from "@/components/layout/home/RecommendedProducts";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export default async function Home() {
   const session = await auth();
+  const userId = session?.user.id;
 
-  // Ultimos productos vistos por el usuario
-  const lastProductView = await getLastViewedProducts(session?.user.id);
-
-  // Productos recomendados para el usuario
-  const recommendedProductsByUser = await getRecommendedProductsForUser(
-    session?.user.id
-  );
-
-  // Productos destacados
-  const featuredProducts = await getFeaturedProducts();
-
-  // Productos mas buscados
-  const popularProducts = await getPopularProductsFromSearchLogs();
-
-  // Productos recientes
-  const products = await getProductsAction();
+  const [
+    lastProductView,
+    recommendedProductsByUser,
+    featuredProducts,
+    popularProducts,
+    products,
+  ] = await Promise.all([
+    getLastViewedProducts(userId),
+    getRecommendedProductsForUser(userId),
+    getFeaturedProducts(userId),
+    getPopularProductsFromSearchLogs(userId),
+    getProductsAction(userId),
+  ]);
 
   return (
     <MainContainer>

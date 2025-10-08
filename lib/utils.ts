@@ -73,3 +73,29 @@ export const hasAnyFilter = (filters: FilterCheck): boolean => {
     return false;
   });
 };
+
+export function buildTsQueryFromQueries(queries: string[] = []) {
+  // devuelve { tsQuery, plain } donde tsQuery está en formato válido para to_tsquery
+  const plain = queries
+    .map((q) => q.trim())
+    .filter(Boolean)
+    .join(" ");
+
+  const tsParts = queries
+    .map((q) => {
+      // Normalizar y limpiar cada palabra. Usa Unicode property escapes.
+      const words = q
+        .trim()
+        .split(/\s+/)
+        .map((w) => w.normalize("NFKD").replace(/[^\p{L}\p{N}]+/gu, "")) // deja letras y números
+        .filter(Boolean);
+
+      if (words.length === 0) return "";
+      // Usamos prefijo :* para que haga match por prefijo y & para "AND" entre palabras
+      return words.map((w) => `${w}:*`).join(" & ");
+    })
+    .filter(Boolean);
+
+  const tsQuery = tsParts.join(" | "); // OR entre queries
+  return { tsQuery, plain };
+}

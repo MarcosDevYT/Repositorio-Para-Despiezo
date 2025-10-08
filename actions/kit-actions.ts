@@ -139,6 +139,44 @@ export async function deleteKit(kitId: string) {
 }
 
 /**
+ * Obtener un kit por su ID.
+ * Incluye los productos asociados y sus datos completos.
+ */
+export async function getKitById(kitId: string) {
+  try {
+    const kit = await prisma.kit.findUnique({
+      where: { id: kitId },
+      include: {
+        products: {
+          include: {
+            product: true,
+          },
+        },
+      },
+    });
+
+    if (!kit) {
+      return { error: "Kit no encontrado" };
+    }
+
+    // Verificar si alguno de los productos del kit fue vendido
+    const hasSoldProducts = kit.products.some(
+      (kp) => kp.product.status === "vendido"
+    );
+
+    // Si tiene productos vendidos, opcionalmente podrías marcarlo o excluirlo
+    if (hasSoldProducts) {
+      return { error: "Uno o más productos del kit fueron vendidos" };
+    }
+
+    return kit;
+  } catch (error) {
+    console.error("Error al obtener kit:", error);
+    return { error: "Error al obtener el kit" };
+  }
+}
+
+/**
  * Obtener todos los kits.
  * No se mostrarán kits que tengan al menos un producto vendido.
  */

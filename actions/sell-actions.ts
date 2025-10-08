@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { sellSchema } from "@/lib/zodSchemas/sellSchema";
 import { prisma } from "@/lib/prisma";
 import { Product, User } from "@prisma/client";
+import { buildTsQueryFromQueries } from "@/lib/utils";
 
 type VendedorResType = {
   user: User | null;
@@ -229,11 +230,8 @@ export const getUserAvaibleProductsAction = async () => {
  */
 
 // Obtener todos los productos publicados
-export const getProductsAction = async () => {
+export const getProductsAction = async (userId?: string) => {
   try {
-    const session = await auth();
-    const userId = session?.user?.id;
-
     const products = await prisma.product.findMany({
       where: {
         status: "publicado",
@@ -301,10 +299,7 @@ export async function getLastViewedProducts(userId?: string) {
  * Obtiene los productos destacados vigentes
  * @param limit Cantidad de productos a traer (default = 10)
  */
-export async function getFeaturedProducts() {
-  const session = await auth();
-  const userId = session?.user?.id;
-
+export async function getFeaturedProducts(userId?: string) {
   const featured = await prisma.product.findMany({
     where: {
       status: "publicado",
@@ -335,137 +330,42 @@ export async function getFeaturedProducts() {
  * Solo devuelve productos con status = "publicado" y añade `isFavorite`.
  */
 export async function getPopularProductsFromSearchLogs(
-  limit = 10
-): Promise<(Product & { isFavorite: boolean })[]> {
-  const session = await auth();
-  const userId = session?.user?.id;
-
-  // 1) traer los 5 search logs más populares
-  const logs = await prisma.searchLog.findMany({
-    orderBy: { clicks: "desc" },
-    take: 5,
-  });
-
-  if (!logs || logs.length === 0) return [];
-
-  const idsOrdered: string[] = [];
-  const seen = new Set<string>();
-
-  for (const log of logs) {
-    const query = (log.query || "").trim();
-    if (!query) continue;
-
-    const tsQuery = query
-      .split(/\s+/)
-      .map((word) => `${word}:*`)
-      .join(" & ");
-
-    const productsPartial = await prisma.$queryRawUnsafe<any[]>(
-      `
-      SELECT id, "name", "brand", "model", "year", "oemNumber"
-      FROM "Product"
-      WHERE status = 'publicado'
-        AND (
-          search_vector @@ to_tsquery('spanish', $1)
-          OR similarity(LOWER("name"), LOWER($2)) > 0.2
-          OR similarity(LOWER("brand"), LOWER($2)) > 0.2
-          OR similarity(LOWER("model"), LOWER($2)) > 0.2
-          OR similarity(LOWER("oemNumber"), LOWER($2)) > 0.2
-        )
-      ORDER BY
-        GREATEST(
-          similarity(LOWER("name"), LOWER($2)),
-          similarity(LOWER("brand"), LOWER($2)),
-          similarity(LOWER("model"), LOWER($2)),
-          similarity(LOWER("oemNumber"), LOWER($2))
-        ) DESC,
-        ts_rank_cd(search_vector, to_tsquery('spanish', $1)) DESC
-      LIMIT $3;
-    `,
-      tsQuery,
-      query,
-      limit
-    );
-
-    for (const p of productsPartial) {
-      if (seen.has(p.id)) continue;
-      seen.add(p.id);
-      idsOrdered.push(p.id);
-      if (idsOrdered.length >= limit) break;
-    }
-
-    if (idsOrdered.length >= limit) break;
-  }
-
-  if (idsOrdered.length === 0) return [];
-
-  // 2) Traer los productos completos con favoritos
-  const fullProducts = await prisma.product.findMany({
-    where: { id: { in: idsOrdered }, status: "publicado" },
-    include: {
-      favorites: userId ? { where: { userId }, select: { id: true } } : false,
-    },
-  });
-
-  const byId = new Map(
-    fullProducts.map((fp) => [
-      fp.id,
-      {
-        ...fp,
-        isFavorite: userId ? fp.favorites.length > 0 : false,
-      },
-    ])
-  );
-
-  return idsOrdered
-    .map((id) => byId.get(id))
-    .filter((p): p is Product & { isFavorite: boolean } => !!p)
-    .slice(0, limit);
-}
-
-/**
- * Obtiene hasta 10 productos recomendados para un usuario específico.
- * Solo devuelve productos con status = "publicado" y añade `isFavorite`.
- */
-export async function getRecommendedProductsForUser(
   userId?: string,
   limit = 10
 ): Promise<(Product & { isFavorite: boolean })[]> {
-  if (!userId) return [];
+  try {
+    // 1️⃣ Obtener top 5 términos más buscados
+    const logs = await prisma.searchLog.findMany({
+      orderBy: { clicks: "desc" },
+      take: 5,
+      select: { query: true },
+    });
 
-  // 1) Traer últimas búsquedas del usuario (máx 5)
-  const searchLogs = await prisma.searchHistory.findMany({
-    where: { userId },
-    orderBy: { createdAt: "desc" },
-    take: 5,
-  });
+    // 2️⃣ Obtener top 5 productos más cliqueados
+    const topClickedProducts = await prisma.product.findMany({
+      where: { status: "publicado" },
+      orderBy: { clicks: "desc" },
+      take: 5,
+      select: { id: true, name: true, brand: true, model: true },
+    });
 
-  // 2) Traer últimos productos vistos (máx 5)
-  const viewedProducts = await prisma.userProductView.findMany({
-    where: { userId },
-    orderBy: { viewedAt: "desc" },
-    take: 5,
-    select: { productId: true },
-  });
+    // Si no hay nada popular aún
+    if (logs.length === 0 && topClickedProducts.length === 0) return [];
 
-  const queries: string[] = searchLogs
-    .map((s) => s.query.trim())
-    .filter((q) => q);
-  const productIdsFromViews = viewedProducts.map((v) => v.productId);
+    // 3️⃣ Combinar consultas del search log + nombres de productos más cliqueados
+    const combinedQueries = [
+      ...logs.map((l) => (l.query || "").trim()),
+      ...topClickedProducts.map((p) =>
+        [p.name, p.brand, p.model].filter(Boolean).join(" ")
+      ),
+    ].filter(Boolean);
 
-  if (queries.length === 0 && productIdsFromViews.length === 0) return [];
+    if (combinedQueries.length === 0) return [];
 
-  const idsOrdered: string[] = [];
-  const seen = new Set<string>();
+    const { tsQuery, plain } = buildTsQueryFromQueries(combinedQueries);
 
-  // 3) Buscar productos por query
-  for (const query of queries) {
-    const tsQuery = query
-      .split(/\s+/)
-      .map((word) => `${word}:*`)
-      .join(" & ");
-
-    const productsPartial = await prisma.$queryRawUnsafe<any[]>(
+    // 4️⃣ Buscar productos populares por similitud o relevancia semántica
+    const idsResult = await prisma.$queryRawUnsafe<any[]>(
       `
       SELECT id
       FROM "Product"
@@ -478,60 +378,178 @@ export async function getRecommendedProductsForUser(
           OR similarity(LOWER("oemNumber"), LOWER($2)) > 0.2
         )
       ORDER BY
+        -- mayor peso a los clics y rank de texto
+        ("clicks" * 0.02) +
         GREATEST(
           similarity(LOWER("name"), LOWER($2)),
           similarity(LOWER("brand"), LOWER($2)),
           similarity(LOWER("model"), LOWER($2)),
           similarity(LOWER("oemNumber"), LOWER($2))
-        ) DESC,
-        ts_rank_cd(search_vector, to_tsquery('spanish', $1)) DESC
+        ) * 0.8 +
+        ts_rank_cd(search_vector, to_tsquery('spanish', $1)) * 2
+        DESC
       LIMIT $3;
     `,
       tsQuery,
-      query,
+      plain,
       limit
     );
 
-    for (const p of productsPartial) {
-      if (seen.has(p.id)) continue;
-      seen.add(p.id);
-      idsOrdered.push(p.id);
-      if (idsOrdered.length >= limit) break;
+    const ids = idsResult.map((r) => r.id);
+    if (ids.length === 0) return [];
+
+    // 5️⃣ Traer productos completos + favoritos
+    const fullProducts = await prisma.product.findMany({
+      where: { id: { in: ids }, status: "publicado" },
+      include: {
+        favorites: userId ? { where: { userId }, select: { id: true } } : false,
+      },
+    });
+
+    // 6️⃣ Mantener orden de popularidad y añadir isFavorite
+    const byId = new Map(fullProducts.map((p) => [p.id, p]));
+
+    return ids
+      .map((id) => {
+        const p = byId.get(id);
+        if (!p) return null;
+        const isFavorite = userId
+          ? !!(p.favorites && p.favorites.length > 0)
+          : false;
+        return { ...p, isFavorite };
+      })
+      .filter(Boolean) as (Product & { isFavorite: boolean })[];
+  } catch (error) {
+    console.error("❌ getPopularProductsFromSearchLogs error:", error);
+    return [];
+  }
+}
+
+/**
+ * Obtiene hasta 10 productos recomendados para un usuario específico.
+ * Solo devuelve productos con status = "publicado" y añade `isFavorite`.
+ */
+export async function getRecommendedProductsForUser(
+  userId?: string,
+  limit = 10
+): Promise<(Product & { isFavorite: boolean })[]> {
+  try {
+    if (!userId) return [];
+
+    // 1) Traer search history y vistas en paralelo
+    const [searchLogs, viewedProducts] = await Promise.all([
+      prisma.searchHistory.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+        select: { query: true },
+      }),
+      prisma.userProductView.findMany({
+        where: { userId },
+        orderBy: { viewedAt: "desc" },
+        take: 5,
+        select: { productId: true },
+      }),
+    ]);
+
+    const queries = searchLogs
+      .map((s) => (s.query || "").trim())
+      .filter(Boolean);
+    const viewedIds = viewedProducts.map((v) => v.productId);
+
+    if (queries.length === 0 && viewedIds.length === 0) return [];
+
+    const { tsQuery, plain } = buildTsQueryFromQueries(queries);
+
+    // 2) Buscar IDs relevantes en UNA query (incluye vistos mediante id = ANY($3))
+    let idsResult: { id: string }[] = [];
+
+    if (tsQuery) {
+      idsResult = await prisma.$queryRawUnsafe<any[]>(
+        `
+        SELECT id
+        FROM "Product"
+        WHERE status = 'publicado'
+          AND (
+            search_vector @@ to_tsquery('spanish', $1)
+            OR similarity(LOWER("name"), LOWER($2)) > 0.2
+            OR similarity(LOWER("brand"), LOWER($2)) > 0.2
+            OR similarity(LOWER("model"), LOWER($2)) > 0.2
+            OR similarity(LOWER("oemNumber"), LOWER($2)) > 0.2
+            OR id = ANY($3)
+          )
+        ORDER BY
+          GREATEST(
+            similarity(LOWER("name"), LOWER($2)),
+            similarity(LOWER("brand"), LOWER($2)),
+            similarity(LOWER("model"), LOWER($2)),
+            similarity(LOWER("oemNumber"), LOWER($2))
+          ) DESC,
+          ts_rank_cd(search_vector, to_tsquery('spanish', $1)) DESC
+        LIMIT $4;
+      `,
+        tsQuery,
+        plain,
+        viewedIds,
+        limit
+      );
+    } else {
+      // fallback: sin tsquery, usar similarity + vistos
+      idsResult = await prisma.$queryRawUnsafe<any[]>(
+        `
+        SELECT id
+        FROM "Product"
+        WHERE status = 'publicado'
+          AND (
+            similarity(LOWER("name"), LOWER($1)) > 0.2
+            OR similarity(LOWER("brand"), LOWER($1)) > 0.2
+            OR similarity(LOWER("model"), LOWER($1)) > 0.2
+            OR similarity(LOWER("oemNumber"), LOWER($1)) > 0.2
+            OR id = ANY($2)
+          )
+        ORDER BY
+          GREATEST(
+            similarity(LOWER("name"), LOWER($1)),
+            similarity(LOWER("brand"), LOWER($1)),
+            similarity(LOWER("model"), LOWER($1)),
+            similarity(LOWER("oemNumber"), LOWER($1))
+          ) DESC
+        LIMIT $3;
+      `,
+        plain,
+        viewedIds,
+        limit
+      );
     }
 
-    if (idsOrdered.length >= limit) break;
+    const ids = idsResult.map((r) => r.id);
+    if (ids.length === 0) return [];
+
+    // 3) Traer productos completos con favorites
+    const fullProducts = await prisma.product.findMany({
+      where: { id: { in: ids }, status: "publicado" },
+      include: {
+        favorites: { where: { userId }, select: { id: true } },
+      },
+    });
+
+    const byId = new Map(fullProducts.map((p) => [p.id, p]));
+    const favoriteSet = new Set(
+      fullProducts.filter((p) => p.favorites?.length).map((p) => p.id)
+    );
+
+    // 4) Mantener orden y devolver
+    return ids
+      .map((id) => {
+        const p = byId.get(id);
+        if (!p) return null;
+        return { ...p, isFavorite: favoriteSet.has(id) };
+      })
+      .filter(Boolean) as (Product & { isFavorite: boolean })[];
+  } catch (error) {
+    console.error("getRecommendedProductsForUser error:", error);
+    return [];
   }
-
-  // 4) Agregar productos vistos si falta
-  for (const pid of productIdsFromViews) {
-    if (!seen.has(pid) && idsOrdered.length < limit) {
-      idsOrdered.push(pid);
-      seen.add(pid);
-    }
-    if (idsOrdered.length >= limit) break;
-  }
-
-  if (idsOrdered.length === 0) return [];
-
-  // 5) Traer productos completos con favoritos
-  const fullProducts = await prisma.product.findMany({
-    where: { id: { in: idsOrdered }, status: "publicado" },
-    include: {
-      favorites: { where: { userId }, select: { id: true } },
-    },
-  });
-
-  const byId = new Map(
-    fullProducts.map((fp) => [
-      fp.id,
-      { ...fp, isFavorite: fp.favorites.length > 0 },
-    ])
-  );
-
-  return idsOrdered
-    .map((id) => byId.get(id))
-    .filter((p): p is Product & { isFavorite: boolean } => !!p)
-    .slice(0, limit);
 }
 
 /**
@@ -744,11 +762,10 @@ export const getProductByIdAction = async (id: string) => {
  */
 export async function getRecommendedProductsByProductId(
   productId: string,
+  userId?: string,
   limit = 10
 ) {
   const now = new Date();
-  const session = await auth();
-  const userId = session?.user?.id;
 
   // 1️⃣ Buscar el producto actual
   const baseProduct = await prisma.product.findUnique({
@@ -807,11 +824,10 @@ export async function getRecommendedProductsByProductId(
  */
 export async function getRelatedProducts(
   productId: string,
-  vendedorId: string
+  vendedorId: string,
+  userId?: string
 ) {
   const now = new Date();
-  const session = await auth();
-  const userId = session?.user?.id;
 
   // 1️⃣ Traer productos del mismo vendedor
   const productsRaw = await prisma.product.findMany({

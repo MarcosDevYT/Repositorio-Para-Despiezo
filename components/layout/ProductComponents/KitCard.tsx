@@ -29,7 +29,7 @@ export const KitCard = ({ kit }: SellKitCardProps) => {
         </div>
         <div className="w-full md:w-36">
           <Button asChild className="rounded-full w-full">
-            <Link href={`/vendedor/kits/${kit.id}`}>Comprar Kit</Link>
+            <Link href={`/kit/${kit.id}`}>Comprar Kit</Link>
           </Button>
         </div>
       </div>
@@ -39,7 +39,7 @@ export const KitCard = ({ kit }: SellKitCardProps) => {
         {kit.products.map(({ product }) => (
           <Link
             key={product.id}
-            href={`/vendedor/productos/${product.id}`}
+            href={`/productos/${product.id}`}
             className="flex flex-col items-center w-24 group hover:cursor-pointer"
           >
             <div className="w-16 h-16 relative">
