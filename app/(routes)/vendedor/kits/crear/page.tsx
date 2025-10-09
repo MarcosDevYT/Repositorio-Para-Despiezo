@@ -20,6 +20,8 @@ export default async function CreateKitPage() {
 
   if (!session?.user) redirect("/login");
 
+  if (!session.user.pro) redirect("/vendedor");
+
   const products = await getUserAvaibleProductsAction();
 
   if (!Array.isArray(products)) {

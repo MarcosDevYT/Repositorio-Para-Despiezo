@@ -80,6 +80,7 @@ export const KitCheckout = ({
 
         const res = await buyKitProductsActions(
           productIds,
+          kit.id,
           checkoutAddress!,
           phoneNumber!
         );

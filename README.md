@@ -163,7 +163,7 @@ reference_validations:
 - [x] Agrupar piezas complementarias
 - [x] CRUD para crear/gestionar kits
 - [x] Precio conjunto con descuento
-- [ ] Agregar Checkout de Stripe
+- [x] Agregar Checkout de Stripe
 
 #### Cuotas PRO
 

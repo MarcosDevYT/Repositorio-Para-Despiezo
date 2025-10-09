@@ -165,7 +165,7 @@ model Product {
   vendor         User       @relation(fields: [vendorId], references: [id])
   rooms          Room[]
   favorites      Favorite[]
-  orders         Orden[]
+  orderItems     OrderItem[]
   kits           KitProduct[]
 
   // Relación inversa con vistas de usuarios
@@ -189,6 +189,7 @@ model Kit {
 
   // Relación con productos
   products    KitProduct[]
+  orderItems  OrderItem[]
 
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
@@ -222,18 +223,19 @@ model UserProductView {
 
 // Modelo de orden
 model Orden {
-  id                  String   @id @default(cuid())
+  id                  String        @id @default(cuid())
 
-  // Relaciones
-  productId           String
-  product             Product  @relation(fields: [productId], references: [id])
+  // Relaciones principales
   buyerId             String
-  buyer               User     @relation("BuyerOrders", fields: [buyerId], references: [id])
+  buyer               User          @relation("BuyerOrders", fields: [buyerId], references: [id])
   vendorId            String
-  vendor              User     @relation("VendorOrders", fields: [vendorId], references: [id])
+  vendor              User          @relation("VendorOrders", fields: [vendorId], references: [id])
+
+  // Nueva relación
+  items               OrderItem[]   // 👈 cada orden puede tener uno o varios productos
 
   // Stripe
-  stripeSessionId     String   @unique
+  stripeSessionId     String        @unique
   stripePaymentIntent String?
 
   // Dinero
@@ -242,13 +244,13 @@ model Orden {
   feeAmount           Int
 
   // Estado de la orden
-  status              OrderStatus @default(created)
-  payoutReleased      Boolean @default(false)
+  status              OrderStatus   @default(created)
+  payoutReleased      Boolean       @default(false)
 
   // Envío y logística
   trackingNumber      String?
   trackingUrl         String?
-  shippingStatus      String @default("pending")
+  shippingStatus      String        @default("pending")
   shippingProvider    String?
   shippingLabelUrl    String?
 
@@ -267,17 +269,43 @@ model Orden {
   stripeTransferId    String?
 
   // Devoluciones
-  refundRequested     Boolean @default(false)
-  refundProcessed     Boolean @default(false)
+  refundRequested     Boolean       @default(false)
+  refundProcessed     Boolean       @default(false)
   refundStripeId      String?
 
   // Notas
   buyerNote           String?
   vendorNote          String?
 
+  // Tipo de orden (producto o kit)
+  orderType           OrderType     @default(PRODUCT)
+
   // Tiempos
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+}
+
+// 👇 Nuevo modelo intermedio
+model OrderItem {
+  id        String   @id @default(cuid())
+  ordenId   String
+  orden     Orden    @relation(fields: [ordenId], references: [id])
+
+  // Producto individual
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+
+  // En caso de que el item provenga de un kit
+  kitId     String?   // opcional, si se trata de un kit
+  kit       Kit?      @relation(fields: [kitId], references: [id])
+
+  // Aunque sea siempre 1, podés dejar este campo por flexibilidad futura
+  quantity  Int       @default(1)
+}
+
+enum OrderType {
+  PRODUCT
+  KIT
 }
 
 enum OrderStatus {

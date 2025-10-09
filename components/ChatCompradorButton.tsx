@@ -5,22 +5,17 @@ import { Button } from "./ui/button";
 
 import React, { useTransition } from "react";
 import { toast } from "sonner";
-import { Prisma } from "@prisma/client";
-import { startChatAction } from "@/actions/chat-actions";
+import { startChatWithClient } from "@/actions/chat-actions";
 import { useRouter } from "next/navigation";
-
-type PrismaOrden = Prisma.OrdenGetPayload<{
-  include: { product: true; buyer: true };
-}>;
+import { PrismaOrden } from "@/types/ProductTypes";
 
 export const ChatCompradorButton = ({ orden }: { orden: PrismaOrden }) => {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
-  // Funcion para llamar al action asi crear un chat con el vendedor
   const handleInitChat = () => {
     startTransition(async () => {
-      const res = await startChatAction(orden.product.id);
+      const res = await startChatWithClient(orden);
       if (!res?.success) {
         toast.error(res?.error);
         return;
@@ -37,11 +32,11 @@ export const ChatCompradorButton = ({ orden }: { orden: PrismaOrden }) => {
       className="flex items-center justify-center gap-2"
     >
       {isPending ? (
-        <Loader2 className="size-4 animate-spin" />
+        <Loader2 className="w-4 h-4 animate-spin" />
       ) : (
         <>
           <Mail className="w-4 h-4" />
-          Contactar comprador
+          Contactar con el comprador
         </>
       )}
     </Button>

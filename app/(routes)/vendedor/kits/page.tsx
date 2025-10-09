@@ -19,6 +19,8 @@ export default async function KitsPage() {
 
   if (!session?.user) redirect("/login");
 
+  if (!session.user.pro) redirect("/vendedor");
+
   const kits = await getVendedorKits(session.user.id);
 
   if (!Array.isArray(kits)) {

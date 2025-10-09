@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { getKitByProductId } from "@/actions/kit-actions";
+import { getKitsByProductId } from "@/actions/kit-actions";
 import {
   getRecommendedProductsByProductId,
   getRelatedProducts,
@@ -38,7 +38,7 @@ export default function ProductsRelationed({
       const [recommended, vendedor, kits] = await Promise.all([
         getRecommendedProductsByProductId(productId, userId),
         getRelatedProducts(productId, vendedorId, userId),
-        getKitByProductId(productId),
+        getKitsByProductId(productId),
       ]);
 
       setRecomendedProducts(recommended.length > 0 ? recommended : null);

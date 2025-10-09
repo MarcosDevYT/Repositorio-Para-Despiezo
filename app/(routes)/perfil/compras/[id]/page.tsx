@@ -13,7 +13,6 @@ import {
   MapPin,
   Phone,
   User,
-  FileText,
   ArrowLeft,
 } from "lucide-react";
 import {
@@ -23,6 +22,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import { OrderTracking } from "@/components/layout/ordenesLayout/OrderTracking";
 
 export default async function CompradorDetalleOrden({
   params,
@@ -51,9 +51,7 @@ export default async function CompradorDetalleOrden({
     );
   }
 
-  const product = orden.product;
   const total = (orden.amountTotal / 100).toFixed(2);
-  const fee = (orden.feeAmount / 100).toFixed(2);
 
   return (
     <div className="p-6 flex flex-col space-y-6 w-full">
@@ -68,38 +66,49 @@ export default async function CompradorDetalleOrden({
         </Button>
       </div>
 
-      {/* Producto */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Producto</CardTitle>
-          <CardDescription>Información del artículo adquirido</CardDescription>
-        </CardHeader>
-        <CardContent className="flex items-start gap-6">
-          <div className="relative w-40 h-40 flex-shrink-0">
-            <Image
-              src={product.images[0]}
-              alt={product.name}
-              fill
-              className="object-contain rounded-md border"
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <h2 className="text-lg font-semibold">{product.name}</h2>
-            <p className="text-sm text-gray-600">
-              {product.brand} {product.model} • {product.year}
-            </p>
-            <Badge variant="outline" className="w-fit">
-              {product.condition}
-            </Badge>
-            <p className="text-sm text-gray-500">
-              OEM: {product.oemNumber || "No especificado"}
-            </p>
-            <p className="text-sm text-gray-500">
-              Ubicación: {product.location}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Items de la orden */}
+      {orden.items.map((item) => {
+        const productOrKit = item.product || item.kit;
+        if (!productOrKit) return null;
+
+        return (
+          <Card key={item.id}>
+            <CardHeader>
+              <CardTitle>{item.product ? "Producto" : "Kit"}</CardTitle>
+              <CardDescription>
+                Información del artículo adquirido
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex items-start gap-6">
+              <div className="relative w-40 h-40 flex-shrink-0">
+                <Image
+                  src={productOrKit.images[0] || ""}
+                  alt={productOrKit.name}
+                  fill
+                  className="object-contain rounded-md border"
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <h2 className="text-lg font-semibold">{productOrKit.name}</h2>
+                {item.product && (
+                  <>
+                    <p className="text-sm text-gray-600">
+                      {item.product.brand} {item.product.model} •{" "}
+                      {item.product.year}
+                    </p>
+                    <Badge variant="outline" className="w-fit">
+                      {item.product.condition}
+                    </Badge>
+                  </>
+                )}
+                <p className="text-sm text-gray-500">
+                  Cantidad: {item.quantity}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
 
       {/* Estado de la orden */}
       <Card>
@@ -142,6 +151,12 @@ export default async function CompradorDetalleOrden({
               <span>Proveedor: {orden.shippingProvider}</span>
             </div>
           )}
+
+          <div className="col-span-full flex flex-col gap-4">
+            <h2 className="font-semibold">Seguimiento del paquete</h2>
+
+            <OrderTracking trackingNumber={orden.trackingNumber} />
+          </div>
         </CardContent>
       </Card>
 
@@ -164,6 +179,7 @@ export default async function CompradorDetalleOrden({
           <CardTitle>Datos de envío</CardTitle>
           <CardDescription>Dirección y contacto</CardDescription>
         </CardHeader>
+
         <CardContent className="space-y-2 text-sm text-gray-700">
           {orden.shippingName && (
             <p className="flex items-center gap-2">

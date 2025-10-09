@@ -29,6 +29,27 @@ interface ParcelType {
   };
 }
 
+export interface TrackingStatus {
+  carrier_update_timestamp: string;
+  parcel_status_history_id: string;
+  parent_status: string;
+  carrier_code: string;
+  carrier_message: string;
+}
+
+export interface TrackingResponse {
+  parcel_id: string;
+  carrier_code: string;
+  created_at: string;
+  carrier_tracking_url: string;
+  sendcloud_tracking_url: string | null;
+  is_return: boolean;
+  is_to_service_point: boolean;
+  is_mail_box: boolean;
+  expected_delivery_date: string;
+  statuses: TrackingStatus[];
+}
+
 // Ruta para SendCloud
 const sendCloudRoute = "https://panel.sendcloud.sc/api/v2";
 const username = process.env.SENDCLOUD_PUBLIC_KEY!;
@@ -72,7 +93,7 @@ export async function getOrders(page: number = 1, limit: number = 10) {
 }
 
 /**
- * Funcion para obtener las ordenes del usuario
+ * Funcion para obtener las ordenes del usuario (buyer)
  */
 export async function getUserOrdens(userId: string) {
   try {
@@ -81,11 +102,16 @@ export async function getUserOrdens(userId: string) {
     const ordenes = await prisma.orden.findMany({
       where: { buyerId: userId },
       include: {
-        product: true,
+        items: {
+          include: {
+            product: true,
+            kit: true,
+          },
+        },
+        vendor: true,
       },
+      orderBy: { createdAt: "desc" },
     });
-
-    if (!ordenes) return [];
 
     return ordenes;
   } catch (error) {
@@ -104,11 +130,16 @@ export async function getVendedorOrdens(userId: string) {
     const ordenes = await prisma.orden.findMany({
       where: { vendorId: userId },
       include: {
-        product: true,
+        items: {
+          include: {
+            product: true,
+            kit: true,
+          },
+        },
+        buyer: true,
       },
+      orderBy: { createdAt: "desc" },
     });
-
-    if (!ordenes) return [];
 
     return ordenes;
   } catch (error) {
@@ -118,7 +149,7 @@ export async function getVendedorOrdens(userId: string) {
 }
 
 /**
- * Funcion para obtener la orden del vendedor por id
+ * Funcion para obtener la orden por ID
  */
 export async function getOrdenByID(orderId: string) {
   try {
@@ -127,12 +158,18 @@ export async function getOrdenByID(orderId: string) {
     const orden = await prisma.orden.findUnique({
       where: { id: orderId },
       include: {
-        product: true,
+        items: {
+          include: {
+            product: true,
+            kit: true,
+          },
+        },
         buyer: true,
+        vendor: true,
       },
     });
 
-    if (!orden) return null;
+    console.log(orden);
 
     return orden;
   } catch (error) {
@@ -182,6 +219,43 @@ export async function createEtiqueta(parcelData: ParcelType) {
   } catch (error) {
     console.error(error);
     throw new Error("Error al crear la etiqueta");
+  }
+}
+
+/**
+ * Obtener seguimiento de la orden
+ */
+export async function getTrackingStatus(
+  tracking_number: string
+): Promise<TrackingResponse> {
+  try {
+    if (!tracking_number) {
+      throw new Error("No se encontró el número de seguimiento de esta orden.");
+    }
+
+    const response = await fetch(
+      `${sendCloudRoute}/tracking/${tracking_number}`,
+      {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          Authorization:
+            "Basic " +
+            Buffer.from(username + ":" + password).toString("base64"),
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error("Error obteniendo el estado del envío: " + errorText);
+    }
+
+    const data: TrackingResponse = await response.json();
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw new Error("Error al obtener el estado del envío");
   }
 }
 

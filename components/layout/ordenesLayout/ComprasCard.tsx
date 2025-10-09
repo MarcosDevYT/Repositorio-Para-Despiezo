@@ -18,39 +18,54 @@ import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
 import { Prisma } from "@prisma/client";
 
+// Ahora incluimos items con producto y kit
 type PrismaOrden = Prisma.OrdenGetPayload<{
-  include: { product: true };
+  include: {
+    items: {
+      include: {
+        product: true;
+        kit: true;
+      };
+    };
+  };
 }>;
 
 export const ComprasCard = ({ orden }: { orden: PrismaOrden }) => {
-  const product = orden.product;
   const total = (orden.amountTotal / 100).toFixed(2);
-  const fee = (orden.feeAmount / 100).toFixed(2);
   const fecha = format(new Date(orden.createdAt), "dd/MM/yyyy");
 
   return (
     <Card className="w-full rounded-2xl border border-gray-200 shadow-sm bg-white gap-0">
-      {/* Header con producto y estado */}
+      {/* Header con primer item */}
       <CardHeader className="flex items-center gap-4 p-4">
-        <div className="relative w-20 h-20 flex-shrink-0">
-          <Image
-            src={product.images[0]}
-            alt={product.name}
-            fill
-            className="object-contain rounded-md border bg-gray-50"
-          />
-        </div>
+        {orden.items[0]?.product || orden.items[0]?.kit ? (
+          <div className="relative w-20 h-20 flex-shrink-0">
+            <Image
+              src={
+                orden.items[0].product
+                  ? orden.items[0].product.images[0]
+                  : orden.items[0].kit?.images[0] || ""
+              }
+              alt={
+                orden.items[0].product
+                  ? orden.items[0].product.name
+                  : orden.items[0].kit?.name || ""
+              }
+              fill
+              className="object-contain rounded-md border bg-gray-50"
+            />
+          </div>
+        ) : null}
+
         <div className="flex-1 flex flex-col gap-1">
-          <h3 className="font-semibold text-gray-900">{product.name}</h3>
-          <p className="text-sm text-gray-500">
-            {product.brand} {product.model} • {product.year}
-          </p>
+          <h3 className="font-semibold text-gray-900">
+            {orden.items[0].product
+              ? orden.items[0].product.name
+              : orden.items[0].kit?.name || "Sin nombre"}
+          </h3>
           <div className="flex items-center gap-2 mt-1">
             <Badge variant="outline" className="text-xs px-2 capitalize">
               {orden.status}
-            </Badge>
-            <Badge variant="outline" className="text-xs px-2">
-              {product.condition}
             </Badge>
           </div>
         </div>

@@ -2,6 +2,7 @@
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { PrismaOrden } from "@/types/ProductTypes";
 import { redirect } from "next/navigation";
 
 // Funcion para iniciar un chat con un vendedor
@@ -41,6 +42,49 @@ export const startChatAction = async (productId: string) => {
     if (!room) {
       room = await prisma.room.create({
         data: { productId, vendorId, buyerId: userId },
+      });
+    }
+
+    return { success: true, url: `/inbox/${room.id}` };
+  } catch (err) {
+    console.error("Error starting chat:", err);
+    return { success: false, error: "Error al crear chat" };
+  }
+};
+
+/**
+ * Función para iniciar un chat con un cliente desde la perspectiva del vendedor
+ */
+export const startChatWithClient = async (orden: PrismaOrden) => {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) redirect("/login");
+
+    const vendorId = session.user.id;
+    const buyerId = orden.buyer.id;
+
+    if (vendorId === buyerId) {
+      return { success: false, error: "No puedes chatear contigo mismo" };
+    }
+
+    // Revisamos si ya existe un chat con alguno de los productos
+    let room;
+    for (const item of orden.items) {
+      room = await prisma.room.findFirst({
+        where: {
+          productId: item.product.id,
+          vendorId,
+          buyerId,
+        },
+      });
+      if (room) break; // usamos el primer chat existente
+    }
+
+    // Si no hay ninguno, creamos con el primer producto
+    if (!room) {
+      const firstProductId = orden.items[0].product.id;
+      room = await prisma.room.create({
+        data: { productId: firstProductId, vendorId, buyerId },
       });
     }
 

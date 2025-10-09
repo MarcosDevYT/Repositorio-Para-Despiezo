@@ -17,6 +17,8 @@ export default async function EditKitPage({
   const session = await auth();
   if (!session?.user) redirect("/login");
 
+  if (!session.user.pro) redirect("/vendedor");
+
   // 🔹 Obtenemos el kit a editar
   const kit = await prisma.kit.findUnique({
     where: { id: id },

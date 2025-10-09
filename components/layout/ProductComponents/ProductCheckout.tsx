@@ -173,7 +173,7 @@ export const ProductCheckout = ({
                 <EditableBusinessField
                   label="Numero de teléfono"
                   setValue={setPhoneNumber}
-                  value={session.user.phoneNumber}
+                  value={phoneNumber}
                   type="text"
                   fieldName="phoneNumber"
                 />

@@ -2,12 +2,17 @@ import { Prisma } from "@prisma/client";
 import { OrderRow } from "../ordenesLayout/OrderRow";
 import { Card, CardHeader } from "@/components/ui/card";
 
+// Ahora incluimos items con producto y kit
 type PrismaOrden = Prisma.OrdenGetPayload<{
   include: {
-    product: true;
+    items: {
+      include: {
+        product: true;
+        kit: true;
+      };
+    };
   };
 }>;
-
 export const SalesProducts = ({ orders }: { orders: PrismaOrden[] }) => {
   return (
     <div className="flex flex-col items-start justify-start space-y-4">

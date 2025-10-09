@@ -101,12 +101,15 @@ export async function buyProductActions(
 }
 
 /**
- * Función para armar el checkout de stripe con los datos del kit para comprar
- * @param productsIds Array de IDs de productos
- * @returns Retornamos la url del checkout de stripe
+ * Función para armar el checkout de Stripe con los datos del kit para comprar
+ * @param productIds Array de IDs de productos del kit
+ * @param kitId ID del kit
+ * @param userAddressId ID de la dirección del usuario
+ * @param userPhoneNumber Teléfono del usuario
  */
 export async function buyKitProductsActions(
   productIds: string[],
+  kitId: string,
   userAddressId: string,
   userPhoneNumber: string
 ) {
@@ -114,52 +117,69 @@ export async function buyKitProductsActions(
     const session = await auth();
     if (!session?.user) redirect("/login");
 
-    // Buscar productos del kit
-    const products = await prisma.product.findMany({
-      where: { id: { in: productIds }, status: "publicado" },
+    // Buscar el kit con sus productos
+    const kit = await prisma.kit.findUnique({
+      where: { id: kitId },
+      include: {
+        products: {
+          include: { product: true },
+        },
+      },
     });
 
-    if (products.length === 0)
-      return { error: "No se encontraron productos válidos en el kit" };
+    if (!kit) return { error: "Kit no encontrado" };
 
-    // Validar que el usuario no compre sus propios productos
-    const isOwnProduct = products.some((p) => p.vendorId === session.user.id);
+    // Verificar que los productos existan y estén publicados
+    const validProducts = kit.products
+      .map((kp) => kp.product)
+      .filter((p) => p.status === "publicado");
+
+    if (validProducts.length === 0)
+      return { error: "No hay productos válidos en este kit" };
+
+    // Validar que el usuario no compre su propio kit
+    const isOwnProduct = validProducts.some(
+      (p) => p.vendorId === session.user.id
+    );
     if (isOwnProduct) return { error: "No puedes comprar tu propio kit" };
 
-    // Tomamos el vendedor del primer producto (todos pertenecen al mismo vendedor)
+    // Obtener vendedor
     const vendedor = await prisma.user.findUnique({
-      where: { id: products[0].vendorId },
+      where: { id: validProducts[0].vendorId },
       select: { connectedAccountId: true },
     });
 
-    const totalPrice = products.reduce((acc, p) => {
-      const price = p.offer && p.offerPrice ? +p.offerPrice : +p.price;
-      return acc + price;
-    }, 0);
-
+    // 💰 Usamos el precio total del kit (ya con descuento aplicado)
+    const totalPrice = kit.price;
     const applicationFee = Math.round(totalPrice * 0.1);
-    const stripeLineItems = products.map((p) => ({
-      price_data: {
-        currency: "eur",
-        unit_amount: Math.round(
-          (p.offer && p.offerPrice ? +p.offerPrice : +p.price) * 100
-        ),
-        product_data: {
-          name: p.name,
-          description: p.description,
-          images: [p.images[0]],
-        },
-      },
-      quantity: 1,
-    }));
 
+    // 🧾 Creamos solo un item de Stripe representando el KIT
+    const stripeLineItems = [
+      {
+        price_data: {
+          currency: "eur",
+          unit_amount: Math.round(totalPrice * 100),
+          product_data: {
+            name: kit.name,
+            description:
+              kit.description ||
+              `Incluye ${validProducts.length} productos con ${kit.discount}% de descuento.`,
+            images: kit.images.length ? [kit.images[0]] : [],
+          },
+        },
+        quantity: 1,
+      },
+    ];
+
+    // Crear sesión de Stripe
     const stripeSession = await stripe.checkout.sessions.create({
       mode: "payment",
       customer_email: session.user.email,
       metadata: {
         buyerId: session.user.id,
-        vendedorId: products[0].vendorId,
+        vendedorId: validProducts[0].vendorId,
         productIds: JSON.stringify(productIds),
+        kitId,
         vendedorConnectedAccountId: vendedor?.connectedAccountId || "",
         applicationFee,
         userAddressId,
@@ -348,10 +368,9 @@ export async function handleCheckoutCompleted(
   throw new Error(`Tipo de compra desconocido: ${typeOfBuy}`);
 }
 
-/**
- * Manejo de compra de producto
- */
 async function handleProductPurchase(sessionObj: Stripe.Checkout.Session) {
+  console.log("SessionObj de handleProductPurchase: ", sessionObj);
+
   const userId = sessionObj.metadata?.buyerId;
   const vendedorId = sessionObj.metadata?.vendedorId;
   const productId = sessionObj.metadata?.productId;
@@ -396,15 +415,12 @@ async function handleProductPurchase(sessionObj: Stripe.Checkout.Session) {
     const userAddress = await prisma.address.findUnique({
       where: { id: userAddressId },
     });
-
-    if (!userAddress) {
+    if (!userAddress)
       throw new Error("No se encontró la dirección del usuario");
-    }
 
-    // Crear orden
+    // Crear orden con items
     const orden = await prisma.orden.create({
       data: {
-        productId,
         buyerId: userId,
         vendorId: vendedorId,
         stripeSessionId: sessionObj.id,
@@ -422,6 +438,19 @@ async function handleProductPurchase(sessionObj: Stripe.Checkout.Session) {
         shippingAddressLine2: userAddress.number,
         shippingName: userName,
         shippingPhone: userPhoneNumber,
+
+        orderType: "PRODUCT", // es un producto individual
+        items: {
+          create: [
+            {
+              productId,
+              quantity: 1,
+            },
+          ],
+        },
+      },
+      include: {
+        items: true, // opcional, si querés devolver los items creados
       },
     });
 
@@ -433,27 +462,30 @@ async function handleProductPurchase(sessionObj: Stripe.Checkout.Session) {
 }
 
 /**
- * Manejo de compra de kit
+ * Manejo de compra (producto o kit)
  */
 async function handleKitPurchase(sessionObj: Stripe.Checkout.Session) {
   const userId = sessionObj.metadata?.buyerId;
   const vendedorId = sessionObj.metadata?.vendedorId;
-  const productId = sessionObj.metadata?.productId;
   const vendedorConnectedAccountId =
     sessionObj.metadata?.vendedorConnectedAccountId;
   const applicationFee = sessionObj.metadata?.applicationFee;
-  const productPrice = sessionObj.amount_total;
+  const totalPrice = sessionObj.amount_total;
   const userAddressId = sessionObj.metadata?.userAddressId;
   const userPhoneNumber = sessionObj.metadata?.userPhoneNumber;
   const userName = sessionObj.metadata?.userName;
+  const typeOfBuy = sessionObj.metadata?.typeOfBuy;
+  const kitId = sessionObj.metadata?.kitId;
+  const productIds = sessionObj.metadata?.productIds
+    ? JSON.parse(sessionObj.metadata.productIds)
+    : [];
 
   if (
     !userId ||
     !vendedorId ||
-    !productId ||
     !vendedorConnectedAccountId ||
     !applicationFee ||
-    !productPrice ||
+    !totalPrice ||
     !userAddressId ||
     !userPhoneNumber ||
     !userName
@@ -462,7 +494,7 @@ async function handleKitPurchase(sessionObj: Stripe.Checkout.Session) {
   }
 
   try {
-    const amountTotal = Number(productPrice);
+    const amountTotal = Number(totalPrice);
     const feeAmount = Number(applicationFee) * 100; // centavos
     const vendorAmount = amountTotal - feeAmount;
 
@@ -470,25 +502,17 @@ async function handleKitPurchase(sessionObj: Stripe.Checkout.Session) {
     const releaseAt = new Date();
     releaseAt.setDate(releaseAt.getDate() + 20);
 
-    // Cambiar estado del producto
-    await prisma.product.update({
-      where: { id: productId },
-      data: { status: "vendido" },
-    });
-
     // Obtener dirección
     const userAddress = await prisma.address.findUnique({
       where: { id: userAddressId },
     });
-
     if (!userAddress) {
       throw new Error("No se encontró la dirección del usuario");
     }
 
-    // Crear orden
+    // Crear la orden
     const orden = await prisma.orden.create({
       data: {
-        productId,
         buyerId: userId,
         vendorId: vendedorId,
         stripeSessionId: sessionObj.id,
@@ -506,8 +530,44 @@ async function handleKitPurchase(sessionObj: Stripe.Checkout.Session) {
         shippingAddressLine2: userAddress.number,
         shippingName: userName,
         shippingPhone: userPhoneNumber,
+        orderType: typeOfBuy === "COMPRAR-KIT" ? "KIT" : "PRODUCT",
       },
     });
+
+    // Crear OrderItems
+    if (typeOfBuy === "COMPRAR-KIT" && kitId && productIds.length > 0) {
+      // Marcar productos como vendidos
+      await prisma.product.updateMany({
+        where: { id: { in: productIds } },
+        data: { status: "vendido" },
+      });
+
+      // Crear OrderItems del kit
+      const orderItemsData = productIds.map((pid: string) => ({
+        ordenId: orden.id,
+        productId: pid,
+        kitId,
+        quantity: 1,
+      }));
+      await prisma.orderItem.createMany({ data: orderItemsData });
+    } else if (typeOfBuy === "COMPRAR-PRODUCTO" && productIds.length === 1) {
+      const productId = productIds[0];
+
+      // Marcar producto como vendido
+      await prisma.product.update({
+        where: { id: productId },
+        data: { status: "vendido" },
+      });
+
+      // Crear OrderItem
+      await prisma.orderItem.create({
+        data: {
+          ordenId: orden.id,
+          productId,
+          quantity: 1,
+        },
+      });
+    }
 
     return orden;
   } catch (error) {
@@ -614,17 +674,26 @@ export async function releasePaymentAction(
   motivo: "delivery" | "timeout"
 ) {
   try {
-    // 1. Buscar la orden (usamos findFirst porque productId no es único)
-    const orden = await prisma.orden.findFirst({
-      where: { productId, status: "paid" },
+    // 1. Buscar el OrderItem activo para ese producto
+    const orderItem = await prisma.orderItem.findFirst({
+      where: {
+        productId,
+        orden: {
+          status: "paid",
+        },
+      },
       include: {
-        vendor: {
-          select: { connectedAccountId: true },
+        orden: {
+          include: {
+            vendor: {
+              select: { connectedAccountId: true },
+            },
+          },
         },
       },
     });
 
-    if (!orden) {
+    if (!orderItem) {
       console.error(
         "No se encontró una orden 'paid' para productId:",
         productId
@@ -632,19 +701,21 @@ export async function releasePaymentAction(
       return null;
     }
 
+    const orden = orderItem.orden;
+
     if (!orden.vendor.connectedAccountId) {
       console.error("El vendedor no tiene connectedAccountId:", orden.vendorId);
       return null;
     }
 
-    // 2. Hacer transferencia al vendedor en Stripe
+    // 2. Hacer transferencia al vendedor en Stripe usando el vendorAmount ya calculado
     const transferencia = await stripe.transfers.create({
       amount: orden.vendorAmount, // en centavos
       currency: "eur",
       destination: orden.vendor.connectedAccountId,
       metadata: {
         orderId: orden.id,
-        productId: orden.productId,
+        productId: orderItem.productId,
         motivo,
       },
     });
@@ -654,8 +725,8 @@ export async function releasePaymentAction(
       where: { id: orden.id },
       data: {
         payoutReleased: true,
-        releasedAt: new Date(), // Campo para guardar la fecha de transferencia
-        stripeTransferId: transferencia.id, // Campo para guardar la transferencia
+        releasedAt: new Date(),
+        stripeTransferId: transferencia.id,
       },
     });
 

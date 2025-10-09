@@ -13,9 +13,7 @@ import {
   MapPin,
   Phone,
   User,
-  FileText,
   ArrowLeft,
-  Mail,
   CheckCircle2,
 } from "lucide-react";
 import {
@@ -27,6 +25,7 @@ import {
 } from "@/components/ui/card";
 import { CrearEtiquetaButton } from "@/components/CrearEtiquetaButton";
 import { ChatCompradorButton } from "@/components/ChatCompradorButton";
+import { OrderProduct } from "@/components/layout/ordenesLayout/orderProduct";
 
 export default async function VentasIDOrden({
   params,
@@ -55,7 +54,6 @@ export default async function VentasIDOrden({
     );
   }
 
-  const product = orden.product;
   const total = (orden.amountTotal / 100).toFixed(2);
   const vendorAmount = (orden.vendorAmount / 100).toFixed(2);
   const fee = (orden.feeAmount / 100).toFixed(2);
@@ -94,7 +92,7 @@ export default async function VentasIDOrden({
         </CardContent>
       </Card>
 
-      {/* Layout principal: desktop 2 columnas, mobile 1 columna */}
+      {/* Layout principal */}
       <div className="flex flex-col md:flex-row gap-6">
         {/* Columna izquierda: info de orden */}
         <div className="flex-1 space-y-6 order-2 md:order-1">
@@ -223,37 +221,8 @@ export default async function VentasIDOrden({
             </Card>
           )}
         </div>
-
-        {/* Columna derecha: producto + acciones */}
-        <div className="w-full md:w-80 lg:w-sm flex-shrink-0 space-y-6 order-1 md:order-2">
-          {/* Producto */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Producto vendido</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center gap-4">
-              <div className="relative w-40 h-40">
-                <Image
-                  src={product.images[0]}
-                  alt={product.name}
-                  fill
-                  className="object-contain rounded-md border"
-                />
-              </div>
-              <div className="text-center space-y-1">
-                <h2 className="text-lg font-semibold">{product.name}</h2>
-                <p className="text-sm text-gray-600">
-                  {product.brand} {product.model} • {product.year}
-                </p>
-                <Badge variant="outline">{product.condition}</Badge>
-                <p className="text-sm text-gray-500">
-                  OEM: {product.oemNumber || "No especificado"}
-                </p>
-                <p className="text-sm text-gray-500">{product.location}</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Columna derecha: items vendidos */}
+        <OrderProduct orden={orden} />
       </div>
     </div>
   );

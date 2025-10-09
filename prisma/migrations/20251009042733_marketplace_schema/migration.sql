@@ -1,4 +1,7 @@
 -- CreateEnum
+CREATE TYPE "OrderType" AS ENUM ('PRODUCT', 'KIT');
+
+-- CreateEnum
 CREATE TYPE "OrderStatus" AS ENUM ('created', 'paid', 'shipped', 'delivered', 'completed', 'canceled', 'refunded');
 
 -- CreateTable
@@ -17,6 +20,10 @@ CREATE TABLE "User" (
     "bussinesCategory" TEXT[] DEFAULT ARRAY[]::TEXT[],
     "connectedAccountId" TEXT,
     "stripeConnectedLinked" BOOLEAN NOT NULL DEFAULT false,
+    "pro" BOOLEAN NOT NULL DEFAULT false,
+    "priceId" TEXT,
+    "customerId" TEXT,
+    "subscriptionId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -101,12 +108,37 @@ CREATE TABLE "Product" (
     "width" DOUBLE PRECISION,
     "height" DOUBLE PRECISION,
     "featuredUntil" TIMESTAMP(3),
+    "featuredAt" TIMESTAMP(3),
     "clicks" INTEGER NOT NULL DEFAULT 0,
     "vendorId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Product_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Kit" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "price" DOUBLE PRECISION NOT NULL,
+    "discount" DOUBLE PRECISION,
+    "images" TEXT[],
+    "vendorId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Kit_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "KitProduct" (
+    "id" TEXT NOT NULL,
+    "kitId" TEXT NOT NULL,
+    "productId" TEXT NOT NULL,
+
+    CONSTRAINT "KitProduct_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -122,7 +154,6 @@ CREATE TABLE "UserProductView" (
 -- CreateTable
 CREATE TABLE "Orden" (
     "id" TEXT NOT NULL,
-    "productId" TEXT NOT NULL,
     "buyerId" TEXT NOT NULL,
     "vendorId" TEXT NOT NULL,
     "stripeSessionId" TEXT NOT NULL,
@@ -152,10 +183,22 @@ CREATE TABLE "Orden" (
     "refundStripeId" TEXT,
     "buyerNote" TEXT,
     "vendorNote" TEXT,
+    "orderType" "OrderType" NOT NULL DEFAULT 'PRODUCT',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Orden_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "OrderItem" (
+    "id" TEXT NOT NULL,
+    "ordenId" TEXT NOT NULL,
+    "productId" TEXT NOT NULL,
+    "kitId" TEXT,
+    "quantity" INTEGER NOT NULL DEFAULT 1,
+
+    CONSTRAINT "OrderItem_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -183,6 +226,8 @@ CREATE TABLE "SearchLog" (
     "id" TEXT NOT NULL,
     "query" TEXT NOT NULL,
     "clicks" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "SearchLog_pkey" PRIMARY KEY ("id")
 );
@@ -214,6 +259,9 @@ CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_connectedAccountId_key" ON "User"("connectedAccountId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_customerId_key" ON "User"("customerId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "VerificationToken_identifier_key" ON "VerificationToken"("identifier");
@@ -258,19 +306,34 @@ ALTER TABLE "Address" ADD CONSTRAINT "Address_userId_fkey" FOREIGN KEY ("userId"
 ALTER TABLE "Product" ADD CONSTRAINT "Product_vendorId_fkey" FOREIGN KEY ("vendorId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "Kit" ADD CONSTRAINT "Kit_vendorId_fkey" FOREIGN KEY ("vendorId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "KitProduct" ADD CONSTRAINT "KitProduct_kitId_fkey" FOREIGN KEY ("kitId") REFERENCES "Kit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "KitProduct" ADD CONSTRAINT "KitProduct_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "UserProductView" ADD CONSTRAINT "UserProductView_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "UserProductView" ADD CONSTRAINT "UserProductView_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Orden" ADD CONSTRAINT "Orden_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "Orden" ADD CONSTRAINT "Orden_buyerId_fkey" FOREIGN KEY ("buyerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Orden" ADD CONSTRAINT "Orden_vendorId_fkey" FOREIGN KEY ("vendorId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_ordenId_fkey" FOREIGN KEY ("ordenId") REFERENCES "Orden"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_kitId_fkey" FOREIGN KEY ("kitId") REFERENCES "Kit"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Favorite" ADD CONSTRAINT "Favorite_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

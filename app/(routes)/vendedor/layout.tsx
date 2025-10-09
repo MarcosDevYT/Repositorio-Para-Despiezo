@@ -14,11 +14,9 @@ export default async function SellLayout({
 }) {
   const session = await auth();
 
-  if (!session) return null;
-
   return (
     <MainContainer className="container mx-auto px-4 py-8 md:py-16 flex flex-col gap-4 min-h-[82.5vh]">
-      <SellNav />
+      <SellNav session={session} />
 
       {children}
     </MainContainer>

@@ -83,29 +83,37 @@ export async function updateKit(
       throw new Error("Debes tener el Plan Pro para poder actualizar un Kit.");
     }
 
-    // Si esta actualizando los productos tenemos que verificar que el kit tenga al menos 2 productos
-    if (data.productIds && data.productIds.length < 2) {
-      throw new Error("Un Kit debe tener al menos 2 productos.");
-    }
-
     let newProducts;
+
     if (data.productIds) {
+      // Traemos los productos y sus estados
       const products = await prisma.product.findMany({
         where: { id: { in: data.productIds } },
         select: { id: true, status: true },
       });
 
-      const vendidos = products.filter((p) => p.status === "vendido");
-      if (vendidos.length > 0) {
-        throw new Error("No se pueden agregar productos vendidos al kit.");
+      // Filtramos los productos que NO están vendidos
+      const disponibles = products.filter((p) => p.status !== "vendido");
+
+      // Si hay productos vendidos, los quitamos y mostramos un aviso
+      if (disponibles.length < products.length) {
+        console.warn("Algunos productos vendidos fueron eliminados del kit.");
       }
 
-      // Eliminamos relaciones anteriores y creamos nuevas
+      // Validamos que haya al menos 2 productos válidos
+      if (disponibles.length < 2) {
+        throw new Error(
+          "El kit debe tener al menos 2 productos disponibles (no vendidos)."
+        );
+      }
+
+      // Eliminamos las relaciones anteriores del kit
       await prisma.kitProduct.deleteMany({ where: { kitId } });
 
+      // Creamos las nuevas relaciones solo con productos válidos
       newProducts = {
-        create: data.productIds.map((id) => ({
-          product: { connect: { id } },
+        create: disponibles.map((p) => ({
+          product: { connect: { id: p.id } },
         })),
       };
     }
@@ -123,7 +131,14 @@ export async function updateKit(
       },
     });
 
-    return { success: "Kit actualizado correctamente." };
+    return {
+      success: "Kit actualizado correctamente.",
+      warning:
+        newProducts &&
+        newProducts.create.length < (data.productIds?.length ?? 0)
+          ? "Algunos productos vendidos fueron eliminados del kit."
+          : undefined,
+    };
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Error al actualizar el kit";
@@ -248,22 +263,27 @@ export async function getKitsByProductId(productId: string) {
   // Traer los kits que contengan ese producto
   const kitsRaw = await prisma.kit.findMany({
     where: {
-      products: {
-        some: { productId },
-      },
-      // No incluir kits con productos vendidos
-      products: {
-        none: {
-          product: { status: "vendido" },
+      AND: [
+        // Que contenga el producto que queremos
+        {
+          products: {
+            some: { productId },
+          },
         },
-      },
+        // Que **ningún producto** del kit esté vendido
+        {
+          products: {
+            none: { product: { status: "vendido" } },
+          },
+        },
+      ],
     },
     include: {
       products: {
         include: { product: true },
       },
     },
-    orderBy: { createdAt: "desc" }, // luego reordenamos en memoria
+    orderBy: { createdAt: "desc" },
   });
 
   // Ordenar manualmente para priorizar los destacados vigentes
@@ -278,6 +298,8 @@ export async function getKitsByProductId(productId: string) {
       return b.createdAt.getTime() - a.createdAt.getTime();
     })
     .slice(0, 10);
+
+  console.log(kits);
 
   return kits;
 }

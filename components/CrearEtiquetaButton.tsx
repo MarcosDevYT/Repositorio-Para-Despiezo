@@ -5,12 +5,8 @@ import { Button } from "./ui/button";
 import { File, Loader2, Printer } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Prisma } from "@prisma/client";
 import { useRouter } from "next/navigation";
-
-type PrismaOrden = Prisma.OrdenGetPayload<{
-  include: { product: true; buyer: true };
-}>;
+import { PrismaOrden } from "@/types/ProductTypes";
 
 export const CrearEtiquetaButton = ({ orden }: { orden: PrismaOrden }) => {
   const router = useRouter();
@@ -30,11 +26,11 @@ export const CrearEtiquetaButton = ({ orden }: { orden: PrismaOrden }) => {
             postal_code: orden.shippingPostalCode,
             telephone: orden.shippingPhone,
             request_label: true,
-            email: orden.buyer.email,
+            email: orden.items[0]?.buyer?.email,
             data: {},
             country: "ES",
             shipment: { id: 8 },
-            weight: orden.product.weight,
+            weight: orden.items[0]?.product.weight,
             order_number: orden.id,
             insured_value: 0,
             total_order_value_currency: "EUR",

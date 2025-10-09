@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Building2, Layers, Package, Plus, ShoppingCart } from "lucide-react";
+import { Session } from "next-auth";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -9,7 +10,7 @@ import { usePathname } from "next/navigation";
  * @description Componente de navegacion para la venta de productos
  * @returns Componente de navegacion para la venta de productos
  */
-export const SellNav = () => {
+export const SellNav = ({ session }: { session: Session | null }) => {
   const pathname = usePathname();
 
   return (
@@ -56,16 +57,18 @@ export const SellNav = () => {
             </Link>
           </Button>
 
-          <Button
-            className="flex items-center flex-1 w-full"
-            variant={pathname === "/vendedor/kits" ? "default" : "ghost"}
-            asChild
-          >
-            <Link href="/vendedor/kits">
-              <Layers />
-              Kits
-            </Link>
-          </Button>
+          {session?.user.pro && (
+            <Button
+              className="flex items-center flex-1 w-full"
+              variant={pathname === "/vendedor/kits" ? "default" : "ghost"}
+              asChild
+            >
+              <Link href="/vendedor/kits">
+                <Layers />
+                Kits
+              </Link>
+            </Button>
+          )}
         </div>
 
         <div className="hidden md:block">

@@ -8,14 +8,20 @@ import { MapPin, Package, Truck, DollarSign } from "lucide-react";
 import { Prisma } from "@prisma/client";
 import { Card } from "@/components/ui/card";
 
+// Ahora incluimos items con producto y kit
 type PrismaOrden = Prisma.OrdenGetPayload<{
   include: {
-    product: true;
+    items: {
+      include: {
+        product: true;
+        kit: true;
+      };
+    };
   };
 }>;
 
 export const OrderRow = ({ order }: { order: PrismaOrden }) => {
-  const product = order.product;
+  const product = order.items[0].product;
 
   // formatear precio (Stripe suele estar en centavos)
   const total = (order.amountTotal / 100).toFixed(2);
