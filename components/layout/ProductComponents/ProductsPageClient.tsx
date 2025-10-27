@@ -8,10 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 import { getProductsByFilterAction } from "@/actions/sell-actions";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ProductFilterSheet } from "./ProductFilterSheet";
 import { ProductType } from "@/types/ProductTypes";
+import { ProductsSkeleton } from "@/components/skeletons/ProductsSkeleton";
 
 type Props = {
   params: {
@@ -54,13 +54,16 @@ export const ProductsPageClient = ({ params, initialFilters }: Props) => {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [products, setProducts] = useState<ProductType[]>([]);
+  const [counts, setCounts] = useState<{ condition: Record<string, number> }>({
+    condition: {},
+  });
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(pageNumber);
 
   const fetchProducts = () => {
     startTransition(async () => {
       try {
-        const { products, total } = await getProductsByFilterAction({
+        const { products, total, counts } = await getProductsByFilterAction({
           query,
           categoria,
           subcategoria,
@@ -77,6 +80,7 @@ export const ProductsPageClient = ({ params, initialFilters }: Props) => {
 
         setProducts(products);
         setTotal(total);
+        setCounts(counts);
       } catch (error) {
         console.error("Error fetching products:", error);
       }
@@ -110,7 +114,7 @@ export const ProductsPageClient = ({ params, initialFilters }: Props) => {
 
       <div className="flex gap-4 relative">
         <aside className="hidden lg:flex w-72 h-[80vh] sticky top-20 left-0 right-0 ">
-          <ProductFilters {...initialFilters} />
+          <ProductFilters counts={counts} {...initialFilters} />
         </aside>
 
         <section className="flex flex-col gap-4 flex-1 min-h-screen">
@@ -141,32 +145,7 @@ export const ProductsPageClient = ({ params, initialFilters }: Props) => {
           </div>
 
           {isPending ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 place-content-center place-items-center gap-4">
-              {Array.from({ length: 6 }).map((_, index) => (
-                <Card
-                  key={index}
-                  className="space-y-4 bg-white p-4 shadow-sm w-full max-w-72 h-[410px]"
-                >
-                  <Skeleton className="h-60 md:h-64 w-full rounded-lg" />
-
-                  <div className="space-y-2">
-                    <div className="flex flex-row justify-between">
-                      <Skeleton className="h-4 w-16 rounded-full" />
-                      <Skeleton className="h-4 w-16 rounded-full" />
-                    </div>
-
-                    <Skeleton className="h-12 w-full rounded-lg" />
-                    <Skeleton className="h-4 w-full rounded-lg" />
-                    <Skeleton className="h-4 w-full rounded-lg" />
-
-                    <div className="flex flex-row justify-between">
-                      <Skeleton className="h-8 w-16 rounded-lg" />
-                      <Skeleton className="h-8 w-16 rounded-full" />
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
+            <ProductsSkeleton />
           ) : (
             <article className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 place-content-center place-items-center gap-4">
               {products.map((product) => (

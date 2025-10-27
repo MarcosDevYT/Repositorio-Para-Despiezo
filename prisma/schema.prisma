@@ -137,7 +137,7 @@ model Product {
   model          String
   year           String
   tipoDeVehiculo String
-  condition      String
+  condition      String    // "nuevo" | "como-nuevo" | "buen-estado" | "condiciones-aceptables" | "lo-ha-dado-todo"
   status         String
   typeOfPiece    String
   location       String

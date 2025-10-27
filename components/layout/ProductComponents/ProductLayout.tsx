@@ -15,7 +15,6 @@ import {
   Hash,
   Tag,
   Factory,
-  Circle,
   Loader2,
   Truck,
 } from "lucide-react";
@@ -112,13 +111,33 @@ export const ProductLayout = ({
         <article className="relative flex flex-col gap-6 w-full lg:w-3/5">
           {product.featuredUntil &&
             new Date(product.featuredUntil) > new Date() && (
-              <div className="absolute top-3 left-3 z-10 p-0.5 rounded-full shadow-md bg-white">
+              <div className="absolute top-3 left-3 z-10 p-1 rounded-full shadow-md bg-white flex flex-row items-center justify-center gap-2">
                 <Image
                   src={"/destacado-icon-green.png"}
                   alt="Icono de Patrocinado"
                   width={48}
                   height={48}
                 />
+
+                {session?.user.id === vendedor.id && (
+                  <span className="pr-2 font-medium">
+                    {(() => {
+                      const now = new Date();
+                      const end = new Date(product.featuredUntil);
+
+                      const days = differenceInDays(end, now);
+                      const totalHours = differenceInHours(end, now);
+                      const hours = totalHours - days * 24;
+
+                      // Si ya expiró
+                      if (totalHours <= 0) return "El destacado ha finalizado";
+
+                      return `Faltan ${days} ${days === 1 ? "día" : "días"} y ${hours} ${
+                        hours === 1 ? "hora" : "horas"
+                      }`;
+                    })()}
+                  </span>
+                )}
               </div>
             )}
 
@@ -245,27 +264,32 @@ export const ProductLayout = ({
                           {/* Botón informativo: días u horas restantes */}
                           <Button className="w-1/2 rounded-full cursor-default">
                             <Star className="size-6" />
-                            {differenceInDays(
-                              new Date(product.featuredUntil),
-                              new Date()
-                            ) >= 1
-                              ? `Destacado por ${differenceInDays(
-                                  new Date(product.featuredUntil),
-                                  new Date()
-                                )} días`
-                              : `Destacado por ${differenceInHours(
-                                  new Date(product.featuredUntil),
-                                  new Date()
-                                )} horas`}
+                            {(() => {
+                              const now = new Date();
+                              const end = new Date(product.featuredUntil);
+
+                              const days = differenceInDays(end, now);
+                              const totalHours = differenceInHours(end, now);
+                              const hours = totalHours - days * 24;
+
+                              // Si ya expiró
+                              if (totalHours <= 0)
+                                return "El destacado ha finalizado";
+
+                              return `Faltan ${days} ${days === 1 ? "día" : "días"} y ${hours} ${
+                                hours === 1 ? "hora" : "horas"
+                              }`;
+                            })()}
                           </Button>
 
                           {/* Botón para extender destacado */}
+
                           <Button
                             asChild
                             className="w-1/2 rounded-full bg-green-500 text-white hover:bg-green-600"
                           >
                             <Link href={`/vendedor/destacar/${product.id}`}>
-                              <Star className="w-4 h-4" />
+                              <Star className="size-6" />
                               Extender Destacado
                             </Link>
                           </Button>

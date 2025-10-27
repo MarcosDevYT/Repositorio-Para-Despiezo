@@ -1,5 +1,6 @@
+import { getVendedorKits } from "@/actions/kit-actions";
 import { MainContainer } from "@/components/layout/MainContainer";
-import { TiendaLayout } from "@/components/layout/vendedor/TiendaLayout";
+import { TiendaLayout } from "@/components/layout/vendedor/tienda/TiendaLayout";
 
 export const dynamic = "force-dynamic";
 
@@ -13,9 +14,11 @@ export default async function TiendaUserPage({
   const { page = "1", limit = "12" } = await searchParams;
   const { id } = await params;
 
+  const kits = await getVendedorKits(id);
+
   return (
     <MainContainer className="min-h-[82.5vh] container mx-auto px-4 py-12">
-      <TiendaLayout id={id} limit={limit} page={page} />
+      <TiendaLayout id={id} limit={limit} page={page} kits={kits} />
     </MainContainer>
   );
 }

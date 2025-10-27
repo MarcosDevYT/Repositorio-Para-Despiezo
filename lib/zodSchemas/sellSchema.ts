@@ -1,4 +1,4 @@
-import { categories } from "@/data";
+import { categories, conditions } from "@/data";
 import { z, string } from "zod";
 
 const categorySlugs = categories.map((c) => c.slug) as [string, ...string[]];
@@ -37,10 +37,10 @@ export const sellSchema = z
       message: "Debes seleccionar una categoría",
     }),
 
-    subcategory: z.string().optional(), // 👈 ahora opcional, validamos después
+    subcategory: z.string().optional(),
 
     tipoDeVehiculo: z.enum(["coche", "moto", "furgoneta"]),
-    condition: z.enum(["nuevo", "verificado", "usado", "defectuoso"]),
+    condition: z.enum(conditions.map((c) => c.value) as [string, ...string[]]),
 
     brand: string({ message: "La Marca es requerida" })
       .trim()

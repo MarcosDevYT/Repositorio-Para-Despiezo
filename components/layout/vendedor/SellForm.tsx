@@ -34,7 +34,7 @@ import { Label } from "@/components/ui/label";
 import { LocationAutocomplete } from "@/components/LocationSearchInput";
 import { Switch } from "@/components/ui/switch";
 import Image from "next/image";
-import { categories } from "@/data";
+import { categories, conditions } from "@/data";
 
 type SellFormProps = {
   initialValues?: Partial<z.infer<typeof sellSchema>>;
@@ -449,10 +449,21 @@ export const SellForm = ({ initialValues, action }: SellFormProps) => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="nuevo">Nuevo</SelectItem>
-                      <SelectItem value="usado">Usado</SelectItem>
-                      <SelectItem value="defectuoso">Defectuoso</SelectItem>
-                      <SelectItem value="verificado">Verificado</SelectItem>
+                      {conditions.map((condition) => (
+                        <SelectItem
+                          key={condition.value}
+                          value={condition.value}
+                        >
+                          <div className="flex flex-col">
+                            <span className="font-medium">
+                              {condition.label}
+                            </span>
+                            <span className="text-sm text-muted-foreground">
+                              {condition.description}
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </FormControl>

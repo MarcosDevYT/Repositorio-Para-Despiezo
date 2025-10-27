@@ -106,19 +106,6 @@ export const ComprasCard = ({ orden }: { orden: PrismaOrden }) => {
           </div>
         )}
 
-        {orden.shippingLabelUrl && (
-          <div className="flex items-center gap-2">
-            <FileText className="w-4 h-4 text-gray-400" />
-            <a
-              href={orden.shippingLabelUrl}
-              target="_blank"
-              className="text-blue-600 underline"
-            >
-              Descargar etiqueta
-            </a>
-          </div>
-        )}
-
         <div className="flex items-center gap-2">
           <DollarSign className="w-4 h-4 text-gray-400" />
           <span>Total pagado: €{total}</span>

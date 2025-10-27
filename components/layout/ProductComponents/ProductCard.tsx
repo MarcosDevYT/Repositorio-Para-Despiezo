@@ -52,7 +52,7 @@ export const ProductCard = ({
   const conditionColor = getConditionColor(product.condition);
 
   return (
-    <Card className="w-full max-w-72 h-[410px] rounded-2xl py-0 gap-0 border border-transparent shadow-sm overflow-hidden bg-white">
+    <Card className="w-full max-w-72 h-[410px] rounded-2xl py-0 gap-0 border shadow-sm overflow-hidden bg-white">
       {/* Imagen + acciones */}
       <CardHeader className="relative">
         {product.offer && (

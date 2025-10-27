@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { hasAnyFilter } from "@/lib/utils";
 import { categories } from "@/data";
+import { EstadoVehiculoFilter } from "@/components/EstadoVehiculoFilter";
 
 type Props = {
   subcategoria?: string;
@@ -28,6 +29,9 @@ type Props = {
   tipoDeVehiculo?: string;
   priceMin?: string;
   priceMax?: string;
+  counts: {
+    condition: Record<string, number>;
+  };
 };
 
 export const ProductFilters = ({
@@ -42,6 +46,7 @@ export const ProductFilters = ({
   tipoDeVehiculo,
   priceMax,
   priceMin,
+  counts,
 }: Props) => {
   const router = useRouter();
 
@@ -51,7 +56,6 @@ export const ProductFilters = ({
   const [oemInput, setOemInput] = useState(oem || "");
   const [marcaInput, setMarcaInput] = useState(marca || "");
   const [modeloInput, setModeloInput] = useState(modelo || "");
-  const [selectEstado, setSelectEstado] = useState(estado || "");
   const [year, setYear] = useState(año || "");
   const [selectTipoVehiculo, setSelectTipoVehiculo] = useState(
     tipoDeVehiculo || ""
@@ -75,7 +79,6 @@ export const ProductFilters = ({
     setSelectedCategory(categoria || "");
     setSelectedSubcategory(subcategoria || "");
     setSelectTipoVehiculo(tipoDeVehiculo || "");
-    setSelectEstado(estado || "");
   }, [
     categoria,
     subcategoria,
@@ -245,18 +248,6 @@ export const ProductFilters = ({
     router.push(`/productos?${params.toString()}`);
   };
 
-  const onEstadoChange = (estado: string) => {
-    const params = new URLSearchParams(window.location.search);
-
-    if (estado) {
-      params.set("estado", estado);
-    } else {
-      params.delete("estado");
-    }
-
-    router.push(`/productos?${params.toString()}`);
-  };
-
   const onModeloChange = (value: string) => {
     setModeloInput(value);
 
@@ -350,7 +341,6 @@ export const ProductFilters = ({
             </SelectContent>
           </Select>
         </div>
-
         {/* Subcategoría */}
         {subcategories.length > 0 && (
           <div className="space-y-2">
@@ -372,10 +362,8 @@ export const ProductFilters = ({
             </Select>
           </div>
         )}
-
         {/* Tipo de Vehiculo */}
         <Separator />
-
         <div className="space-y-2">
           <Label className="text-sm font-medium">Tipo de vehiculo</Label>
           <Select
@@ -392,7 +380,6 @@ export const ProductFilters = ({
             </SelectContent>
           </Select>
         </div>
-
         {/* Precio */}
         <Separator />
         <div className="space-y-2">
@@ -427,7 +414,6 @@ export const ProductFilters = ({
             </Button>
           </form>
         </div>
-
         {/* Marca */}
         <Separator />
         <div className="space-y-2">
@@ -453,7 +439,6 @@ export const ProductFilters = ({
             </Button>
           </form>
         </div>
-
         {/* Modelo */}
         <Separator />
         <div className="space-y-2">
@@ -479,7 +464,6 @@ export const ProductFilters = ({
             </Button>
           </form>
         </div>
-
         {/* Año */}
         <Separator />
         <div className="space-y-2">
@@ -505,24 +489,10 @@ export const ProductFilters = ({
             </Button>
           </form>
         </div>
-
         {/* Tipo de Vehiculo */}
         <Separator />
 
-        <div className="space-y-2">
-          <Label className="text-sm font-medium">Estado del Vehiculo</Label>
-          <Select onValueChange={onEstadoChange} value={selectEstado}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Seleccioná un estado" />
-            </SelectTrigger>
-            <SelectContent side="bottom" className="max-h-72">
-              <SelectItem value="nuevo">Nuevo</SelectItem>
-              <SelectItem value="usado">Usado</SelectItem>
-              <SelectItem value="defectuoso">Defectuoso</SelectItem>
-              <SelectItem value="verificado">Verificado</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <EstadoVehiculoFilter counts={counts.condition} />
 
         {/* OEM */}
         <Separator />

@@ -555,7 +555,7 @@ export async function getRecommendedProductsForUser(
 /**
  * Funcion para traer los productos por filtro
  * @param filters Como parametro recibimos los filtros
- * @returns retornamos los productos con paginacion ya filtrados
+ * @returns retornamos los productos con paginacion ya filtrados y contadores de filtros
  */
 export const getProductsByFilterAction = async (filters: ProductFilter) => {
   try {
@@ -602,7 +602,15 @@ export const getProductsByFilterAction = async (filters: ProductFilter) => {
       where.brand = { contains: filters.marca, mode: "insensitive" };
     if (filters.modelo)
       where.model = { contains: filters.modelo, mode: "insensitive" };
-    if (filters.estado) where.condition = filters.estado;
+
+    if (filters.estado) {
+      if (Array.isArray(filters.estado)) {
+        where.condition = { in: filters.estado };
+      } else {
+        where.condition = filters.estado;
+      }
+    }
+
     if (filters.año) where.year = filters.año;
     if (filters.tipoDeVehiculo) where.tipoDeVehiculo = filters.tipoDeVehiculo;
 
@@ -639,7 +647,24 @@ export const getProductsByFilterAction = async (filters: ProductFilter) => {
     const total = await prisma.product.count({ where });
 
     // --------------------------
-    // Traer productos sin ordenar por destacado aún
+    // Contadores por condición (condition)
+    // --------------------------
+    const conditionCountsRaw = await prisma.product.groupBy({
+      by: ["condition"],
+      where, // aplica todos los filtros excepto 'estado'
+      _count: { condition: true },
+    });
+
+    const conditionCounts = conditionCountsRaw.reduce(
+      (acc, curr) => ({
+        ...acc,
+        [curr.condition]: curr._count.condition,
+      }),
+      {}
+    );
+
+    // --------------------------
+    // Traer productos
     // --------------------------
     const productsRaw = await prisma.product.findMany({
       where,
@@ -653,15 +678,14 @@ export const getProductsByFilterAction = async (filters: ProductFilter) => {
     const now = new Date();
 
     // --------------------------
-    // Ordenar en memoria: destacados vigentes primero
+    // Ordenar: destacados arriba
     // --------------------------
     const products = productsRaw.sort((a, b) => {
       const aFeatured = a.featuredUntil && a.featuredUntil >= now ? 1 : 0;
       const bFeatured = b.featuredUntil && b.featuredUntil >= now ? 1 : 0;
 
-      if (aFeatured !== bFeatured) return bFeatured - aFeatured; // destacados vigentes arriba
+      if (aFeatured !== bFeatured) return bFeatured - aFeatured;
 
-      // Dentro del mismo grupo, orden por tu campo
       const aValue = a[orderBy];
       const bValue = b[orderBy];
 
@@ -671,7 +695,7 @@ export const getProductsByFilterAction = async (filters: ProductFilter) => {
     });
 
     // --------------------------
-    // Devolver productos con estado de favorito
+    // Retorno final
     // --------------------------
     return {
       total,
@@ -681,6 +705,9 @@ export const getProductsByFilterAction = async (filters: ProductFilter) => {
         ...p,
         isFavorite: userId ? p.favorites.length > 0 : false,
       })),
+      counts: {
+        condition: conditionCounts,
+      },
     };
   } catch (error) {
     console.error(error);
@@ -689,6 +716,9 @@ export const getProductsByFilterAction = async (filters: ProductFilter) => {
       page: 1,
       limit: 20,
       products: [],
+      counts: {
+        condition: {},
+      },
     };
   }
 };
@@ -952,4 +982,66 @@ export async function registerUserProductView(
     update: { viewedAt: new Date() }, // si ya existe, actualiza
     create: { userId, productId }, // si no existe, lo crea
   });
+}
+
+/**
+ * Traer toda la informacion de la tienda
+ */
+export async function getVendorResponseAnalytics(vendorId: string) {
+  // Traemos los mensajes de todas las salas del vendedor
+  const rooms = await prisma.room.findMany({
+    where: { vendorId },
+    include: {
+      messages: {
+        orderBy: { createdAt: "asc" },
+        select: {
+          senderId: true,
+          createdAt: true,
+        },
+      },
+    },
+  });
+
+  let totalResponseTime = 0;
+  let totalResponses = 0;
+
+  // Analizamos cada sala del vendedor
+  for (const room of rooms) {
+    const { messages } = room;
+    let lastBuyerMessage: Date | null = null;
+
+    for (const msg of messages) {
+      const isBuyer = msg.senderId === room.buyerId;
+      const isVendor = msg.senderId === room.vendorId;
+
+      // Guardamos el momento del último mensaje del comprador
+      if (isBuyer) {
+        lastBuyerMessage = msg.createdAt;
+      }
+
+      // Cuando el vendedor responde, calculamos la diferencia de tiempo
+      if (isVendor && lastBuyerMessage) {
+        const diffMs = msg.createdAt.getTime() - lastBuyerMessage.getTime();
+        totalResponseTime += diffMs;
+        totalResponses++;
+        lastBuyerMessage = null; // Reiniciamos para la próxima interacción
+      }
+    }
+  }
+
+  if (totalResponses === 0) {
+    return {
+      averageMinutes: null,
+      message: "No hay respuestas registradas aún",
+    };
+  }
+
+  // Promedio en minutos
+  const averageMinutes = totalResponseTime / totalResponses / 1000 / 60;
+
+  return {
+    vendorId,
+    averageMinutes,
+    responses: totalResponses,
+  };
 }
