@@ -15,6 +15,7 @@ import { stripe } from "./lib/stripe";
 // Configuración de NextAuth
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
+  trustHost: true,
   session: { strategy: "jwt" },
   ...authConfig,
   callbacks: {
