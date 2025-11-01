@@ -1,5 +1,6 @@
 import { MainContainer } from "@/components/layout/MainContainer";
-import { VerificarEmailButton } from "@/components/loginComponents/VerificarEmailButton";
+import { VerificarEmailButton } from "@/components/LoginComponents/VerificarEmailButton";
+
 import {
   Card,
   CardContent,

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import React, { Fragment } from "react";
+import { Fragment } from "react";
 
 export default function loading() {
   return (

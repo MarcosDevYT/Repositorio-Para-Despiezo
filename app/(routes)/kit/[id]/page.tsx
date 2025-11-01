@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/auth";
 import Link from "next/link";
-import React from "react";
 import { KitCheckout } from "@/components/layout/ProductComponents/KitCheckout";
 import { getKitById } from "@/actions/kit-actions";
 

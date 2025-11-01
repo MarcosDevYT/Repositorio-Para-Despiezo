@@ -3,6 +3,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { SessionProvider } from "next-auth/react";
+import { Footer } from "@/components/layout/Footer";
+import { Navbar } from "@/components/layout/navbar/Navbar";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -24,7 +26,12 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} antialiased bg-slate-50`}>
-        <SessionProvider>{children}</SessionProvider>
+        <SessionProvider>
+          <Navbar />
+          {children}
+
+          <Footer />
+        </SessionProvider>
 
         <Toaster />
       </body>

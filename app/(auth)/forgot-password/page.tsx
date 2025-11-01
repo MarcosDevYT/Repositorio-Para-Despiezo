@@ -1,5 +1,6 @@
 import { MainContainer } from "@/components/layout/MainContainer";
-import { FormEmailSend } from "@/components/loginComponents/FormEmailSend";
+import { FormEmailSend } from "@/components/LoginComponents/FormEmailSend";
+
 import {
   Card,
   CardContent,

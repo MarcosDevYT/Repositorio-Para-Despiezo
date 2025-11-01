@@ -1,11 +1,10 @@
 import { getProductByIdAction } from "@/actions/sell-actions";
 import { ProductCheckout } from "@/components/layout/ProductComponents/ProductCheckout";
-import { ShoppingBag, X } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/auth";
 import Link from "next/link";
-import React from "react";
 
 export default async function CheckoutPage({
   params,

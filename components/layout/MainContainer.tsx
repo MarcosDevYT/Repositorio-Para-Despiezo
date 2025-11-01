@@ -1,6 +1,3 @@
-import { Footer } from "./Footer";
-import { Navbar } from "./navbar/Navbar";
-
 /**
  * @description Contenedor principal de la aplicacion
  * @param children - Componentes hijos
@@ -14,11 +11,5 @@ export const MainContainer = ({
   children: React.ReactNode;
   className?: string;
 }) => {
-  return (
-    <>
-      <Navbar />
-      <main className={`${className}`}>{children}</main>
-      <Footer />
-    </>
-  );
+  return <main className={`${className}`}>{children}</main>;
 };

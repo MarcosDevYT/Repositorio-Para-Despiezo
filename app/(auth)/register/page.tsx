@@ -1,6 +1,7 @@
 import { MainContainer } from "@/components/layout/MainContainer";
-import { FormRegister } from "@/components/loginComponents/FormRegister";
-import { GoogleLogin } from "@/components/loginComponents/GoogleLogin";
+import { FormGoogleLogin } from "@/components/LoginComponents/FormGoogleLogin";
+import { FormRegister } from "@/components/LoginComponents/FormRegister";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 
@@ -21,7 +22,7 @@ export default function RegisterPage() {
 
         <CardContent className="space-y-4">
           <FormRegister />
-          <GoogleLogin />
+          <FormGoogleLogin />
 
           <p className="text-sm text-center mt-6">
             Ya tienes una cuenta?{" "}

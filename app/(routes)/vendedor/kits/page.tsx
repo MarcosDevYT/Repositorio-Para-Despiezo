@@ -1,7 +1,6 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import React from "react";
 import { getVendedorKits } from "@/actions/kit-actions";
 import { SellKitCard } from "@/components/layout/vendedor/SellKitCard";
 import {

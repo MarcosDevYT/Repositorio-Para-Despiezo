@@ -1,4 +1,3 @@
-import { auth } from "@/auth";
 import EmailVerificationStatus from "@/components/LoginComponents/EnviarVerificacionButton";
 import { Button } from "@/components/ui/button";
 import {

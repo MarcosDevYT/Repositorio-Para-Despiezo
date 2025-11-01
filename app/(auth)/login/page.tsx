@@ -1,6 +1,6 @@
 import { MainContainer } from "@/components/layout/MainContainer";
-import { FormLogin } from "@/components/loginComponents/FormLogin";
-import { GoogleLogin } from "@/components/loginComponents/GoogleLogin";
+import { FormGoogleLogin } from "@/components/LoginComponents/FormGoogleLogin";
+import { FormLogin } from "@/components/LoginComponents/FormLogin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 
@@ -27,7 +27,7 @@ export default async function LoginPage({
 
         <CardContent className="space-y-4">
           <FormLogin isVerified={isVerified} />
-          <GoogleLogin />
+          <FormGoogleLogin />
 
           <p className="text-sm text-center mt-6">
             No tienes una cuenta?{" "}

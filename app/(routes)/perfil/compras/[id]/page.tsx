@@ -80,7 +80,7 @@ export default async function CompradorDetalleOrden({
               </CardDescription>
             </CardHeader>
             <CardContent className="flex items-start gap-6">
-              <div className="relative w-40 h-40 flex-shrink-0">
+              <div className="relative w-40 h-40 shrink-0">
                 <Image
                   src={productOrKit.images[0] || ""}
                   alt={productOrKit.name}

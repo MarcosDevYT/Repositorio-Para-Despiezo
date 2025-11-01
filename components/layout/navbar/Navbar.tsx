@@ -1,4 +1,3 @@
-import { SearchProducts } from "@/components/searchComponents/SearchProducts";
 import { UserDropdown } from "@/components/UserDropdown";
 import { Package, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";

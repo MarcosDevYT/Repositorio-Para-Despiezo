@@ -6,7 +6,7 @@ import { Button } from "../ui/button";
  * @returns Componente de login con Google
  */
 
-export async function GoogleLogin() {
+export const FormGoogleLogin = async () => {
   return (
     <form
       action={async () => {
@@ -22,4 +22,4 @@ export async function GoogleLogin() {
       </Button>
     </form>
   );
-}
+};
