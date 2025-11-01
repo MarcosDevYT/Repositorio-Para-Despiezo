@@ -22,7 +22,7 @@ const config: runtime.GetPrismaClientConfig = {
       "value": "prisma-client"
     },
     "output": {
-      "value": "C:\\Users\\Marcos\\Desktop\\despiezo\\lib\\generated\\prisma",
+      "value": "C:\\Repositorios\\Github\\Repositorio-Para-Despiezo\\lib\\generated\\prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -36,7 +36,7 @@ const config: runtime.GetPrismaClientConfig = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "C:\\Users\\Marcos\\Desktop\\despiezo\\prisma\\schema.prisma",
+    "sourceFilePath": "C:\\Repositorios\\Github\\Repositorio-Para-Despiezo\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativePath": "../../../prisma",
