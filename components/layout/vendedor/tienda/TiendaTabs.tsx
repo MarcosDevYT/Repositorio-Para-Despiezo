@@ -11,8 +11,9 @@ import { ProductType } from "@/types/ProductTypes";
 import { ProductPagination } from "../../ProductComponents/ProductPagination";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Kit } from "@prisma/client";
+
 import { KitCard } from "../../ProductComponents/KitCard";
+import { Kit } from "@/lib/generated/prisma/client";
 
 interface TiendaTabsProps {
   handlePageChange: (newPage: number) => void;

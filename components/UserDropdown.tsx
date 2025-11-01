@@ -12,9 +12,9 @@ import { Monitor, User } from "lucide-react";
 import { LogOutButton } from "./LoginComponents/LogOutButton";
 import Link from "next/link";
 import { Button } from "./ui/button";
-import { DropdownLinks } from "@/data";
 import { Fragment } from "react";
-import { adminEmails } from "@/app/(routes)/admin/page";
+import { adminEmails } from "@/lib/constants/conts";
+import { DropdownLinks } from "@/lib/constants/data";
 
 /**
  * @description Dropdown con las opciones de navegabilidad o logout del usuario

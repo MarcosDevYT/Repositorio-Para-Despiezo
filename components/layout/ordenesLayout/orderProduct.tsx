@@ -3,7 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
-import React, { useRef } from "react";
+import { useRef } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 
@@ -29,7 +29,7 @@ export const OrderProduct = ({ orden }: { orden: PrismaOrden }) => {
     const nextRef = useRef<HTMLButtonElement>(null);
 
     return (
-      <div className="w-full md:w-80 lg:w-sm flex-shrink-0 space-y-6 order-1 md:order-2 relative">
+      <div className="w-full md:w-80 lg:w-sm shrink-0 space-y-6 order-1 md:order-2 relative">
         <Card key={kit.id} className="relative overflow-hidden">
           <Badge
             className="absolute top-2 right-2 bg-blue-600 text-white"

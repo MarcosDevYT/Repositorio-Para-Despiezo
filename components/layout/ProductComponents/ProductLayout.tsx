@@ -17,6 +17,7 @@ import {
   Factory,
   Loader2,
   Truck,
+  Zap,
 } from "lucide-react";
 import { useState, useTransition } from "react";
 import { toggleFavoriteAction } from "@/actions/user-actions";
@@ -33,12 +34,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { User } from "@prisma/client";
 import Link from "next/link";
 import Image from "next/image";
 import { Session } from "next-auth";
 import { differenceInDays, differenceInHours } from "date-fns";
 import ProductsRelationed from "./ProductsRelationed";
+import { User } from "@/lib/generated/prisma/client";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 function Detail({
   icon: Icon,
@@ -132,9 +138,9 @@ export const ProductLayout = ({
                       // Si ya expiró
                       if (totalHours <= 0) return "El destacado ha finalizado";
 
-                      return `Faltan ${days} ${days === 1 ? "día" : "días"} y ${hours} ${
-                        hours === 1 ? "hora" : "horas"
-                      }`;
+                      return `Faltan ${days} ${
+                        days === 1 ? "día" : "días"
+                      } y ${hours} ${hours === 1 ? "hora" : "horas"}`;
                     })()}
                   </span>
                 )}
@@ -149,7 +155,9 @@ export const ProductLayout = ({
             onClick={handleFavorite}
           >
             <Heart
-              className={`size-6 ${isFavorite ? "fill-current text-red-500" : ""}`}
+              className={`size-6 ${
+                isFavorite ? "fill-current text-red-500" : ""
+              }`}
             />
           </Button>
 
@@ -276,9 +284,9 @@ export const ProductLayout = ({
                               if (totalHours <= 0)
                                 return "El destacado ha finalizado";
 
-                              return `Faltan ${days} ${days === 1 ? "día" : "días"} y ${hours} ${
-                                hours === 1 ? "hora" : "horas"
-                              }`;
+                              return `Faltan ${days} ${
+                                days === 1 ? "día" : "días"
+                              } y ${hours} ${hours === 1 ? "hora" : "horas"}`;
                             })()}
                           </Button>
 
@@ -340,15 +348,30 @@ export const ProductLayout = ({
               )}
 
               <div className="flex items-center gap-3">
-                <Link href={`/tienda/${vendedor.id}`}>
-                  <Avatar className="size-12">
-                    <AvatarImage
-                      className="object-cover"
-                      src={vendedor.image || ""}
-                    />
-                    <AvatarFallback>{vendedor.name?.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                </Link>
+                <div className="relative">
+                  <Link href={`/tienda/${vendedor.id}`}>
+                    <Avatar className="size-12">
+                      <AvatarImage
+                        className="object-cover"
+                        src={vendedor.image || ""}
+                      />
+                      <AvatarFallback>
+                        {vendedor.name?.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Link>
+
+                  <Tooltip>
+                    <TooltipTrigger className="absolute -top-2 -right-2 z-10">
+                      <div className="rounded-full size-6 flex items-center justify-center bg-primary text-background ">
+                        <Zap size={16} />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Miembro Pro</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
                 <div>
                   <Link href={`/tienda/${vendedor.id}`}>
                     <CardTitle className="text-lg line-clamp-1">

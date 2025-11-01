@@ -4,7 +4,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 import { Button } from "./ui/button";
-import { ProfileNavLinks } from "@/data";
+import { ProfileNavLinks } from "@/lib/constants/data";
 
 /**
  * @description Componente de links para el perfil del usuario

@@ -7,10 +7,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import React from "react";
 import { SellKitForm } from "./SellKitForm";
-import { Kit, Product } from "@prisma/client";
 import { updateKit } from "@/actions/kit-actions";
+import { Kit, Product } from "@/lib/generated/prisma/client";
 
 interface Props {
   products: Product[];

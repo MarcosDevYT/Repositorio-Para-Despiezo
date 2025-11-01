@@ -9,11 +9,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { stripePlans } from "@/data";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { CheckCircle } from "lucide-react";
-import React from "react";
+import { stripePlans } from "@/lib/constants/data";
 
 export default async function SubscriptionsPage() {
   const session = await auth();
@@ -141,7 +140,9 @@ export default async function SubscriptionsPage() {
                 const ahorro = totalBase - plan.price;
 
                 if (ahorro > 0) {
-                  discount = `Ahorra $${ahorro} (${Math.round((ahorro / totalBase) * 100)}%)`;
+                  discount = `Ahorra $${ahorro} (${Math.round(
+                    (ahorro / totalBase) * 100
+                  )}%)`;
                 }
               }
 

@@ -10,13 +10,12 @@ import {
   Package,
   Truck,
   DollarSign,
-  FileText,
   User,
   Phone,
 } from "lucide-react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/lib/generated/prisma/client";
 
 // Ahora incluimos items con producto y kit
 type PrismaOrden = Prisma.OrdenGetPayload<{

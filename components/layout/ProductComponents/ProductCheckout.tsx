@@ -24,7 +24,7 @@ import Image from "next/image";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { FormCheckout } from "./FormCheckout";
-import { Address } from "@prisma/client";
+
 import { EditableBusinessField } from "../vendedor/EditableBusinessField";
 import {
   DropdownMenu,
@@ -35,6 +35,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { deletedUserAddress } from "@/actions/user-actions";
+import { Address } from "@/lib/generated/prisma/client";
 
 export const ProductCheckout = ({
   session,

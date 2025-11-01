@@ -1,6 +1,6 @@
 "use client";
 
-import { map, z } from "zod";
+import { z } from "zod";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -34,7 +34,8 @@ import { Label } from "@/components/ui/label";
 import { LocationAutocomplete } from "@/components/LocationSearchInput";
 import { Switch } from "@/components/ui/switch";
 import Image from "next/image";
-import { categories, conditions } from "@/data";
+import { categories } from "@/lib/constants/data";
+import { conditions } from "@/lib/constants/conts";
 
 type SellFormProps = {
   initialValues?: Partial<z.infer<typeof sellSchema>>;
@@ -380,8 +381,8 @@ export const SellForm = ({ initialValues, action }: SellFormProps) => {
                             !selectedCategory
                               ? "Seleccioná primero una categoría"
                               : hasSubcategories
-                                ? "Seleccioná una subcategoría"
-                                : "Esta categoría no tiene subcategorías"
+                              ? "Seleccioná una subcategoría"
+                              : "Esta categoría no tiene subcategorías"
                           }
                         />
                       </SelectTrigger>

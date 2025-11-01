@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useTransition } from "react";
+import { useTransition } from "react";
 
 import {
   AlertDialog,
@@ -16,8 +16,8 @@ import {
 
 import { Button } from "./ui/button";
 import { toast } from "sonner";
-import { handleCancelStripeSubscription } from "@/actions/buy-actions";
 import { Loader2 } from "lucide-react";
+import { handleCancelStripeSubscription } from "@/actions/buy-actions";
 
 export const SubscriptionButtonCancel = ({
   subscriptionId,

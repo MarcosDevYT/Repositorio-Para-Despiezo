@@ -9,7 +9,6 @@ import {
   editBusinessDataSchema,
   editProfileSchema,
 } from "@/lib/zodSchemas/userSchema";
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type Stripe from "stripe";
 import { z } from "zod";

@@ -15,7 +15,6 @@ const libraries: "places"[] = ["places"];
 export function LocationAutocomplete({
   value,
   onChange,
-  className,
 }: LocationAutocompleteProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const { isLoaded } = useLoadScript({

@@ -3,15 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import { CategoriesSidebar } from "./CategoriesSidebar";
 import { CategoryDropdown } from "./CategoryDropdown";
-import { SearchProducts } from "@/components/searchComponents/SearchProducts";
 import { ListFilter, LucideShoppingBag } from "lucide-react";
-import { categories } from "@/data";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { SearchIndex } from "@/components/searchComponents/SearchIndex";
+import { categories } from "@/lib/constants/data";
 
-export const Categories = ({ userId }: { userId?: string }) => {
+export const Categories = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
   const viewAllRef = useRef<HTMLDivElement>(null);

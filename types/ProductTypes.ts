@@ -1,4 +1,4 @@
-import { Prisma, Product } from "@prisma/client";
+import { Prisma, Product } from "@/lib/generated/prisma/client";
 
 export interface ProductType extends Product {
   isFavorite?: boolean | undefined;

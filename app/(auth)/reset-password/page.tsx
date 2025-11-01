@@ -1,5 +1,5 @@
 import { MainContainer } from "@/components/layout/MainContainer";
-import { FormResetPassword } from "@/components/LoginComponents/FormResetPassword";
+import { FormResetPassword } from "@/components/loginComponents/FormResetPassword";
 import {
   Card,
   CardContent,

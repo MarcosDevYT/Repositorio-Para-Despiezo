@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { CardContent } from "@/components/ui/card";
 
 import { ProductType } from "@/types/ProductTypes";
-import { Edit, FileText, Star, Trash } from "lucide-react";
+import { Edit, Star, Trash } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -43,7 +43,9 @@ export const SellTable = ({
                 )}
 
                 <figure
-                  className={`w-full ${product.status === "vendido" ? "h-40" : "h-32"} relative`}
+                  className={`w-full ${
+                    product.status === "vendido" ? "h-40" : "h-32"
+                  } relative`}
                 >
                   <Image
                     src={product.images[0] || ""}

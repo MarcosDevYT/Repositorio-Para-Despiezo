@@ -1,7 +1,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "./ui/checkbox";
-import { conditions } from "@/data";
+import { conditions } from "@/lib/constants/conts";
 
 export function EstadoVehiculoFilter({
   counts,

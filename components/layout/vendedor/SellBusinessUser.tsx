@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Session } from "next-auth";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { EditableBusinessField } from "./EditableBusinessField";
@@ -13,6 +18,7 @@ import {
   Box,
   Building2,
   Calendar,
+  Zap,
 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
@@ -66,19 +72,32 @@ export const SellBusinessUser = ({ session }: Props) => {
         </div>
 
         {/* Avatar */}
-        <div className="relative w-28 h-28 rounded-full overflow-hidden border-2 border-gray-200 shadow-sm">
-          {session.user.image ? (
-            <Image
-              src={session.user.image}
-              alt={session.user.name ?? "Avatar"}
-              fill
-              className="object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-600 text-2xl font-semibold">
-              {initials || <User className="w-10 h-10" />}
-            </div>
-          )}
+        <div className="relative">
+          <div className="relative w-28 h-28 rounded-full overflow-hidden border-2 border-gray-200 shadow-sm">
+            {session.user.image ? (
+              <Image
+                src={session.user.image}
+                alt={session.user.name ?? "Avatar"}
+                fill
+                className="object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-600 text-2xl font-semibold">
+                {initials || <User className="w-10 h-10" />}
+              </div>
+            )}
+          </div>
+
+          <Tooltip>
+            <TooltipTrigger className="absolute top-0 right-0 z-10">
+              <div className="rounded-full size-8 flex items-center justify-center bg-primary text-background ">
+                <Zap size={20} />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Miembro Pro</p>
+            </TooltipContent>
+          </Tooltip>
         </div>
 
         {/* Name + business + badges */}

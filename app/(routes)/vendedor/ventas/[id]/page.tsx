@@ -1,7 +1,6 @@
 import { getOrdenByID } from "@/actions/order-actions";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
@@ -43,13 +42,24 @@ export default async function VentasIDOrden({
 
   if (!orden) {
     return (
-      <div className="p-6">
-        <h2 className="text-xl font-semibold text-red-500">
-          Orden no encontrada
-        </h2>
-        <Button asChild className="mt-4">
-          <Link href="/vendedor/ventas">Volver a ventas</Link>
-        </Button>
+      <div className="w-full flex flex-col items-center justify-center bg-white p-8 rounded-2xl shadow-lg border border-gray-200 text-center px-4">
+        <div className="max-w-md mx-auto">
+          <h2 className="text-2xl font-bold text-red-500 mb-4">
+            Orden no encontrada
+          </h2>
+          <p className="text-gray-600 mb-6">
+            Lo sentimos, no pudimos encontrar la orden que estás buscando. Por
+            favor verifica el ID o vuelve a la lista de ventas.
+          </p>
+          <div className="flex justify-center gap-4">
+            <Button asChild variant="default">
+              <Link href="/vendedor/ventas">Volver a ventas</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/">Ir al inicio</Link>
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }

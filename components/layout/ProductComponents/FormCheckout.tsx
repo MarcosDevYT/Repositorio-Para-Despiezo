@@ -23,7 +23,7 @@ import { createUserAddress } from "@/actions/user-actions";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
-import { Address } from "@prisma/client";
+import { Address } from "@/lib/generated/prisma/client";
 
 export const FormCheckout = ({
   isEditing,

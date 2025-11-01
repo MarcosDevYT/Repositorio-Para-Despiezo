@@ -13,30 +13,73 @@ export const CrearEtiquetaButton = ({ orden }: { orden: PrismaOrden }) => {
   const [isPending, startTransition] = useTransition();
   const [isEtiquetaGenerada, setIsEtiquetaGenerada] = useState(false);
 
+  console.log(orden);
+
   const handleSend = () => {
     startTransition(async () => {
       try {
+        // Construimos los parcel_items
+        const parcelItems = orden.items.flatMap((item) => {
+          if (item.kit) {
+            // Si es un kit, cada producto dentro del kit debe ser un parcel_item
+            return item.kit.products.map((p: any) => ({
+              description: p.name,
+              quantity: p.quantity || 1,
+              weight: p.weight.toString(),
+              value: p.price,
+              origin_country: "ES",
+              sku: p.oemNumber || p.id,
+            }));
+          } else if (item.product) {
+            // Si es un producto individual
+            return [
+              {
+                description: item.product.name,
+                quantity: item.quantity || 1,
+                weight: item.product.weight!.toString(),
+                value: item.product.price,
+                origin_country: "ES",
+                sku: item.product.oemNumber || item.product.id,
+              },
+            ];
+          }
+          return [];
+        });
+
         const parcelData = {
           parcel: {
             name: orden.shippingName,
             company_name: "Sendcloud",
             address: orden.shippingAddressLine1,
             house_number: orden.shippingAddressLine2,
+            address_2: "",
             city: orden.shippingCity,
             postal_code: orden.shippingPostalCode,
-            telephone: orden.shippingPhone,
-            request_label: true,
-            email: orden.items[0]?.buyer?.email,
-            data: {},
             country: "ES",
+            telephone: orden.shippingPhone,
+            email: orden.buyer?.email,
             shipment: { id: 8 },
-            weight: orden.items[0]?.product.weight,
+            weight: orden.items.reduce(
+              (acc, item) =>
+                acc +
+                (item.product?.weight || 0) +
+                (item.kit
+                  ? item.kit.products.reduce(
+                      (sum: number, p: any) => sum + p.weight,
+                      0
+                    )
+                  : 0),
+              0
+            ),
             order_number: orden.id,
-            insured_value: 0,
+            request_label: true,
+            insured_value: orden.amountTotal / 100,
             total_order_value_currency: "EUR",
-            total_order_value: "11.11",
+            total_order_value: (orden.amountTotal / 100).toString(),
             quantity: 1,
             shipping_method_checkout_name: "DHL Express Domestic",
+            parcel_items: parcelItems,
+            apply_shipping_rules: true,
           },
         };
 

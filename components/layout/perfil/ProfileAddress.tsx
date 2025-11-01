@@ -13,7 +13,6 @@ import { Session } from "next-auth";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { Address } from "@prisma/client";
 import { EditableBusinessField } from "../vendedor/EditableBusinessField";
 import {
   DropdownMenu,
@@ -25,6 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { deletedUserAddress } from "@/actions/user-actions";
 import { FormCheckout } from "../ProductComponents/FormCheckout";
+import { Address } from "@/lib/generated/prisma/client";
 
 export const ProfileAddress = ({ session }: { session: Session }) => {
   const userAddresses = session.user.addresses;

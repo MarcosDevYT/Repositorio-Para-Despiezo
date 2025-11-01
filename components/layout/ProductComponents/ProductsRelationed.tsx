@@ -6,11 +6,11 @@ import {
   getRecommendedProductsByProductId,
   getRelatedProducts,
 } from "@/actions/sell-actions";
-import { Kit, Product } from "@prisma/client";
 import ProductsSlider from "./ProductsSlider";
 import { KitCard } from "./KitCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
+import { Kit, Product } from "@/lib/generated/prisma/client";
 
 interface Props {
   vendedorId: string;

@@ -1,6 +1,6 @@
 import { MainContainer } from "@/components/layout/MainContainer";
-import { FormRegister } from "@/components/LoginComponents/FormRegister";
-import { GoogleLogin } from "@/components/LoginComponents/GoogleLogin";
+import { FormRegister } from "@/components/loginComponents/FormRegister";
+import { GoogleLogin } from "@/components/loginComponents/GoogleLogin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 

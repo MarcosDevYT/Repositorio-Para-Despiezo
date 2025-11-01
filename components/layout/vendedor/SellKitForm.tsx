@@ -22,7 +22,7 @@ import Image from "next/image";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Product } from "@prisma/client";
+import { Product } from "@/lib/generated/prisma/client";
 
 type KitFormProps = {
   products: Product[];
@@ -186,8 +186,8 @@ export function SellKitForm({
                     isSold
                       ? "opacity-50 border-gray-300"
                       : isSelected
-                        ? "border-blue-500 ring-2 ring-blue-300"
-                        : "border-muted"
+                      ? "border-blue-500 ring-2 ring-blue-300"
+                      : "border-muted"
                   }`}
                 >
                   <Image

@@ -2,12 +2,12 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { categories } from "@/data";
+import { ShoppingBag } from "lucide-react";
+import { categories } from "@/lib/constants/data";
 
 import "swiper/css";
 
 import Link from "next/link";
-import { ShoppingBag } from "lucide-react";
 
 export const ProductCategories = () => {
   return (

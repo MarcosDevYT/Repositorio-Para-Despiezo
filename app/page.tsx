@@ -41,7 +41,7 @@ export default async function Home() {
   return (
     <MainContainer>
       <div className="border-b bg-blue-50 px-4 lg:px-12 py-4 w-full">
-        <Categories userId={session?.user.id} />
+        <Categories />
       </div>
 
       <Hero />

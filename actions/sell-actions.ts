@@ -4,8 +4,9 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { sellSchema } from "@/lib/zodSchemas/sellSchema";
 import { prisma } from "@/lib/prisma";
-import { Product, User } from "@prisma/client";
 import { buildTsQueryFromQueries } from "@/lib/utils";
+import { Product, User } from "@/lib/generated/prisma/client";
+import { VendorFullDataResponse } from "@/components/layout/vendedor/tienda/TiendaLayout";
 
 type VendedorResType = {
   user: User | null;
@@ -182,6 +183,14 @@ export const getUserProductsAction = async () => {
       where: {
         vendorId: session.user.id,
       },
+      orderBy: [
+        {
+          status: "asc",
+        },
+        {
+          createdAt: "desc",
+        },
+      ],
     });
 
     return products;
@@ -193,7 +202,7 @@ export const getUserProductsAction = async () => {
   }
 };
 
-// Obtener los productos del usuario
+// Obtener los productos del usuario disponibles
 export const getUserAvaibleProductsAction = async () => {
   try {
     // Verificar si el usuario está autenticado
@@ -209,6 +218,7 @@ export const getUserAvaibleProductsAction = async () => {
     const products = await prisma.product.findMany({
       where: {
         vendorId: session.user.id,
+        // Verificar que este con estado "publicado"
         status: "publicado",
       },
       orderBy: { createdAt: "desc" },
@@ -896,65 +906,6 @@ export async function getRelatedProducts(
 }
 
 /**
- * Funcion para obtener la informacion de un vendedor para la tienda
- * @param userId id del vendedor
- * @param page numero de pagina
- * @param limit limite de objectos
- * @returns Retorna la lista de productos, informacion del vendedor y la paginacion
- */
-export const getVendedorProductsAndInfo = async (
-  userId: string,
-  page: number = 1,
-  limit: number = 20
-): Promise<VendedorResType> => {
-  try {
-    const session = await auth();
-
-    if (!userId) {
-      return { user: null, products: [], total: 0, page: 1, limit };
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!user) {
-      return { user: null, products: [], total: 0, page: 1, limit };
-    }
-
-    // conteo total de productos del vendedor
-    const total = await prisma.product.count({
-      where: { vendorId: userId },
-    });
-
-    // productos paginados
-    const products = await prisma.product.findMany({
-      where: { status: "publicado", vendorId: userId },
-      skip: (page - 1) * limit,
-      take: limit,
-      include: {
-        favorites: userId ? { where: { userId }, select: { id: true } } : false,
-      },
-      orderBy: { createdAt: "desc" }, // opcional, para orden
-    });
-
-    return {
-      user,
-      products: products.map((p) => ({
-        ...p,
-        isFavorite: session?.user.id ? p.favorites.length > 0 : false,
-      })),
-      total,
-      page,
-      limit,
-    };
-  } catch (error) {
-    console.error(error);
-    return { user: null, products: [], total: 0, page: 1, limit };
-  }
-};
-
-/**
  *  Action para incrementar clicks de un producto
  */
 export async function incrementClicksProduct(productId: string) {
@@ -984,64 +935,127 @@ export async function registerUserProductView(
   });
 }
 
-/**
- * Traer toda la informacion de la tienda
- */
-export async function getVendorResponseAnalytics(vendorId: string) {
-  // Traemos los mensajes de todas las salas del vendedor
-  const rooms = await prisma.room.findMany({
-    where: { vendorId },
-    include: {
-      messages: {
-        orderBy: { createdAt: "asc" },
-        select: {
-          senderId: true,
-          createdAt: true,
+export async function getVendorFullData(
+  vendorId: string,
+  page = 1,
+  limit = 20
+): Promise<VendorFullDataResponse | null> {
+  try {
+    const session = await auth();
+    if (!vendorId) return null;
+
+    // 🔹 1. Obtener todo lo básico en paralelo
+    const [user, productCounts, products, rooms, orders] = await Promise.all([
+      prisma.user.findUnique({ where: { id: vendorId } }),
+
+      prisma.product.groupBy({
+        by: ["status"],
+        where: { vendorId },
+        _count: { _all: true },
+      }),
+
+      prisma.product.findMany({
+        where: { vendorId, status: "publicado" },
+        skip: (page - 1) * limit,
+        take: limit,
+        include: {
+          favorites: session?.user?.id
+            ? { where: { userId: session.user.id }, select: { id: true } }
+            : false,
         },
-      },
-    },
-  });
+        orderBy: { createdAt: "desc" },
+      }),
 
-  let totalResponseTime = 0;
-  let totalResponses = 0;
+      prisma.room.findMany({
+        where: { vendorId },
+        include: {
+          messages: {
+            orderBy: { createdAt: "asc" },
+            take: 20,
+            select: { senderId: true, createdAt: true },
+          },
+        },
+      }),
 
-  // Analizamos cada sala del vendedor
-  for (const room of rooms) {
-    const { messages } = room;
-    let lastBuyerMessage: Date | null = null;
+      prisma.orden.findMany({
+        where: { vendorId, despachadoAt: { not: null } },
+        select: { createdAt: true, despachadoAt: true },
+      }),
+    ]);
 
-    for (const msg of messages) {
-      const isBuyer = msg.senderId === room.buyerId;
-      const isVendor = msg.senderId === room.vendorId;
+    if (!user) return null;
 
-      // Guardamos el momento del último mensaje del comprador
-      if (isBuyer) {
-        lastBuyerMessage = msg.createdAt;
-      }
+    // 🔹 2. Procesar conteos
+    const total = productCounts.reduce((sum, c) => sum + c._count._all, 0);
+    const countVendidos =
+      productCounts.find((c) => c.status === "vendido")?._count._all || 0;
+    const countPublicados =
+      productCounts.find((c) => c.status === "publicado")?._count._all || 0;
 
-      // Cuando el vendedor responde, calculamos la diferencia de tiempo
-      if (isVendor && lastBuyerMessage) {
-        const diffMs = msg.createdAt.getTime() - lastBuyerMessage.getTime();
-        totalResponseTime += diffMs;
-        totalResponses++;
-        lastBuyerMessage = null; // Reiniciamos para la próxima interacción
+    // 🔹 3. Promedio de respuesta
+    let totalResponseTime = 0;
+    let totalResponses = 0;
+
+    for (const room of rooms) {
+      let lastBuyerMessage: Date | null = null;
+      for (const msg of room.messages) {
+        const isBuyer = msg.senderId === room.buyerId;
+        const isVendor = msg.senderId === room.vendorId;
+        if (isBuyer) lastBuyerMessage = msg.createdAt;
+        if (isVendor && lastBuyerMessage) {
+          totalResponseTime +=
+            msg.createdAt.getTime() - lastBuyerMessage.getTime();
+          totalResponses++;
+          lastBuyerMessage = null;
+        }
       }
     }
-  }
 
-  if (totalResponses === 0) {
+    const averageMinutes =
+      totalResponses > 0
+        ? totalResponseTime / totalResponses / 1000 / 60
+        : null;
+
+    // 🔹 4. Analítica de despacho
+    let totalDays = 0;
+    for (const o of orders) {
+      if (o.despachadoAt)
+        totalDays +=
+          (o.despachadoAt.getTime() - o.createdAt.getTime()) /
+          (1000 * 60 * 60 * 24);
+    }
+
+    const averageDispatchDays = orders.length
+      ? totalDays / orders.length
+      : null;
+    const isFastShipper = averageDispatchDays && averageDispatchDays <= 5;
+
+    // 🔹 5. Retornar resultado
     return {
-      averageMinutes: null,
-      message: "No hay respuestas registradas aún",
+      user,
+      products: products.map((p) => ({
+        ...p,
+        isFavorite: session?.user?.id ? p.favorites.length > 0 : false,
+      })),
+      total,
+      page,
+      limit,
+      counts: {
+        publicados: countPublicados,
+        vendidos: countVendidos,
+        noVendidos: total - countVendidos,
+      },
+      analytics: {
+        averageMinutes,
+        responses: totalResponses,
+        dispatch: {
+          averageDays: averageDispatchDays,
+          isFastShipper,
+        },
+      },
     };
+  } catch (error) {
+    console.error(error);
+    return null;
   }
-
-  // Promedio en minutos
-  const averageMinutes = totalResponseTime / totalResponses / 1000 / 60;
-
-  return {
-    vendorId,
-    averageMinutes,
-    responses: totalResponses,
-  };
 }

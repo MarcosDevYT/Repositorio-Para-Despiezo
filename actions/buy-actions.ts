@@ -1,7 +1,8 @@
 "use server";
 
 import { auth } from "@/auth";
-import { stripePlans } from "@/data";
+import { stripePlans } from "@/lib/constants/data";
+
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import { baseUrl } from "@/lib/utils";
@@ -276,8 +277,9 @@ export const handleCancelStripeSubscription = async (
   subscriptionId: string
 ) => {
   try {
-    const canceledSubscription =
-      await stripe.subscriptions.cancel(subscriptionId);
+    const canceledSubscription = await stripe.subscriptions.cancel(
+      subscriptionId
+    );
 
     console.log("Subscripcion cancelada: ", canceledSubscription.id);
 

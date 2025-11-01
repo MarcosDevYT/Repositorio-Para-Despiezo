@@ -5,8 +5,8 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, Package, Truck, DollarSign } from "lucide-react";
-import { Prisma } from "@prisma/client";
 import { Card } from "@/components/ui/card";
+import { Prisma } from "@/lib/generated/prisma/client";
 
 // Ahora incluimos items con producto y kit
 type PrismaOrden = Prisma.OrdenGetPayload<{
@@ -30,7 +30,7 @@ export const OrderRow = ({ order }: { order: PrismaOrden }) => {
     <Card className="w-full flex flex-col md:flex-row items-start md:items-center justify-between gap-4 py-4 px-4 text-sm">
       {/* Imagen + producto */}
       <div className="flex items-center gap-4 w-full md:w-1/3">
-        <div className="relative w-16 h-16 flex-shrink-0">
+        <div className="relative w-16 h-16 shrink-0">
           <Image
             src={product.images[0]}
             alt={product.name}

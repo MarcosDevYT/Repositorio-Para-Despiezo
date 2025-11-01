@@ -19,7 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { hasAnyFilter } from "@/lib/utils";
-import { categories } from "@/data";
+import { categories } from "@/lib/constants/data";
 
 interface SidebarProps {
   open: boolean;

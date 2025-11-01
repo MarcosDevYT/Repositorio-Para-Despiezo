@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Heart, Star, MapPin, Car } from "lucide-react";
+import { Heart, Car } from "lucide-react";
 
 import Image from "next/image";
 

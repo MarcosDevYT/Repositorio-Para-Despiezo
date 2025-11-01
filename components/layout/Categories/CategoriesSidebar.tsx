@@ -5,7 +5,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { categories } from "@/data";
+import { categories } from "@/lib/constants/data";
 import { Category } from "@/types/CategoriesTypes";
 import { ChevronLeftIcon, ListFilter, ShoppingBag } from "lucide-react";
 import { useRouter } from "next/navigation";

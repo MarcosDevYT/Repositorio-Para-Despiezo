@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Kit, Product } from "@prisma/client";
+import { Kit, Product } from "@/lib/generated/prisma/client";
 
 interface SellKitCardProps {
   kit: Kit & { products: (Product & { product: Product })[] };

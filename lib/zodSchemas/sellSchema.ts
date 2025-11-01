@@ -1,15 +1,13 @@
-import { categories, conditions } from "@/data";
 import { z, string } from "zod";
+import { categories } from "../constants/data";
+import { conditions } from "../constants/conts";
 
 const categorySlugs = categories.map((c) => c.slug) as [string, ...string[]];
 
-const categoryMap = categories.reduce(
-  (acc, cat) => {
-    acc[cat.slug] = cat.subcategories?.map((sub) => sub.slug) ?? [];
-    return acc;
-  },
-  {} as Record<string, string[]>
-);
+const categoryMap = categories.reduce((acc, cat) => {
+  acc[cat.slug] = cat.subcategories?.map((sub) => sub.slug) ?? [];
+  return acc;
+}, {} as Record<string, string[]>);
 
 export const sellSchema = z
   .object({

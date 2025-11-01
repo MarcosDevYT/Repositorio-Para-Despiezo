@@ -1,31 +1,59 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { SendcloudResponse } from "@/types/ResponseType";
 
-interface ParcelType {
+export interface ParcelItem {
+  description: string;
+  quantity: number;
+  weight: string | number;
+  value: number;
+  origin_country: string;
+  sku?: string;
+}
+
+export interface ParcelType {
   parcel: {
     name: string | null;
     company_name: string;
     address: string | null;
     house_number: string | null;
+    address_2?: string | null;
     city: string | null;
     postal_code: string | null;
     telephone: string | null;
     request_label: boolean;
     email: string;
-    data: {};
+    data?: Record<string, any>;
     country: string;
     shipment: {
       id: number;
     };
-    weight: number | null;
+    weight: number | string | null;
+    length?: number | string;
+    width?: number | string;
+    height?: number | string;
     order_number: string;
     insured_value: number;
     total_order_value_currency: string;
     total_order_value: string;
     quantity: number;
     shipping_method_checkout_name: string;
+    apply_shipping_rules?: boolean;
+
+    // ✅ Parcel items
+    parcel_items?: ParcelItem[];
+  };
+}
+
+// Ejemplo de respuesta de Sendcloud
+export interface SendcloudResponse {
+  parcel: {
+    tracking_number: string;
+    tracking_url: string;
+    label: {
+      normal_printer: string[];
+      pdf?: string[];
+    };
   };
 }
 
@@ -179,7 +207,7 @@ export async function getOrdenByID(orderId: string) {
 }
 
 /**
- * Crear una etiqueta
+ * Crear una etiqueta y actualizar la orden
  */
 export async function createEtiqueta(parcelData: ParcelType) {
   try {
@@ -202,16 +230,18 @@ export async function createEtiqueta(parcelData: ParcelType) {
       throw new Error("Error creando etiqueta: " + errorText);
     }
 
-    // Obtener el JSON de la respuesta
+    // 📦 Obtener datos de respuesta
     const data: SendcloudResponse = await response.json();
 
-    // Actualizar la orden con la info de la etiqueta
+    // 📝 Actualizar la orden con la información del despacho
     await prisma.orden.update({
       where: { id: parcelData.parcel.order_number },
       data: {
         shippingLabelUrl: data.parcel.label.normal_printer[0],
         trackingNumber: data.parcel.tracking_number,
         trackingUrl: data.parcel.tracking_url,
+        shippingStatus: "shipped",
+        despachadoAt: new Date(),
       },
     });
 
