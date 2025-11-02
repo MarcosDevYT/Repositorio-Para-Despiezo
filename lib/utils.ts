@@ -99,3 +99,15 @@ export function buildTsQueryFromQueries(queries: string[] = []) {
   const tsQuery = tsParts.join(" | "); // OR entre queries
   return { tsQuery, plain };
 }
+
+export function formatCurrency(amount: number, currency = "EUR") {
+  return new Intl.NumberFormat("es-ES", {
+    style: "currency",
+    // "EUR"
+    currency,
+  }).format(amount);
+}
+
+export function formatMinutes(minutes: number) {
+  return `${minutes.toFixed(0)} min`;
+}

@@ -1,5 +1,11 @@
+"use server";
+
+import { prisma } from "@/lib/prisma";
 import { unstable_cache } from "next/cache";
+import { redis } from "@/lib/redis";
 import {
+  calculateProductAndDispatchMetrics,
+  calculateSalesMetrics,
   getFeaturedProducts,
   getPopularProductsFromSearchLogs,
   getProductsAction,
@@ -25,3 +31,37 @@ export const getProductsCached = unstable_cache(
   ["recent-products"],
   { revalidate: 600 }
 );
+
+/**
+ * Obtiene y actualiza las analíticas del vendedor.
+ * Incluye métricas como tiempos de respuesta, despacho y conteos de productos.
+ */
+export async function getVendorAnalytics(vendorId: string) {
+  if (!vendorId) return null;
+
+  const cacheKey = `vendor:${vendorId}:analytics`;
+  const cached = await redis.get(cacheKey);
+  if (cached) return JSON.parse(cached);
+
+  const [productMetrics, salesMetrics] = await Promise.all([
+    calculateProductAndDispatchMetrics(vendorId),
+    calculateSalesMetrics(vendorId),
+  ]);
+
+  const analytics = await prisma.vendorAnalytics.upsert({
+    where: { vendorId },
+    update: {
+      ...productMetrics,
+      ...salesMetrics,
+      calculatedAt: new Date(),
+    },
+    create: {
+      vendorId,
+      ...productMetrics,
+      ...salesMetrics,
+    },
+  });
+
+  await redis.set(cacheKey, JSON.stringify(analytics), "EX", 60 * 60);
+  return analytics;
+}

@@ -19,12 +19,14 @@ Plataforma de compraventa de piezas de automóvil que conecta desguaces, tallere
 ### 0. Cosas por hacer
 
 - [ ] **Cron Job para Transferencias** - Crear un cron job que este atento a si pasan 20 dias o se entrego el pedido
+- [ ] **Crear todos los skeletons de las paginas**
 - [x] **Agregar un tabs en la tienda del vendedor** - En los tabs se van a visualizar los kits, productos y reseñas
 - [x] **Agregar en el destacado las horas y los dias**
-- [ ] **Preparar caching de datos en el home y en los lugares que corresponda**
-- [ ] **Preparar las analiticas para despues agregar en la tienda y negocio del vendedor**
-- [ ] **Agregar input para banner en el negocio y agregar ese banner en la tienda si es que hay**
-- [ ] **Hacer diseño para la tienda, pensar si hacer un diseño pro y no pro**
+- [x] **Preparar caching de datos en el home y en los lugares que corresponda**
+- [x] **Preparar las analiticas para despues agregar en la tienda y negocio del vendedor**
+- [x] **Agregar input para banner en el negocio y agregar ese banner en la tienda si es que hay**
+- [x] **Hacer diseño para la tienda, pensar si hacer un diseño pro y no pro**
+- [ ] **Agregar los badges correspondientes a las analiticas en el producto del vendedor**
 - [ ] **Agregar traducciones a los estados del envio**
 
 ### 🏠 1. Transformación de la Página de Inicio

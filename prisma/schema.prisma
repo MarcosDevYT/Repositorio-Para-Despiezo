@@ -34,6 +34,9 @@ model User {
   connectedAccountId      String? @unique
   stripeConnectedLinked   Boolean @default(false)
 
+  /// Relacion con las analiticas
+  vendorAnalytics         VendorAnalytics?
+
   /// Productos del usuario
   products                Product[]
 
@@ -108,6 +111,48 @@ model PasswordResetToken {
 
   createdAt DateTime @default(now())
 }
+
+// Modelo de datos analiticos
+model VendorAnalytics {
+  id               String   @id @default(cuid())
+  vendorId         String   @unique
+  vendor           User     @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  // Conteos de productos
+  totalProducts    Int       @default(0)
+  publicados       Int       @default(0)
+  vendidos         Int       @default(0)
+  noVendidos       Int       @default(0)
+
+  // Despachos
+  hasDispatched    Boolean   @default(false)
+  totalDispatches  Int       @default(0)
+
+  // Métricas de respuesta y envío
+  avgResponseMin   Float?
+  avgDispatchDays  Float?
+  isFastShipper    Boolean   @default(false)
+
+  // Ventas totales
+  hasSales         Boolean   @default(false)
+  totalOrders      Int       @default(0)
+  totalProductsSold Int      @default(0)
+  totalEarnings    Float     @default(0)
+  avgEarningsPerOrder Float?
+  avgProductPrice  Float?
+
+  // entas recientes (últimos 30 días)
+  isActiveSeller   Boolean   @default(false)
+  earningsLast30Days Float   @default(0)
+  ordersLast30Days   Int     @default(0)
+  avgEarningsLast30Days Float?
+
+  // Control de tiempo
+  calculatedAt     DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+
 
 // Modelo de direccion del usuario
 model Address {

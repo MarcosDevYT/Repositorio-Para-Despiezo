@@ -4,37 +4,18 @@ import { useEffect, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { House } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { TiendaSkeleton } from "@/components/skeletons/TiendaSkeleton";
 import { TiendaTabs } from "./TiendaTabs";
-import { getVendorFullData } from "@/actions/sell-actions";
 import { TiendaHeader } from "./TiendaHeader";
 
-import Link from "next/link";
-import { Kit, Product, User } from "@prisma/client";
+import { Kit, Product, User, VendorAnalytics } from "@prisma/client";
+import { getVendorProductsPaginated } from "@/actions/sell-actions";
 
-export type VendorAnalytics = {
-  averageMinutes: number | null;
-  responses: number;
-  dispatch: {
-    averageDays: number | null;
-    isFastShipper: boolean | 0 | null;
-  };
-};
-
-export type VendorCounts = {
+export interface VendorCounts {
   publicados: number;
   vendidos: number;
   noVendidos: number;
-};
-
-export interface VendorFullDataResponse {
-  user: User | null;
-  products: (Product & { isFavorite?: boolean })[];
-  total: number;
-  page: number;
-  limit: number;
-  counts: VendorCounts | null;
-  analytics: VendorAnalytics | null;
 }
 
 export const TiendaLayout = ({
@@ -42,48 +23,49 @@ export const TiendaLayout = ({
   limit,
   page,
   kits,
+  analytics,
+  vendedorInfo,
 }: {
   id: string;
   page?: string;
   limit?: string;
   kits: Kit[];
+  analytics: VendorAnalytics | null;
+  vendedorInfo: User | null;
 }) => {
   const router = useRouter();
   const pageNumber = Number(page) || 1;
   const limitNumber = Number(limit) || 10;
   const [isPending, startTransition] = useTransition();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [vendedorInfo, setVendedorInfo] = useState<User | null>();
-  const [total, setTotal] = useState<number>(0);
-  const [currentPage, setCurrentPage] = useState<number>(pageNumber);
-  const [vendedorData, setVendedorData] = useState<VendorFullDataResponse>({
-    user: null,
-    products: [],
-    total: 0,
-    page: 1,
-    limit: 10,
-    counts: null,
-    analytics: null,
-  });
 
-  const fetchVendedorInfo = () => {
+  const [products, setProducts] = useState<
+    (Product & { isFavorite?: boolean })[]
+  >([]);
+
+  const [total, setTotal] = useState<number>(0);
+  const [counts, setCounts] = useState<VendorCounts | null>(null);
+  const [currentPage, setCurrentPage] = useState<number>(pageNumber);
+
+  const fetchVendorProducts = () => {
     startTransition(async () => {
       try {
-        const res = await getVendorFullData(id, pageNumber, limitNumber);
-
+        const res = await getVendorProductsPaginated(
+          id,
+          pageNumber,
+          limitNumber
+        );
         if (!res) {
-          setVendedorInfo(null);
           setProducts([]);
           setTotal(0);
+          setCounts(null);
           return;
         }
 
         setProducts(res.products);
-        setVendedorInfo(res.user);
-        setTotal(res.total);
-        setVendedorData(res);
+        setTotal(res.counts.total);
+        setCounts(res.counts);
       } catch (error) {
-        console.error(error);
+        console.error("Error al obtener productos del vendedor:", error);
       }
     });
   };
@@ -96,23 +78,20 @@ export const TiendaLayout = ({
   };
 
   useEffect(() => {
-    fetchVendedorInfo();
+    fetchVendorProducts();
   }, [id, limit, page]);
-
-  console.log(vendedorData);
 
   if (isPending) {
     return <TiendaSkeleton />;
   }
 
-  if (!vendedorInfo)
+  if (!products.length && !vendedorInfo)
     return (
       <div className="h-full flex flex-col items-center justify-center py-16">
         <h1 className="text-2xl font-bold">Tienda no encontrada</h1>
         <p className="text-muted-foreground mb-4">
-          Busca otro vendedor o vuelve al inicio para seguir buscando productos
+          Busca otro vendedor o vuelve al inicio para seguir explorando.
         </p>
-
         <Button className="text-base rounded-full w-44" asChild>
           <Link href={"/"}>
             <House className="size-5" />
@@ -125,7 +104,11 @@ export const TiendaLayout = ({
   return (
     <div className="h-full flex flex-col space-y-8">
       {/* Información del vendedor */}
-      <TiendaHeader vendedorData={vendedorData} />
+      <TiendaHeader
+        vendedorInfo={vendedorInfo}
+        counts={counts}
+        analytics={analytics}
+      />
 
       {/* Productos del vendedor */}
       <TiendaTabs

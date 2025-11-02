@@ -5,8 +5,8 @@ import { auth } from "@/auth";
 import { sellSchema } from "@/lib/zodSchemas/sellSchema";
 import { prisma } from "@/lib/prisma";
 import { buildTsQueryFromQueries } from "@/lib/utils";
-import { VendorFullDataResponse } from "@/components/layout/vendedor/tienda/TiendaLayout";
 import { Product } from "@prisma/client";
+import { redis } from "@/lib/redis";
 
 type ProductFilter = {
   query?: string; // nombre o descripción
@@ -941,23 +941,20 @@ export async function registerUserProductView(
 }
 
 /**
- * Action para obtener los productos del vendedor con paginacion
- * y analiticas del vendedor
+ * Obtiene los productos de un vendedor con paginación y conteos básicos.
  */
-
-export async function getVendorFullData(
+export async function getVendorProductsPaginated(
   vendorId: string,
   page = 1,
   limit = 20
-): Promise<VendorFullDataResponse | null> {
+) {
   try {
-    const session = await auth();
     if (!vendorId) return null;
 
-    // 🔹 1. Obtener todo lo básico en paralelo
-    const [user, productCounts, products, rooms, orders] = await Promise.all([
-      prisma.user.findUnique({ where: { id: vendorId } }),
+    const session = await auth();
 
+    // 🔹 Obtener productos + conteos en paralelo
+    const [productCounts, products] = await Promise.all([
       prisma.product.groupBy({
         by: ["status"],
         where: { vendorId },
@@ -975,97 +972,167 @@ export async function getVendorFullData(
         },
         orderBy: { createdAt: "desc" },
       }),
-
-      prisma.room.findMany({
-        where: { vendorId },
-        include: {
-          messages: {
-            orderBy: { createdAt: "asc" },
-            take: 20,
-            select: { senderId: true, createdAt: true },
-          },
-        },
-      }),
-
-      prisma.orden.findMany({
-        where: { vendorId, despachadoAt: { not: null } },
-        select: { createdAt: true, despachadoAt: true },
-      }),
     ]);
 
-    if (!user) return null;
-
-    // 🔹 2. Procesar conteos
+    // 🔹 Calcular conteos básicos
     const total = productCounts.reduce((sum, c) => sum + c._count._all, 0);
-    const countVendidos =
-      productCounts.find((c) => c.status === "vendido")?._count._all || 0;
-    const countPublicados =
+    const publicados =
       productCounts.find((c) => c.status === "publicado")?._count._all || 0;
+    const vendidos =
+      productCounts.find((c) => c.status === "vendido")?._count._all || 0;
+    const noVendidos = total - vendidos;
 
-    // 🔹 3. Promedio de respuesta
-    let totalResponseTime = 0;
-    let totalResponses = 0;
+    // 🔹 Transformar productos con favoritos
+    const mappedProducts = products.map((p) => ({
+      ...p,
+      isFavorite: session?.user?.id ? p.favorites.length > 0 : false,
+    }));
 
-    for (const room of rooms) {
-      let lastBuyerMessage: Date | null = null;
-      for (const msg of room.messages) {
-        const isBuyer = msg.senderId === room.buyerId;
-        const isVendor = msg.senderId === room.vendorId;
-        if (isBuyer) lastBuyerMessage = msg.createdAt;
-        if (isVendor && lastBuyerMessage) {
-          totalResponseTime +=
-            msg.createdAt.getTime() - lastBuyerMessage.getTime();
-          totalResponses++;
-          lastBuyerMessage = null;
-        }
-      }
-    }
-
-    const averageMinutes =
-      totalResponses > 0
-        ? totalResponseTime / totalResponses / 1000 / 60
-        : null;
-
-    // 🔹 4. Analítica de despacho
-    let totalDays = 0;
-    for (const o of orders) {
-      if (o.despachadoAt)
-        totalDays +=
-          (o.despachadoAt.getTime() - o.createdAt.getTime()) /
-          (1000 * 60 * 60 * 24);
-    }
-
-    const averageDispatchDays = orders.length
-      ? totalDays / orders.length
-      : null;
-    const isFastShipper = averageDispatchDays && averageDispatchDays <= 5;
-
-    // 🔹 5. Retornar resultado
-    return {
-      user,
-      products: products.map((p) => ({
-        ...p,
-        isFavorite: session?.user?.id ? p.favorites.length > 0 : false,
-      })),
-      total,
-      page,
-      limit,
-      counts: {
-        publicados: countPublicados,
-        vendidos: countVendidos,
-        noVendidos: total - countVendidos,
-      },
-      analytics: {
-        averageMinutes,
-        responses: totalResponses,
-        dispatch: {
-          averageDays: averageDispatchDays,
-          isFastShipper,
-        },
-      },
+    const result = {
+      products: mappedProducts,
+      counts: { total, publicados, vendidos, noVendidos },
+      pagination: { page, limit },
     };
+
+    return result;
   } catch (error) {
-    console.error(error);
+    console.error("❌ Error en getVendorProductsPaginated:", error);
     return null;
   }
+}
+
+/**
+ * Función para calcular métricas de productos y despacho
+ */
+export async function calculateProductAndDispatchMetrics(vendorId: string) {
+  const [productCounts, rooms, orders] = await Promise.all([
+    prisma.product.groupBy({
+      by: ["status"],
+      where: { vendorId },
+      _count: { _all: true },
+    }),
+    prisma.room.findMany({
+      where: { vendorId },
+      include: {
+        messages: {
+          orderBy: { createdAt: "asc" },
+          take: 20,
+          select: { senderId: true, createdAt: true },
+        },
+      },
+    }),
+    prisma.orden.findMany({
+      where: { vendorId, despachadoAt: { not: null } },
+      select: { createdAt: true, despachadoAt: true },
+    }),
+  ]);
+
+  // Conteos básicos
+  const total = productCounts.reduce((sum, c) => sum + c._count._all, 0);
+  const publicados =
+    productCounts.find((c) => c.status === "publicado")?._count._all || 0;
+  const vendidos =
+    productCounts.find((c) => c.status === "vendido")?._count._all || 0;
+  const noVendidos = total - vendidos;
+
+  // Promedio de tiempo de respuesta
+  let totalResponseTime = 0;
+  let totalResponses = 0;
+
+  for (const room of rooms) {
+    let lastBuyerMessage: Date | null = null;
+
+    for (const msg of room.messages) {
+      const isBuyer = msg.senderId === room.buyerId;
+      const isVendor = msg.senderId === room.vendorId;
+
+      if (isBuyer) lastBuyerMessage = msg.createdAt;
+      if (isVendor && lastBuyerMessage) {
+        totalResponseTime +=
+          msg.createdAt.getTime() - lastBuyerMessage.getTime();
+        totalResponses++;
+        lastBuyerMessage = null;
+      }
+    }
+  }
+
+  const avgResponseMin =
+    totalResponses > 0 ? totalResponseTime / totalResponses / 1000 / 60 : null;
+
+  // Métricas de despacho
+  const totalDispatches = orders.length;
+  const hasDispatched = totalDispatches > 0;
+
+  let totalDays = 0;
+  for (const o of orders) {
+    if (o.despachadoAt)
+      totalDays +=
+        (o.despachadoAt.getTime() - o.createdAt.getTime()) /
+        (1000 * 60 * 60 * 24);
+  }
+
+  const avgDispatchDays = hasDispatched ? totalDays / totalDispatches : null;
+  const isFastShipper =
+    hasDispatched && !!avgDispatchDays && avgDispatchDays <= 5;
+
+  return {
+    totalProducts: total,
+    publicados,
+    vendidos,
+    noVendidos,
+    avgResponseMin,
+    hasDispatched,
+    totalDispatches,
+    avgDispatchDays,
+    isFastShipper,
+  };
+}
+
+/**
+ *  Función para calcular métricas de ventas
+ */
+export async function calculateSalesMetrics(vendorId: string) {
+  // Obtener todas las órdenes relevantes
+  const orders = await prisma.orden.findMany({
+    where: {
+      vendorId,
+      status: { in: ["paid", "shipped", "delivered", "completed"] },
+    },
+    include: { items: true },
+  });
+
+  const hasSales = orders.length > 0;
+  const totalOrders = orders.length;
+  const totalEarnings = orders.reduce((sum, o) => sum + o.vendorAmount, 0);
+
+  const totalProductsSold = orders.reduce((sum, o) => sum + o.items.length, 0);
+  const avgEarningsPerOrder = totalOrders ? totalEarnings / totalOrders : null;
+  const avgProductPrice = totalProductsSold
+    ? totalEarnings / totalProductsSold
+    : null;
+
+  // Ventas últimos 30 días
+  const last30Days = new Date();
+  last30Days.setDate(last30Days.getDate() - 30);
+  const recentOrders = orders.filter((o) => o.createdAt >= last30Days);
+  const earningsLast30Days = recentOrders.reduce(
+    (sum, o) => sum + o.vendorAmount,
+    0
+  );
+  const ordersLast30Days = recentOrders.length;
+  const avgEarningsLast30Days = earningsLast30Days / 30;
+  const isActiveSeller = ordersLast30Days > 0;
+
+  return {
+    hasSales,
+    totalOrders,
+    totalProductsSold,
+    totalEarnings,
+    avgEarningsPerOrder,
+    avgProductPrice,
+    earningsLast30Days,
+    ordersLast30Days,
+    avgEarningsLast30Days,
+    isActiveSeller,
+  };
 }
