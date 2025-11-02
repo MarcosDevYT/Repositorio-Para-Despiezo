@@ -152,6 +152,50 @@ export const editProfileFieldAction = async (
 };
 
 /**
+ * Actualiza el banner del negocio del usuario
+ */
+export const updateBusinessBanner = async (bannerImages: string[]) => {
+  try {
+    const session = await auth();
+
+    if (!session?.user) {
+      return { error: "No estás autenticado" };
+    }
+
+    if (!session.user.pro) {
+      return { error: "No posees un plan pro para ejecutar esta acción" };
+    }
+
+    const banner = bannerImages[0];
+
+    const validatedData = z
+      .object({
+        banner: z.string().min(1, "La imagen del banner es requerida"),
+      })
+      .parse({ banner });
+
+    if (!banner.includes("http")) {
+      return { error: "La imagen no es válida" };
+    }
+
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: {
+        businessBannerUrl: validatedData.banner,
+      },
+    });
+
+    return {
+      success: "Banner actualizado correctamente",
+      imageUrl: validatedData.banner,
+    };
+  } catch (error) {
+    console.error(error);
+    return { error: "Error al actualizar el banner" };
+  }
+};
+
+/**
  * Action para actualizar la imagen de perfil del usuario
  * @param imageProfile Imagen de perfil a actualizar
  * @returns Resultado de la actualización, si hay error, se retorna el error

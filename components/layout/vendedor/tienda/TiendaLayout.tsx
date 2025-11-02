@@ -5,13 +5,12 @@ import { Button } from "@/components/ui/button";
 import { House } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { TiendaSkeleton } from "@/components/skeletons/TiendaSkeleton";
-
-import Link from "next/link";
 import { TiendaTabs } from "./TiendaTabs";
 import { getVendorFullData } from "@/actions/sell-actions";
-
-import { Kit, Product, User } from "@/lib/generated/prisma/client";
 import { TiendaHeader } from "./TiendaHeader";
+
+import Link from "next/link";
+import { Kit, Product, User } from "@prisma/client";
 
 export type VendorAnalytics = {
   averageMinutes: number | null;

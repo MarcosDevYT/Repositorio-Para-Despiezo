@@ -5,10 +5,7 @@ import { ProductCategories } from "@/components/layout/home/ProductCategories";
 import { ToolsSection } from "@/components/layout/home/ToolsSection";
 import { Categories } from "@/components/layout/Categories/Categories";
 import {
-  getFeaturedProducts,
   getLastViewedProducts,
-  getPopularProductsFromSearchLogs,
-  getProductsAction,
   getRecommendedProductsForUser,
 } from "@/actions/sell-actions";
 import { auth } from "@/auth";
@@ -16,26 +13,30 @@ import { FeaturedProducts } from "@/components/layout/home/FeaturedProducts";
 import { MostSearchProducts } from "@/components/layout/home/MostSearchProducts";
 import { HistoryProducts } from "@/components/layout/home/HistoryProducts";
 import { RecommendedProducts } from "@/components/layout/home/RecommendedProducts";
+import {
+  getFeaturedProductsCached,
+  getPopularProductsCached,
+  getProductsCached,
+} from "@/actions/action-cache";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 60;
+export const dynamic = "auto";
+export const revalidate = 600;
 
 export default async function Home() {
   const session = await auth();
   const userId = session?.user.id;
 
-  const [
-    lastProductView,
-    recommendedProductsByUser,
-    featuredProducts,
-    popularProducts,
-    products,
-  ] = await Promise.all([
+  // datos dependientes de usuario — dinámicos
+  const [lastProductView, recommendedProductsByUser] = await Promise.all([
     getLastViewedProducts(userId),
     getRecommendedProductsForUser(userId),
-    getFeaturedProducts(userId),
-    getPopularProductsFromSearchLogs(userId),
-    getProductsAction(userId),
+  ]);
+
+  // datos cacheables globales con revalidación
+  const [featuredProducts, popularProducts, products] = await Promise.all([
+    getFeaturedProductsCached(),
+    getPopularProductsCached(),
+    getProductsCached(),
   ]);
 
   return (

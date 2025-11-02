@@ -27,6 +27,7 @@ model User {
   phoneVerified           DateTime?
   location                String?
   businessName            String?
+  businessBannerUrl       String?
   bussinesCategory        String[] @default([])
 
   // Stripe Connect

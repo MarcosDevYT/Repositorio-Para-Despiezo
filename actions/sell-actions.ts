@@ -5,16 +5,8 @@ import { auth } from "@/auth";
 import { sellSchema } from "@/lib/zodSchemas/sellSchema";
 import { prisma } from "@/lib/prisma";
 import { buildTsQueryFromQueries } from "@/lib/utils";
-import { Product, User } from "@/lib/generated/prisma/client";
 import { VendorFullDataResponse } from "@/components/layout/vendedor/tienda/TiendaLayout";
-
-type VendedorResType = {
-  user: User | null;
-  products: Product[];
-  total: number;
-  page: number;
-  limit: number;
-};
+import { Product } from "@prisma/client";
 
 type ProductFilter = {
   query?: string; // nombre o descripción
@@ -236,7 +228,7 @@ export const getUserAvaibleProductsAction = async () => {
 /**
  * ACTIONS PARA
  * MOSTRAR LOS PRODUCTOS EN EL HOME
- * ULTIMOS, DESTACADOS, RECOMENDADOS, HISTORIAL, MAS BUSCADOS
+ * Ultimos productos, Productos Desctacados y productos populares con cache
  */
 
 // Obtener todos los productos publicados
@@ -267,6 +259,142 @@ export const getProductsAction = async (userId?: string) => {
     return [];
   }
 };
+
+/**
+ * Obtiene los productos destacados vigentes
+ * @param limit Cantidad de productos a traer (default = 10)
+ */
+export async function getFeaturedProducts(userId?: string) {
+  const featured = await prisma.product.findMany({
+    where: {
+      status: "publicado",
+      featuredUntil: { gte: new Date() },
+    },
+    orderBy: { featuredAt: "desc" },
+    take: 10,
+    include: {
+      favorites: userId
+        ? {
+            where: { userId },
+            select: { id: true },
+          }
+        : false,
+    },
+  });
+
+  if (featured.length === 0) return [];
+
+  return featured.map((p) => ({
+    ...p,
+    isFavorite: userId ? p.favorites.length > 0 : false,
+  }));
+}
+
+/**
+ * Obtiene hasta `limit` productos (objetos Product completos) en base a los search logs más populares.
+ * Solo devuelve productos con status = "publicado" y añade `isFavorite`.
+ */
+export async function getPopularProductsFromSearchLogs(
+  userId?: string,
+  limit = 10
+): Promise<(Product & { isFavorite: boolean })[]> {
+  try {
+    // 1️ Obtener top 5 términos más buscados
+    const logs = await prisma.searchLog.findMany({
+      orderBy: { clicks: "desc" },
+      take: 5,
+      select: { query: true },
+    });
+
+    // 2️ Obtener top 5 productos más cliqueados
+    const topClickedProducts = await prisma.product.findMany({
+      where: { status: "publicado" },
+      orderBy: { clicks: "desc" },
+      take: 5,
+      select: { id: true, name: true, brand: true, model: true },
+    });
+
+    // Si no hay nada popular aún
+    if (logs.length === 0 && topClickedProducts.length === 0) return [];
+
+    // 3️ Combinar consultas del search log + nombres de productos más cliqueados
+    const combinedQueries = [
+      ...logs.map((l) => (l.query || "").trim()),
+      ...topClickedProducts.map((p) =>
+        [p.name, p.brand, p.model].filter(Boolean).join(" ")
+      ),
+    ].filter(Boolean);
+
+    if (combinedQueries.length === 0) return [];
+
+    const { tsQuery, plain } = buildTsQueryFromQueries(combinedQueries);
+
+    // 4️ Buscar productos populares por similitud o relevancia semántica
+    const idsResult = await prisma.$queryRawUnsafe<any[]>(
+      `
+      SELECT id
+      FROM "Product"
+      WHERE status = 'publicado'
+        AND (
+          search_vector @@ to_tsquery('spanish', $1)
+          OR similarity(LOWER("name"), LOWER($2)) > 0.2
+          OR similarity(LOWER("brand"), LOWER($2)) > 0.2
+          OR similarity(LOWER("model"), LOWER($2)) > 0.2
+          OR similarity(LOWER("oemNumber"), LOWER($2)) > 0.2
+        )
+      ORDER BY
+        -- mayor peso a los clics y rank de texto
+        ("clicks" * 0.02) +
+        GREATEST(
+          similarity(LOWER("name"), LOWER($2)),
+          similarity(LOWER("brand"), LOWER($2)),
+          similarity(LOWER("model"), LOWER($2)),
+          similarity(LOWER("oemNumber"), LOWER($2))
+        ) * 0.8 +
+        ts_rank_cd(search_vector, to_tsquery('spanish', $1)) * 2
+        DESC
+      LIMIT $3;
+    `,
+      tsQuery,
+      plain,
+      limit
+    );
+
+    const ids = idsResult.map((r) => r.id);
+    if (ids.length === 0) return [];
+
+    // 5️ Traer productos completos + favoritos
+    const fullProducts = await prisma.product.findMany({
+      where: { id: { in: ids }, status: "publicado" },
+      include: {
+        favorites: userId ? { where: { userId }, select: { id: true } } : false,
+      },
+    });
+
+    // 6️ Mantener orden de popularidad y añadir isFavorite
+    const byId = new Map(fullProducts.map((p) => [p.id, p]));
+
+    return ids
+      .map((id) => {
+        const p = byId.get(id);
+        if (!p) return null;
+        const isFavorite = userId
+          ? !!(p.favorites && p.favorites.length > 0)
+          : false;
+        return { ...p, isFavorite };
+      })
+      .filter(Boolean) as (Product & { isFavorite: boolean })[];
+  } catch (error) {
+    console.error("❌ getPopularProductsFromSearchLogs error:", error);
+    return [];
+  }
+}
+
+/**
+ * Productos sin cache para el home
+ * Ultimos productos vistos, prouctos recomendados
+ *
+ */
 
 // Obtener los últimos productos vistos
 export async function getLastViewedProducts(userId?: string) {
@@ -303,136 +431,6 @@ export async function getLastViewedProducts(userId?: string) {
     ...view.product,
     isFavorite: view.product.favorites.length > 0,
   }));
-}
-
-/**
- * Obtiene los productos destacados vigentes
- * @param limit Cantidad de productos a traer (default = 10)
- */
-export async function getFeaturedProducts(userId?: string) {
-  const featured = await prisma.product.findMany({
-    where: {
-      status: "publicado",
-      featuredUntil: { gte: new Date() }, // solo los vigentes
-    },
-    orderBy: { featuredAt: "desc" }, // prioridad a los más nuevos
-    take: 10,
-    include: {
-      favorites: userId
-        ? {
-            where: { userId },
-            select: { id: true },
-          }
-        : false,
-    },
-  });
-
-  if (featured.length === 0) return [];
-
-  return featured.map((p) => ({
-    ...p,
-    isFavorite: userId ? p.favorites.length > 0 : false,
-  }));
-}
-
-/**
- * Obtiene hasta `limit` productos (objetos Product completos) en base a los search logs más populares.
- * Solo devuelve productos con status = "publicado" y añade `isFavorite`.
- */
-export async function getPopularProductsFromSearchLogs(
-  userId?: string,
-  limit = 10
-): Promise<(Product & { isFavorite: boolean })[]> {
-  try {
-    // 1️⃣ Obtener top 5 términos más buscados
-    const logs = await prisma.searchLog.findMany({
-      orderBy: { clicks: "desc" },
-      take: 5,
-      select: { query: true },
-    });
-
-    // 2️⃣ Obtener top 5 productos más cliqueados
-    const topClickedProducts = await prisma.product.findMany({
-      where: { status: "publicado" },
-      orderBy: { clicks: "desc" },
-      take: 5,
-      select: { id: true, name: true, brand: true, model: true },
-    });
-
-    // Si no hay nada popular aún
-    if (logs.length === 0 && topClickedProducts.length === 0) return [];
-
-    // 3️⃣ Combinar consultas del search log + nombres de productos más cliqueados
-    const combinedQueries = [
-      ...logs.map((l) => (l.query || "").trim()),
-      ...topClickedProducts.map((p) =>
-        [p.name, p.brand, p.model].filter(Boolean).join(" ")
-      ),
-    ].filter(Boolean);
-
-    if (combinedQueries.length === 0) return [];
-
-    const { tsQuery, plain } = buildTsQueryFromQueries(combinedQueries);
-
-    // 4️⃣ Buscar productos populares por similitud o relevancia semántica
-    const idsResult = await prisma.$queryRawUnsafe<any[]>(
-      `
-      SELECT id
-      FROM "Product"
-      WHERE status = 'publicado'
-        AND (
-          search_vector @@ to_tsquery('spanish', $1)
-          OR similarity(LOWER("name"), LOWER($2)) > 0.2
-          OR similarity(LOWER("brand"), LOWER($2)) > 0.2
-          OR similarity(LOWER("model"), LOWER($2)) > 0.2
-          OR similarity(LOWER("oemNumber"), LOWER($2)) > 0.2
-        )
-      ORDER BY
-        -- mayor peso a los clics y rank de texto
-        ("clicks" * 0.02) +
-        GREATEST(
-          similarity(LOWER("name"), LOWER($2)),
-          similarity(LOWER("brand"), LOWER($2)),
-          similarity(LOWER("model"), LOWER($2)),
-          similarity(LOWER("oemNumber"), LOWER($2))
-        ) * 0.8 +
-        ts_rank_cd(search_vector, to_tsquery('spanish', $1)) * 2
-        DESC
-      LIMIT $3;
-    `,
-      tsQuery,
-      plain,
-      limit
-    );
-
-    const ids = idsResult.map((r) => r.id);
-    if (ids.length === 0) return [];
-
-    // 5️⃣ Traer productos completos + favoritos
-    const fullProducts = await prisma.product.findMany({
-      where: { id: { in: ids }, status: "publicado" },
-      include: {
-        favorites: userId ? { where: { userId }, select: { id: true } } : false,
-      },
-    });
-
-    // 6️⃣ Mantener orden de popularidad y añadir isFavorite
-    const byId = new Map(fullProducts.map((p) => [p.id, p]));
-
-    return ids
-      .map((id) => {
-        const p = byId.get(id);
-        if (!p) return null;
-        const isFavorite = userId
-          ? !!(p.favorites && p.favorites.length > 0)
-          : false;
-        return { ...p, isFavorite };
-      })
-      .filter(Boolean) as (Product & { isFavorite: boolean })[];
-  } catch (error) {
-    console.error("❌ getPopularProductsFromSearchLogs error:", error);
-    return [];
-  }
 }
 
 /**
@@ -561,6 +559,13 @@ export async function getRecommendedProductsForUser(
     return [];
   }
 }
+
+/**
+ *
+ *
+ * Productos por filtro para la pagina de todos los productos
+ *
+ */
 
 /**
  * Funcion para traer los productos por filtro
@@ -928,12 +933,17 @@ export async function registerUserProductView(
 ) {
   if (!userId) return;
 
-  const view = await prisma.userProductView.upsert({
+  await prisma.userProductView.upsert({
     where: { userId_productId: { userId, productId } },
     update: { viewedAt: new Date() }, // si ya existe, actualiza
     create: { userId, productId }, // si no existe, lo crea
   });
 }
+
+/**
+ * Action para obtener los productos del vendedor con paginacion
+ * y analiticas del vendedor
+ */
 
 export async function getVendorFullData(
   vendorId: string,

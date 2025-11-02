@@ -240,7 +240,8 @@ export async function getKitByProductId(productId: string) {
     where: {
       products: {
         some: {
-          productId, // Relación con Product
+          // Relación con Product
+          productId,
         },
       },
     },
