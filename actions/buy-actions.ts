@@ -150,11 +150,11 @@ export async function buyKitProductsActions(
       select: { connectedAccountId: true },
     });
 
-    // 💰 Usamos el precio total del kit (ya con descuento aplicado)
+    // Usamos el precio total del kit (ya con descuento aplicado)
     const totalPrice = kit.price;
     const applicationFee = Math.round(totalPrice * 0.1);
 
-    // 🧾 Creamos solo un item de Stripe representando el KIT
+    // Creamos solo un item de Stripe representando el KIT
     const stripeLineItems = [
       {
         price_data: {
@@ -339,7 +339,7 @@ export async function handleCheckoutCompleted(
 ) {
   console.log("Iniciando handleCheckoutSessionCompleted");
 
-  // 1️⃣ Si es suscripción → no necesitamos metadata.typeOfBuy
+  // 1️ Si es suscripción → no necesitamos metadata.typeOfBuy
   if (sessionObj.mode === "subscription" && sessionObj.customer) {
     const priceId = sessionObj.line_items?.data[0].price?.id;
     const plan = stripePlans.find((p) => p.priceId === priceId);
@@ -350,7 +350,7 @@ export async function handleCheckoutCompleted(
     }
   }
 
-  // 2️⃣ Compras normales requieren typeOfBuy
+  // 2️ Compras normales requieren typeOfBuy
   const typeOfBuy = sessionObj.metadata?.typeOfBuy;
   if (!typeOfBuy) {
     throw new Error("No se encontró el tipo de compra en metadata");
@@ -400,7 +400,8 @@ async function handleProductPurchase(sessionObj: Stripe.Checkout.Session) {
 
   try {
     const amountTotal = Number(productPrice);
-    const feeAmount = Number(applicationFee) * 100; // centavos
+    // centavos
+    const feeAmount = Number(applicationFee) * 100;
     const vendorAmount = amountTotal - feeAmount;
 
     // Release en 20 días
@@ -441,7 +442,8 @@ async function handleProductPurchase(sessionObj: Stripe.Checkout.Session) {
         shippingName: userName,
         shippingPhone: userPhoneNumber,
 
-        orderType: "PRODUCT", // es un producto individual
+        // es un producto individual
+        orderType: "PRODUCT",
         items: {
           create: [
             {
@@ -452,7 +454,7 @@ async function handleProductPurchase(sessionObj: Stripe.Checkout.Session) {
         },
       },
       include: {
-        items: true, // opcional, si querés devolver los items creados
+        items: true,
       },
     });
 

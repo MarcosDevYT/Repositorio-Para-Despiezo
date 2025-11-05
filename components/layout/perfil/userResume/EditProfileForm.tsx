@@ -24,7 +24,7 @@ import { LocationAutocomplete } from "@/components/LocationSearchInput";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Textarea } from "@/components/ui/textarea";
-import { User } from "@/lib/generated/prisma/client";
+import { User } from "@prisma/client";
 
 /**
  * Formulario de login

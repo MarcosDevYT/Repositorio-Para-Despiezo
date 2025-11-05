@@ -230,10 +230,10 @@ export async function createEtiqueta(parcelData: ParcelType) {
       throw new Error("Error creando etiqueta: " + errorText);
     }
 
-    // 📦 Obtener datos de respuesta
+    // Obtener datos de respuesta
     const data: SendcloudResponse = await response.json();
 
-    // 📝 Actualizar la orden con la información del despacho
+    // Actualizar la orden con la información del despacho
     await prisma.orden.update({
       where: { id: parcelData.parcel.order_number },
       data: {
@@ -317,4 +317,24 @@ export async function getPDFParcel(ordenId: string): Promise<Buffer> {
 
   const arrayBuffer = await response.arrayBuffer();
   return Buffer.from(arrayBuffer);
+}
+
+/**
+ * Marcar una orden como entregada
+ */
+export async function markAsDelivered(orderId: string) {
+  try {
+    const updatedOrder = await prisma.orden.update({
+      where: { id: orderId },
+      data: {
+        shippingStatus: "delivered",
+        entregadoAt: new Date(),
+      },
+    });
+
+    return { success: true, order: updatedOrder };
+  } catch (error) {
+    console.error("Error al marcar la orden como entregada:", error);
+    return { success: false, error: "No se pudo actualizar la orden" };
+  }
 }

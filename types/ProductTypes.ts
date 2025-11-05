@@ -1,4 +1,4 @@
-import { Prisma, Product } from "@/lib/generated/prisma/client";
+import { Prisma, Product } from "@prisma/client";
 
 export interface ProductType extends Product {
   isFavorite?: boolean | undefined;
@@ -17,6 +17,19 @@ export type PrismaOrden = Prisma.OrdenGetPayload<{
         product: true;
         kit: { include: { products: true } };
         buyer: true;
+      };
+    };
+    buyer: true;
+    vendor: true;
+  };
+}>;
+
+export type OrdenFull = Prisma.OrdenGetPayload<{
+  include: {
+    items: {
+      include: {
+        product: true;
+        kit: true;
       };
     };
     buyer: true;

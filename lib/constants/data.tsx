@@ -18,6 +18,7 @@ import {
   Thermometer,
   Wind,
   Puzzle,
+  Store,
 } from "lucide-react";
 
 //  https://repositorio-para-despiezo.vercel.app/payment/subscriptions
@@ -102,6 +103,11 @@ export const ProfileNavLinks = [
     icon: <ShoppingBag />,
   },
   {
+    label: "Mi Negocio",
+    href: "/vendedor/negocio",
+    icon: <Store />,
+  },
+  {
     label: "Mis Productos",
     href: "/vendedor",
     icon: <Package />,
@@ -151,6 +157,11 @@ export const DropdownLinks = [
   {
     title: "Vender",
     links: [
+      {
+        label: "Mi Negocio",
+        href: "/vendedor/negocio",
+        icon: <Store className="size-4" strokeWidth={2.5} />,
+      },
       {
         label: "Mis Productos",
         href: "/vendedor",

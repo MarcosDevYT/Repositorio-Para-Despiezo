@@ -26,8 +26,22 @@ Plataforma de compraventa de piezas de automóvil que conecta desguaces, tallere
 - [x] **Preparar las analiticas para despues agregar en la tienda y negocio del vendedor**
 - [x] **Agregar input para banner en el negocio y agregar ese banner en la tienda si es que hay**
 - [x] **Hacer diseño para la tienda, pensar si hacer un diseño pro y no pro**
+- [ ] **Hero de busqueda con Tabs, pensado para buscar por oem o marca/modelo/año**
 - [ ] **Agregar los badges correspondientes a las analiticas en el producto del vendedor**
 - [ ] **Agregar traducciones a los estados del envio**
+
+### Crear un boton y funcionalidad de reseñas
+
+- [x] **Crear un boton en la compra del usuario para marcar como entregado**
+- Este boton libera los fondos y le habilita el formulario de reseña y compatibilidades al usuario.
+- [ ] **Crear los action para guardar reseñas y compatibilidades en la base de datos**
+- [ ] **Esquematizar correctamente el sistema de compatibilidades de piezas**
+
+### Tabs para buscar por marca/modelo/año
+
+- Encontre una api que puede traerte todas las marcas, modelos de las marcas y podes encontrar modelos de las marcas por año.
+- Pero no se pueden obtener de por si modelo/año juntos, solo se puede filtrar por el año
+- Es una API totalmente gratuita y podemos cachear los resultados de todas las marcas y reutilizarlas en nuestro sistema
 
 ### 🏠 1. Transformación de la Página de Inicio
 
@@ -97,7 +111,7 @@ Plataforma de compraventa de piezas de automóvil que conecta desguaces, tallere
   - Tasa de devoluciones y motivos
   - Mapa de demanda por provincia
 - [ ] Export CSV de métricas
-- [ ] Dashboard con gráficas interactivas
+- [x] Dashboard con gráficas interactivas
 
 ### 👥 5. Validación por la Comunidad
 

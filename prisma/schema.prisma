@@ -276,7 +276,8 @@ model Orden {
   vendor              User          @relation("VendorOrders", fields: [vendorId], references: [id])
 
   // Nueva relación
-  items               OrderItem[]   // 👈 cada orden puede tener uno o varios productos
+  // cada orden puede tener uno o varios productos
+  items               OrderItem[]   
 
   // Stripe
   stripeSessionId     String        @unique
@@ -301,6 +302,9 @@ model Orden {
   // Para registrar cuándo se despacha la orden
   despachadoAt        DateTime?
 
+  // Para registrar cuándo se entrega la orden
+  entregadoAt         DateTime?
+
   // Dirección de envío
   shippingName        String?
   shippingAddressLine1 String?
@@ -310,7 +314,7 @@ model Orden {
   shippingCountry     String?
   shippingPhone       String?
 
-  // Control de tiempo
+  // Control de tiempo de pagos
   releaseAt           DateTime?
   releasedAt          DateTime?
   stripeTransferId    String?
@@ -332,7 +336,7 @@ model Orden {
   updatedAt           DateTime      @updatedAt
 }
 
-// 👇 Nuevo modelo intermedio
+// Nuevo modelo intermedio
 model OrderItem {
   id        String   @id @default(cuid())
   ordenId   String
