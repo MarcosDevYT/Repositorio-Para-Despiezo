@@ -27,6 +27,7 @@ Plataforma de compraventa de piezas de automóvil que conecta desguaces, tallere
 - [x] **Agregar input para banner en el negocio y agregar ese banner en la tienda si es que hay**
 - [x] **Hacer diseño para la tienda, pensar si hacer un diseño pro y no pro**
 - [ ] **Hero de busqueda con Tabs, pensado para buscar por oem o marca/modelo/año**
+- [ ] **Encontrar una api europea de modelo/año/marca**
 - [ ] **Agregar los badges correspondientes a las analiticas en el producto del vendedor**
 - [ ] **Agregar traducciones a los estados del envio**
 
@@ -34,14 +35,21 @@ Plataforma de compraventa de piezas de automóvil que conecta desguaces, tallere
 
 - [x] **Crear un boton en la compra del usuario para marcar como entregado**
 - Este boton libera los fondos y le habilita el formulario de reseña y compatibilidades al usuario.
-- [ ] **Crear los action para guardar reseñas y compatibilidades en la base de datos**
-- [ ] **Esquematizar correctamente el sistema de compatibilidades de piezas**
+- [x] **Crear los action para guardar reseñas y compatibilidades en la base de datos**
+- [x] **Esquematizar correctamente el sistema de compatibilidades de piezas**
 
 ### Tabs para buscar por marca/modelo/año
 
 - Encontre una api que puede traerte todas las marcas, modelos de las marcas y podes encontrar modelos de las marcas por año.
 - Pero no se pueden obtener de por si modelo/año juntos, solo se puede filtrar por el año
 - Es una API totalmente gratuita y podemos cachear los resultados de todas las marcas y reutilizarlas en nuestro sistema
+
+## APIS
+
+- NHTSA (vPIC) API actual opcion gratuita (Es de canada)
+- CarQuery API opción gratuita (no es específicamente “europea”)
+- Auto-Data.net empresarial / pago cobertura europea muy completa
+- CarRegistrationAPI orientado a Europa (registro/lookup)
 
 ### 🏠 1. Transformación de la Página de Inicio
 
@@ -79,15 +87,15 @@ Plataforma de compraventa de piezas de automóvil que conecta desguaces, tallere
 
 #### En Tarjetas de Producto
 
-- [ ] Badge "Envío rápido" (basado en métricas reales)
-- [ ] Badge "Responde rápido" (tiempo de respuesta en chat)
+- [x] Badge "Envío rápido" (basado en métricas reales)
+- [x] Badge "Responde rápido" (tiempo de respuesta en chat)
 - [ ] Badge "Garantía de devolución"
 - [x] Botón "Chat/Preguntar" directo en tarjeta
 
 #### Datos Necesarios
 
-- [ ] Tracking de tiempo de despacho por vendedor
-- [ ] Métricas de tiempo de respuesta en chat
+- [x] Tracking de tiempo de despacho por vendedor
+- [x] Métricas de tiempo de respuesta en chat
 - [ ] Sistema de políticas de garantía por anuncio
 
 ### 📊 4. Panel de Control Inteligente
@@ -99,12 +107,12 @@ Plataforma de compraventa de piezas de automóvil que conecta desguaces, tallere
 - [ ] **Rastreo integrado** - Timeline completo sin enlaces externos
 - [ ] Estados: Confirmado → Preparación → Enviado → Reparto → Entregado
 - [ ] Porcentaje de avance visual
-- [ ] Botones "Hablar con vendedor" y "Abrir incidencia"
+- [x] Botones "Hablar con vendedor" y "Abrir incidencia"
 - [ ] Notificaciones push/email en cambios de estado
 
 #### Para Vendedores PRO
 
-- [ ] **Métricas de rendimiento**:
+- [x] **Métricas de rendimiento**:
   - Tiempo de respuesta (gráficas semanales)
   - Velocidad de preparación/envío
   - Top piezas por beneficio y volumen
@@ -147,7 +155,7 @@ Plataforma de compraventa de piezas de automóvil que conecta desguaces, tallere
 
 - [x] Suscripción mensual para profesionales
 - [ ] Subida masiva por CSV
-- [ ] Análisis de mercado avanzado
+- [x] Análisis de mercado avanzado
 
 ### 💳 7. Mejoras de Pago y Confianza
 
@@ -194,10 +202,10 @@ Plataforma de compraventa de piezas de automóvil que conecta desguaces, tallere
 
 #### Implementación
 
-- [ ] Contadores visibles en filtros y cabecera
-- [ ] Desglose numérico por estado en resultados
+- [x] Contadores visibles en filtros y cabecera
+- [x] Desglose numérico por estado en resultados
 - [ ] Badge "caja abierta" cuando aplique
-- [ ] Filtro por "mejor estado"
+- [x] Filtro por "mejor estado"
 
 ### 🔧 10. Integraciones y APIs
 

@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
-import { Prisma } from "@/lib/generated/prisma/client";
+import { Prisma } from "@prisma/client";
 
 // Ahora incluimos items con producto y kit
 type PrismaOrden = Prisma.OrdenGetPayload<{
@@ -38,7 +38,7 @@ export const ComprasCard = ({ orden }: { orden: PrismaOrden }) => {
       {/* Header con primer item */}
       <CardHeader className="flex items-center gap-4 p-4">
         {orden.items[0]?.product || orden.items[0]?.kit ? (
-          <div className="relative w-20 h-20 flex-shrink-0">
+          <div className="relative w-20 h-20 shrink-0">
             <Image
               src={
                 orden.items[0].product

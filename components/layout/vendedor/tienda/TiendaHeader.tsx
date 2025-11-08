@@ -142,7 +142,8 @@ export const TiendaHeader = ({
                 Calificacion
               </span>
               <p className="text-3xl font-bold inline-flex gap-2 items-center ml-7">
-                {4.5} <Star className="text-[#ffdf20]" fill="#ffdf20" />
+                {analytics?.averageRating}{" "}
+                <Star className="text-[#ffdf20]" fill="#ffdf20" />
               </p>
             </Card>
 
@@ -178,7 +179,7 @@ export const TiendaHeader = ({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Card className="flex flex-col items-center justify-start gap-3 border-2">
-                      <span className="text-base  font-bold uppercase tracking-wide text-center">
+                      <span className="inline-flex items-center justify-center gap-1 text-base font-bold uppercase tracking-wide text-center">
                         <Clock size={12} />
                         Respuesta
                       </span>
@@ -203,14 +204,14 @@ export const TiendaHeader = ({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Card className="flex flex-col items-center justify-start gap-3 border-2">
-                      <span className="text-base  font-bold uppercase tracking-wide text-center">
-                        <Zap size={12} />
+                      <span className="inline-flex items-center justify-center gap-1 text-base font-bold uppercase tracking-wide text-center">
+                        <Zap size={20} />
                         Envío
                       </span>
                       <p className="text-3xl text-emerald-600 font-bold inline-flex gap-2 items-center ">
                         Rápido
                       </p>
-                      <span className="text-xs text-emerald-600 text-center">
+                      <span className="text-sm text-emerald-600 text-center">
                         Ágil
                       </span>
                     </Card>

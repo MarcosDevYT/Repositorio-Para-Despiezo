@@ -1123,6 +1123,26 @@ export async function calculateSalesMetrics(vendorId: string) {
   const avgEarningsLast30Days = earningsLast30Days / 30;
   const isActiveSeller = ordersLast30Days > 0;
 
+  // Calcular reviews del vendedor
+  const reviews = await prisma.review.findMany({
+    where: { vendorId },
+    select: { rating: true },
+  });
+
+  const totalReviews = reviews.length;
+  const averageRating =
+    totalReviews > 0
+      ? reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews
+      : 0;
+
+  await prisma.user.update({
+    where: { id: vendorId },
+    data: {
+      averageRating,
+      totalReviews,
+    },
+  });
+
   return {
     hasSales,
     totalOrders,
@@ -1134,5 +1154,7 @@ export async function calculateSalesMetrics(vendorId: string) {
     ordersLast30Days,
     avgEarningsLast30Days,
     isActiveSeller,
+    averageRating,
+    totalReviews,
   };
 }

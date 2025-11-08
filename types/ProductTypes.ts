@@ -24,6 +24,7 @@ export type PrismaOrden = Prisma.OrdenGetPayload<{
   };
 }>;
 
+// Tipo actualizado con la relación products dentro de kit
 export type OrdenFull = Prisma.OrdenGetPayload<{
   include: {
     items: {

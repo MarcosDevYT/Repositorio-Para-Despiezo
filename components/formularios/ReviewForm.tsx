@@ -3,7 +3,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-
 import {
   Form,
   FormField,
@@ -19,8 +18,15 @@ import { useTransition } from "react";
 import { Loader2, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { reviewSchema } from "@/lib/zodSchemas/ReviewSchemas";
+import { createReviewAction } from "@/actions/review-actions";
+import type { OrdenFull } from "@/types/ProductTypes";
 
-export const ReviewForm = ({ productId }: { productId?: string }) => {
+interface ReviewFormProps {
+  orden: OrdenFull;
+  onSuccess?: () => void;
+}
+
+export const ReviewForm = ({ orden, onSuccess }: ReviewFormProps) => {
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<z.infer<typeof reviewSchema>>({
@@ -34,20 +40,22 @@ export const ReviewForm = ({ productId }: { productId?: string }) => {
   const onSubmit = (data: z.infer<typeof reviewSchema>) => {
     startTransition(async () => {
       try {
-        // Aquí enviarías la reseña al backend, ejemplo:
-        // await createReviewAction(productId, data);
-        toast.success("¡Gracias por tu reseña!");
-        form.reset();
-      } catch (err) {
-        toast.error("Ocurrió un error al enviar la reseña");
+        const result = await createReviewAction(orden, data);
+        if (result.success) {
+          toast.success(result.message);
+          form.reset();
+          // Llamar callback para actualizar el estado del componente padre
+          onSuccess?.();
+        }
+      } catch (err: any) {
+        toast.error(err.message || "Ocurrió un error al enviar la reseña");
       }
     });
   };
 
-  // Componente auxiliar para las estrellas
-  const RatingStars = ({ field, label }: { field: any; label: string }) => (
+  const RatingStars = ({ field }: { field: any }) => (
     <FormItem>
-      <FormLabel>{label}</FormLabel>
+      <FormLabel>Calificación del servicio</FormLabel>
       <FormControl>
         <div className="flex items-center gap-1">
           {[1, 2, 3, 4, 5].map((star) => (
@@ -76,16 +84,12 @@ export const ReviewForm = ({ productId }: { productId?: string }) => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 w-full">
-        {/* Calificación del producto */}
         <FormField
           control={form.control}
           name="rating"
-          render={({ field }) => (
-            <RatingStars field={field} label="Calificación del servicio" />
-          )}
+          render={({ field }) => <RatingStars field={field} />}
         />
 
-        {/* Comentario */}
         <FormField
           control={form.control}
           name="comentario"
@@ -93,7 +97,10 @@ export const ReviewForm = ({ productId }: { productId?: string }) => {
             <FormItem>
               <FormLabel>Comentario (opcional)</FormLabel>
               <FormControl>
-                <Textarea placeholder="Contanos tu experiencia" {...field} />
+                <Textarea
+                  placeholder="Contanos tu experiencia con el producto y envío"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

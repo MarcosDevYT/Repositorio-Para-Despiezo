@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { deletedUserAddress } from "@/actions/user-actions";
 import { FormCheckout } from "../ProductComponents/FormCheckout";
-import { Address } from "@/lib/generated/prisma/client";
+import { Address } from "@prisma/client";
 
 export const ProfileAddress = ({ session }: { session: Session }) => {
   const userAddresses = session.user.addresses;

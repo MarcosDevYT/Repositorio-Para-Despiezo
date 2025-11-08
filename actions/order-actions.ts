@@ -197,8 +197,6 @@ export async function getOrdenByID(orderId: string) {
       },
     });
 
-    console.log(orden);
-
     return orden;
   } catch (error) {
     console.error(error);
@@ -211,6 +209,10 @@ export async function getOrdenByID(orderId: string) {
  */
 export async function createEtiqueta(parcelData: ParcelType) {
   try {
+    console.log(parcelData);
+
+    console.log(parcelData.parcel.parcel_items);
+
     const response = await fetch(
       `${sendCloudRoute}/parcels?errors=verbose-carrier`,
       {
@@ -327,6 +329,7 @@ export async function markAsDelivered(orderId: string) {
     const updatedOrder = await prisma.orden.update({
       where: { id: orderId },
       data: {
+        status: "delivered",
         shippingStatus: "delivered",
         entregadoAt: new Date(),
       },

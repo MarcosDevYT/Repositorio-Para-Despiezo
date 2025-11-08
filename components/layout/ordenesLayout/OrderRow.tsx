@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, Package, Truck, DollarSign } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Prisma } from "@/lib/generated/prisma/client";
+import { Prisma } from "@prisma/client";
 
 // Ahora incluimos items con producto y kit
 type PrismaOrden = Prisma.OrdenGetPayload<{

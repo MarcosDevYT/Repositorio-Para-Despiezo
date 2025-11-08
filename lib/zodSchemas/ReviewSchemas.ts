@@ -19,21 +19,29 @@ export const compatibilidadSchema = z.object({
   encajo: z.boolean({
     error: "Debes indicar si la pieza encajó",
   }),
+  marca: z
+    .string({
+      error: "Debes seleccionar la marca del vehículo",
+    })
+    .min(1, "La marca es obligatoria"),
   modelo: z
     .string({
-      error: "Debes ingresar el modelo del vehículo",
+      error: "Debes seleccionar el modelo del vehículo",
     })
-    .min(1, "El modelo es obligatorio")
-    .max(50, "El modelo no puede tener más de 50 caracteres"),
+    .min(1, "El modelo es obligatorio"),
   anio: z
     .string({
-      error: "Debes ingresar el año del vehículo",
+      error: "Debes seleccionar el año del vehículo",
     })
     .regex(/^\d{4}$/, "El año debe tener 4 dígitos (por ejemplo: 2020)"),
   version: z
     .string()
-    .max(50, "La versión no puede tener más de 50 caracteres")
-    .optional(),
+    .max(100, "La versión no puede tener más de 100 caracteres"),
+  motorizacion: z
+    .string()
+    .max(100, "La motorización no puede tener más de 100 caracteres"),
+  combustible: z.enum(["gasolina", "diesel", "hibrido", "electrico"]),
+  transmision: z.enum(["manual", "automatica"]),
 });
 
 export type CompatibilidadSchema = z.infer<typeof compatibilidadSchema>;

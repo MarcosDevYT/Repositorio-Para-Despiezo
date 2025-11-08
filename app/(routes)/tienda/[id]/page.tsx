@@ -1,5 +1,6 @@
 import { getVendorAnalytics } from "@/actions/action-cache";
 import { getVendedorKits } from "@/actions/kit-actions";
+import { getVendedorReviews } from "@/actions/review-actions";
 import { getUserAction } from "@/actions/user-actions";
 
 import { MainContainer } from "@/components/layout/MainContainer";
@@ -18,13 +19,14 @@ export default async function TiendaUserPage({
   const { id } = await params;
 
   // Cargar datos base del vendedor
-  const [kits, analytics, vendedorInfo] = await Promise.all([
+  const [kits, analytics, vendedorInfo, reviews] = await Promise.all([
     getVendedorKits(id),
     getVendorAnalytics(id),
     getUserAction(id),
+    getVendedorReviews(id),
   ]);
 
-  console.log("Analiticas: ", analytics);
+  console.log(reviews);
 
   return (
     <MainContainer className="min-h-[82.5vh] container mx-auto px-4 py-12">
@@ -35,6 +37,7 @@ export default async function TiendaUserPage({
         kits={kits}
         analytics={analytics}
         vendedorInfo={vendedorInfo.user!}
+        reviews={reviews}
       />
     </MainContainer>
   );

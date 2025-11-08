@@ -13,7 +13,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 
 import { KitCard } from "../../ProductComponents/KitCard";
-import { Kit } from "@/lib/generated/prisma/client";
+import { Kit } from "@prisma/client";
+import { ReviewCard } from "@/components/ReviewCard";
+import { VendedorReview } from "@/actions/review-actions";
+import { StarOff } from "lucide-react";
 
 interface TiendaTabsProps {
   handlePageChange: (newPage: number) => void;
@@ -23,6 +26,7 @@ interface TiendaTabsProps {
   products: ProductType[];
   total: number;
   kits: Kit[];
+  reviews: VendedorReview[];
 }
 
 export function TiendaTabs({
@@ -33,6 +37,7 @@ export function TiendaTabs({
   isPending,
   total,
   kits,
+  reviews,
 }: TiendaTabsProps) {
   return (
     <Tabs defaultValue="productos" className="space-y-2">
@@ -105,18 +110,34 @@ export function TiendaTabs({
       </TabsContent>
       <TabsContent value="reseñas" className="space-y-6">
         <Card>
-          <CardHeader className="gap-0">
-            <div className="flex flex-col items-center justify-center md:flex-row md:justify-between gap-y-2">
-              <CardTitle className="text-xl">Reseñas</CardTitle>
+          <CardHeader>
+            <div className="flex flex-col items-center justify-center gap-2 md:flex-row md:justify-between">
+              <CardTitle className="text-xl font-semibold">Reseñas</CardTitle>
               <CardDescription>
                 <Badge className="rounded-full py-1 text-sm bg-blue-500/10 text-blue-500">
-                  {kits.length} Reseñas
+                  {reviews.length} Reseña{reviews.length !== 1 && "s"}
                 </Badge>
               </CardDescription>
             </div>
           </CardHeader>
-          <CardContent className="grid gap-6">Reseñas</CardContent>
         </Card>
+
+        {reviews.length > 0 ? (
+          <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+            {reviews.map((review) => (
+              <ReviewCard key={review.id} review={review} />
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-10 text-center text-muted-foreground">
+            <div className="flex flex-col items-center gap-2">
+              <StarOff />
+              <p className="text-sm">
+                Todavía no hay reseñas para este vendedor.
+              </p>
+            </div>
+          </div>
+        )}
       </TabsContent>
     </Tabs>
   );

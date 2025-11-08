@@ -247,8 +247,6 @@ export const updateImageProfile = async (imageProfile: string[]) => {
 
 // Agregar un producto a favoritos
 export const toggleFavoriteAction = async (productId: string) => {
-  console.log("Aplicando favorito");
-
   // Verificar el usuario logeado
   const session = await auth();
 

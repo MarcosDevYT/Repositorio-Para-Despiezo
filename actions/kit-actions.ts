@@ -300,7 +300,5 @@ export async function getKitsByProductId(productId: string) {
     })
     .slice(0, 10);
 
-  console.log(kits);
-
   return kits;
 }

@@ -11,6 +11,7 @@ import { TiendaHeader } from "./TiendaHeader";
 
 import { Kit, Product, User, VendorAnalytics } from "@prisma/client";
 import { getVendorProductsPaginated } from "@/actions/sell-actions";
+import { VendedorReview } from "@/actions/review-actions";
 
 export interface VendorCounts {
   publicados: number;
@@ -25,6 +26,7 @@ export const TiendaLayout = ({
   kits,
   analytics,
   vendedorInfo,
+  reviews,
 }: {
   id: string;
   page?: string;
@@ -32,6 +34,7 @@ export const TiendaLayout = ({
   kits: Kit[];
   analytics: VendorAnalytics | null;
   vendedorInfo: User | null;
+  reviews: VendedorReview[];
 }) => {
   const router = useRouter();
   const pageNumber = Number(page) || 1;
@@ -119,6 +122,7 @@ export const TiendaLayout = ({
         limitNumber={limitNumber}
         total={total}
         kits={kits}
+        reviews={reviews}
       />
     </div>
   );

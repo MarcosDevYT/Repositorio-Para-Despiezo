@@ -18,6 +18,8 @@ import {
   Phone,
   Truck,
   User,
+  CheckCircle2,
+  Loader2,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -25,13 +27,68 @@ import { OrderTracking } from "./OrderTracking";
 import { OrdenFull } from "@/types/ProductTypes";
 import { ReviewForm } from "@/components/formularios/ReviewForm";
 import { CompatibilidadForm } from "@/components/formularios/CompatibilidadForm";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  checkReviewExists,
+  checkCompatibilidadExists,
+} from "@/actions/review-actions";
 
 export const ComprasDetalleOrden = ({ orden }: { orden: OrdenFull }) => {
   const [delivered, setDelivered] = useState(
     orden.shippingStatus === "delivered"
   );
+  const [hasReview, setHasReview] = useState(false);
+  const [hasCompatibilidad, setHasCompatibilidad] = useState(false);
+  const [isCheckingReview, setIsCheckingReview] = useState(true);
+  const [isCheckingCompatibilidad, setIsCheckingCompatibilidad] =
+    useState(true);
+
   const total = (orden.amountTotal / 100).toFixed(2);
+
+  // Verificar si ya existe review
+  useEffect(() => {
+    const checkReview = async () => {
+      if (delivered) {
+        setIsCheckingReview(true);
+        const exists = await checkReviewExists(orden.id);
+        setHasReview(exists);
+        setIsCheckingReview(false);
+      }
+    };
+    checkReview();
+  }, [delivered, orden.id]);
+
+  // Verificar si ya existe compatibilidad para todos los productos
+  useEffect(() => {
+    const checkCompatibilidad = async () => {
+      if (delivered) {
+        setIsCheckingCompatibilidad(true);
+
+        // Extraer todos los product IDs
+        const productIds: string[] = [];
+
+        if (orden.orderType === "PRODUCT") {
+          orden.items.forEach((item) => {
+            productIds.push(item.productId);
+          });
+        } else if (orden.orderType === "KIT") {
+          orden.items.forEach((item) => {
+            productIds.push(item.productId);
+          });
+        }
+
+        // Verificar si todos los productos tienen compatibilidad
+        const checks = await Promise.all(
+          productIds.map((id) => checkCompatibilidadExists(orden.id, id))
+        );
+
+        // Si todos tienen compatibilidad registrada
+        setHasCompatibilidad(checks.every((check) => check === true));
+        setIsCheckingCompatibilidad(false);
+      }
+    };
+    checkCompatibilidad();
+  }, [delivered, orden.id, orden.orderType, orden.items]);
 
   return (
     <div className="p-6 flex flex-col space-y-6 w-full">
@@ -101,7 +158,6 @@ export const ComprasDetalleOrden = ({ orden }: { orden: OrdenFull }) => {
             </CardTitle>
             <CardDescription>Información de pago y envío</CardDescription>
           </div>
-
           <EntregadoButton
             delivered={delivered}
             setDelivered={setDelivered}
@@ -143,45 +199,92 @@ export const ComprasDetalleOrden = ({ orden }: { orden: OrdenFull }) => {
               <span>Proveedor: {orden.shippingProvider}</span>
             </div>
           )}
-
           <div className="col-span-full flex flex-col gap-4">
             <h2 className="font-semibold">Seguimiento del paquete</h2>
-
             <OrderTracking trackingNumber={orden.trackingNumber} />
           </div>
         </CardContent>
       </Card>
+
       {delivered && (
         <>
           {/* Formulario de Reseña */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">
-                Formulario de Reseña
-              </CardTitle>
-              <CardDescription>
-                Dejá tu reseña sobre el producto
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ReviewForm />
-            </CardContent>
-          </Card>
+          {isCheckingReview ? (
+            <Card>
+              <CardContent className="py-8">
+                <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                  <Loader2 className="animate-spin size-4" />
+                  <span>Verificando reseña...</span>
+                </div>
+              </CardContent>
+            </Card>
+          ) : hasReview ? (
+            <Card>
+              <CardContent className="py-8">
+                <div className="flex items-center justify-center gap-2 text-green-600">
+                  <CheckCircle2 className="w-5 h-5" />
+                  <span className="font-medium">
+                    Ya has dejado una reseña para esta orden
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold">
+                  Formulario de Reseña
+                </CardTitle>
+                <CardDescription>
+                  Dejá tu reseña sobre el producto
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ReviewForm
+                  orden={orden}
+                  onSuccess={() => setHasReview(true)}
+                />
+              </CardContent>
+            </Card>
+          )}
 
           {/* Formulario de Compatibilidad */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">
-                Formulario de Compatiblidad
-              </CardTitle>
-              <CardDescription>Información de compatibilidad</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <CompatibilidadForm />
-            </CardContent>
-          </Card>
+          {isCheckingCompatibilidad ? (
+            <Card>
+              <CardContent className="py-8">
+                <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                  <Loader2 className="animate-spin size-4" />
+                  <span>Verificando compatibilidad...</span>
+                </div>
+              </CardContent>
+            </Card>
+          ) : hasCompatibilidad ? (
+            <Card>
+              <CardContent className="py-8">
+                <div className="flex items-center justify-center gap-2 text-green-600">
+                  <CheckCircle2 className="w-5 h-5" />
+                  <span className="font-medium">
+                    Ya has registrado la compatibilidad para esta orden
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold">
+                  Formulario de Compatibilidad
+                </CardTitle>
+                <CardDescription>Información de compatibilidad</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <CompatibilidadForm orden={orden} />
+              </CardContent>
+            </Card>
+          )}
         </>
       )}
+
       {/* Detalles de pago */}
       <Card>
         <CardHeader>
@@ -203,7 +306,6 @@ export const ComprasDetalleOrden = ({ orden }: { orden: OrdenFull }) => {
           </CardTitle>
           <CardDescription>Dirección y contacto</CardDescription>
         </CardHeader>
-
         <CardContent className="space-y-2 text-sm text-gray-700">
           {orden.shippingName && (
             <p className="flex items-center gap-2">

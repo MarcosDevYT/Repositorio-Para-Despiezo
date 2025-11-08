@@ -13,8 +13,6 @@ export const SellTable = ({
   products: ProductType[];
   handle: (id: string) => Promise<void>;
 }) => {
-  console.log("Productos", products);
-
   return (
     <>
       {/* Card Content */}

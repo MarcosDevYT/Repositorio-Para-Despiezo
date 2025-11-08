@@ -6,9 +6,9 @@ import { File, Loader2, Printer } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { PrismaOrden } from "@/types/ProductTypes";
+import { OrdenFull } from "@/types/ProductTypes";
 
-export const CrearEtiquetaButton = ({ orden }: { orden: PrismaOrden }) => {
+export const CrearEtiquetaButton = ({ orden }: { orden: OrdenFull }) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isEtiquetaGenerada, setIsEtiquetaGenerada] = useState(false);
@@ -19,32 +19,23 @@ export const CrearEtiquetaButton = ({ orden }: { orden: PrismaOrden }) => {
     startTransition(async () => {
       try {
         // Construimos los parcel_items
-        const parcelItems = orden.items.flatMap((item) => {
-          if (item.kit) {
-            // Si es un kit, cada producto dentro del kit debe ser un parcel_item
-            return item.kit.products.map((p: any) => ({
-              description: p.name,
-              quantity: p.quantity || 1,
-              weight: p.weight.toString(),
-              value: p.price,
-              origin_country: "ES",
-              sku: p.oemNumber || p.id,
-            }));
-          } else if (item.product) {
-            // Si es un producto individual
-            return [
-              {
-                description: item.product.name,
-                quantity: item.quantity || 1,
-                weight: item.product.weight!.toString(),
-                value: item.product.price,
-                origin_country: "ES",
-                sku: item.product.oemNumber || item.product.id,
-              },
-            ];
-          }
-          return [];
+        const parcelItems = orden.items.map((item) => {
+          const source = item.product || item.kit;
+
+          return {
+            description: source.name,
+            quantity: item.quantity || 1,
+            weight: source.weight?.toString() || "0",
+            value: Number(source.price) || 0,
+            origin_country: "ES",
+            sku: source.oemNumber || source.id,
+          };
         });
+
+        const totalWeight = orden.items.reduce(
+          (acc, item) => acc + (item.product?.weight || item.kit?.weight || 0),
+          0
+        );
 
         const parcelData = {
           parcel: {
@@ -59,18 +50,6 @@ export const CrearEtiquetaButton = ({ orden }: { orden: PrismaOrden }) => {
             telephone: orden.shippingPhone,
             email: orden.buyer?.email,
             shipment: { id: 8 },
-            weight: orden.items.reduce(
-              (acc, item) =>
-                acc +
-                (item.product?.weight || 0) +
-                (item.kit
-                  ? item.kit.products.reduce(
-                      (sum: number, p: any) => sum + p.weight,
-                      0
-                    )
-                  : 0),
-              0
-            ),
             order_number: orden.id,
             request_label: true,
             insured_value: orden.amountTotal / 100,
@@ -78,10 +57,13 @@ export const CrearEtiquetaButton = ({ orden }: { orden: PrismaOrden }) => {
             total_order_value: (orden.amountTotal / 100).toString(),
             quantity: 1,
             shipping_method_checkout_name: "DHL Express Domestic",
+            weight: totalWeight,
             parcel_items: parcelItems,
             apply_shipping_rules: true,
           },
         };
+
+        console.log(parcelData);
 
         await createEtiqueta(parcelData);
         setIsEtiquetaGenerada(true);

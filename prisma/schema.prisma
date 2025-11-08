@@ -22,6 +22,12 @@ model User {
   phoneNumber             String?
   addresses               Address[]
 
+  /// Promedio de calificaciones recibidas como vendedor
+  averageRating     Float?   @default(0)
+
+  /// Total de reseñas recibidas (opcional, útil para evitar otro count)
+  totalReviews      Int?     @default(0)
+
   /// Campos necesarios para Vender
   emailVerified           DateTime?
   phoneVerified           DateTime?
@@ -54,7 +60,16 @@ model User {
   viewedProducts          UserProductView[] 
 
   /// Relación con Kits
-  kits Kit[]
+  kits                    Kit[]
+
+  /// Reseñas escritas por el usuario (como comprador)
+  reviewsWritten          Review[]        @relation("UserToReview")
+
+  /// Reseñas recibidas (como vendedor)
+  reviewsReceived         Review[]        @relation("VendorToReview")
+
+  /// Relacion con las compatibilidades escritas
+  compatibilidades        Compatibilidad[]
 
   /// Relacion con chats
   roomsAsVendor           Room[]    @relation("VendorRooms")
@@ -71,7 +86,7 @@ model User {
   updatedAt               DateTime @updatedAt
 }
 
-
+// Modelo de cuenta de Google
 model Account {
   userId            String
   type              String
@@ -141,18 +156,20 @@ model VendorAnalytics {
   avgEarningsPerOrder Float?
   avgProductPrice  Float?
 
-  // entas recientes (últimos 30 días)
+  // Ventas recientes (últimos 30 días)
   isActiveSeller   Boolean   @default(false)
   earningsLast30Days Float   @default(0)
   ordersLast30Days   Int     @default(0)
   avgEarningsLast30Days Float?
 
+  // Review promedio
+  averageRating         Float    @default(0)
+  totalReviews          Int      @default(0)
+
   // Control de tiempo
   calculatedAt     DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 }
-
-
 
 // Modelo de direccion del usuario
 model Address {
@@ -211,6 +228,8 @@ model Product {
   favorites      Favorite[]
   orderItems     OrderItem[]
   kits           KitProduct[]
+  reviews         Review[]
+  compatibilidades Compatibilidad[]
 
   // Relación inversa con vistas de usuarios
   userViews      UserProductView[]
@@ -331,6 +350,12 @@ model Orden {
   // Tipo de orden (producto o kit)
   orderType           OrderType     @default(PRODUCT)
 
+  // Relacion con las reviews
+  reviews       Review[]
+
+  // Relacion con compatibilidades
+  compatibilidades Compatibilidad[]
+
   // Tiempos
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
@@ -367,6 +392,71 @@ enum OrderStatus {
   completed
   canceled
   refunded
+}
+
+/// Modelo de Reseñas
+model Review {
+  id           String   @id @default(cuid())
+
+  // Relación con el usuario que deja la reseña (comprador)
+  userId       String
+  user         User     @relation("UserToReview", fields: [userId], references: [id])
+
+  // Relación con la orden (se hace una reseña por compra)
+  ordenId      String
+  orden        Orden    @relation(fields: [ordenId], references: [id])
+
+  // Relación con el producto que se compró
+  productId    String
+  product      Product  @relation(fields: [productId], references: [id])
+
+  // Relación con el vendedor (usuario dueño del producto)
+  vendorId     String
+  vendor       User     @relation("VendorToReview", fields: [vendorId], references: [id])
+
+  // Datos de la reseña
+  rating       Int       // 1 a 5 estrellas
+  comentario   String?   // opcional
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Aseguramos que un mismo usuario no pueda reseñar dos veces la misma orden
+  @@unique([userId, ordenId])
+}
+
+/// Modelo de compatibilidades
+model Compatibilidad {
+  id           String   @id @default(cuid())
+
+  // Relación con el usuario que registra la compatibilidad (comprador)
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+
+  // Relación con la orden
+  ordenId      String
+  orden        Orden    @relation(fields: [ordenId], references: [id])
+
+  // Relación con el producto
+  productId    String
+  product      Product  @relation(fields: [productId], references: [id])
+
+  // Datos de compatibilidad
+  encajo       Boolean  // Si la pieza encajó o no
+  marca        String   // Marca del vehículo
+  modelo       String   // Modelo del vehículo
+  anio         String   // Año del vehículo
+  version      String?  // Versión/acabado (opcional)
+  motorizacion String?  // Motorización (opcional)
+  combustible  String   // gasolina, diesel, hibrido, electrico
+  transmision  String   // manual, automatica
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Un usuario puede registrar compatibilidad una vez por producto en una orden
+  @@unique([userId, ordenId, productId])
+  @@index([productId])
+  @@index([ordenId])
 }
 
 /// Modelo de Favoritos
