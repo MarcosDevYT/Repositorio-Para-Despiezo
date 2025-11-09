@@ -13,7 +13,7 @@ import {
   User,
   Phone,
 } from "lucide-react";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { format } from "date-fns";
 import { Prisma } from "@prisma/client";
 
@@ -32,121 +32,133 @@ type PrismaOrden = Prisma.OrdenGetPayload<{
 export const ComprasCard = ({ orden }: { orden: PrismaOrden }) => {
   const total = (orden.amountTotal / 100).toFixed(2);
   const fecha = format(new Date(orden.createdAt), "dd/MM/yyyy");
+  const firstItem = orden.items[0];
+  const itemData = firstItem?.product || firstItem?.kit;
 
   return (
-    <Card className="w-full rounded-2xl border border-gray-200 shadow-sm bg-white gap-0">
-      {/* Header con primer item */}
-      <CardHeader className="flex items-center gap-4 p-4">
-        {orden.items[0]?.product || orden.items[0]?.kit ? (
-          <div className="relative w-20 h-20 shrink-0">
-            <Image
-              src={
-                orden.items[0].product
-                  ? orden.items[0].product.images[0]
-                  : orden.items[0].kit?.images[0] || ""
-              }
-              alt={
-                orden.items[0].product
-                  ? orden.items[0].product.name
-                  : orden.items[0].kit?.name || ""
-              }
-              fill
-              className="object-contain rounded-md border bg-gray-50"
-            />
-          </div>
-        ) : null}
-
-        <div className="flex-1 flex flex-col gap-1">
-          <h3 className="font-semibold text-gray-900">
-            {orden.items[0].product
-              ? orden.items[0].product.name
-              : orden.items[0].kit?.name || "Sin nombre"}
-          </h3>
-          <div className="flex items-center gap-2 mt-1">
-            <Badge variant="outline" className="text-xs px-2 capitalize">
-              {orden.status}
-            </Badge>
-          </div>
-        </div>
-      </CardHeader>
-
-      {/* Contenido con info de envío y pago */}
-      <CardContent className="p-4 space-y-2 text-sm text-gray-700">
-        <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-gray-400" />
-          <span>Fecha: {fecha}</span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Package className="w-4 h-4 text-gray-400" />
-          <span>Estado de envío: {orden.shippingStatus}</span>
-        </div>
-
-        {orden.trackingNumber && (
-          <div className="flex items-center gap-2">
-            <Truck className="w-4 h-4 text-gray-400" />
-            <span>
-              Tracking:{" "}
-              <a
-                href={orden.trackingUrl || "#"}
-                target="_blank"
-                className="text-blue-600 underline"
-              >
-                {orden.trackingNumber}
-              </a>
-            </span>
-          </div>
-        )}
-
-        {orden.shippingProvider && (
-          <div className="flex items-center gap-2">
-            <Truck className="w-4 h-4 text-gray-400" />
-            <span>Proveedor: {orden.shippingProvider}</span>
-          </div>
-        )}
-
-        <div className="flex items-center gap-2">
-          <DollarSign className="w-4 h-4 text-gray-400" />
-          <span>Total pagado: €{total}</span>
-        </div>
-
-        {/* Datos de envío */}
-        <div className="pt-2 border-t border-gray-200 space-y-1">
-          {orden.shippingName && (
-            <div className="flex items-center gap-2">
-              <User className="w-4 h-4 text-gray-400" /> {orden.shippingName}
-            </div>
+    <Card className="w-full p-4">
+      <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+        {/* Imagen + Producto Info */}
+        <div className="flex items-center gap-4 min-w-[250px]">
+          {itemData && (
+            <>
+              <div className="relative w-20 h-20 shrink-0">
+                <Image
+                  src={itemData.images[0]}
+                  alt={itemData.name}
+                  fill
+                  className="object-contain rounded-md border bg-gray-50"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <h3 className="font-semibold text-gray-900 line-clamp-2">
+                  {itemData.name}
+                </h3>
+                {firstItem?.product && (
+                  <span className="text-xs text-gray-500">
+                    {firstItem.product.brand} {firstItem.product.model} •{" "}
+                    {firstItem.product.year}
+                  </span>
+                )}
+              </div>
+            </>
           )}
-          {orden.shippingPhone && (
+        </div>
+
+        {/* Info Grid - Estados y Datos */}
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-sm place-items-center">
+          {/* Columna 1 */}
+          <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <Phone className="w-4 h-4 text-gray-400" /> {orden.shippingPhone}
+              <Calendar className="w-4 h-4 text-gray-400" />
+              <span className="text-gray-700">{fecha}</span>
             </div>
-          )}
-          {orden.shippingAddressLine1 ? (
             <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-gray-400" />
-              <span>
-                {orden.shippingAddressLine1}
-                {orden.shippingAddressLine2 &&
-                  ` ${orden.shippingAddressLine2}`}{" "}
-                - {orden.shippingCity}, {orden.shippingPostalCode},{" "}
-                {orden.shippingCountry}
+              <Package className="w-4 h-4 text-gray-400" />
+              <Badge variant="outline" className="text-xs px-2 capitalize">
+                {orden.status}
+              </Badge>
+            </div>
+            <div className="flex items-center gap-2">
+              <Truck className="w-4 h-4 text-gray-400" />
+              <span className="text-xs text-gray-700 capitalize">
+                {orden.shippingStatus}
               </span>
             </div>
-          ) : (
-            <span className="text-gray-400 italic">
-              No se registró dirección de envío
-            </span>
-          )}
+          </div>
+
+          {/* Columna 2 */}
+          <div className="space-y-2">
+            {orden.trackingNumber && (
+              <div className="flex items-center gap-2">
+                <Truck className="w-4 h-4 text-gray-400" />
+                <a
+                  href={orden.trackingUrl || "#"}
+                  target="_blank"
+                  className="text-xs text-blue-600 underline line-clamp-1"
+                >
+                  {orden.trackingNumber}
+                </a>
+              </div>
+            )}
+            {orden.shippingProvider && (
+              <div className="flex items-center gap-2">
+                <Package className="w-4 h-4 text-gray-400" />
+                <span className="text-xs text-gray-700">
+                  {orden.shippingProvider}
+                </span>
+              </div>
+            )}
+            {orden.shippingName && (
+              <div className="flex items-center gap-2">
+                <User className="w-4 h-4 text-gray-400" />
+                <span className="text-xs text-gray-700 line-clamp-1">
+                  {orden.shippingName}
+                </span>
+              </div>
+            )}
+            {orden.shippingPhone && (
+              <div className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-gray-400" />
+                <span className="text-xs text-gray-700">
+                  {orden.shippingPhone}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Columna 3 */}
+          <div className="space-y-2">
+            {orden.shippingAddressLine1 ? (
+              <div className="flex items-start gap-2">
+                <MapPin className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
+                <span className="text-xs text-gray-700 line-clamp-3">
+                  {orden.shippingAddressLine1}
+                  {orden.shippingAddressLine2 &&
+                    ` ${orden.shippingAddressLine2}`}
+                  , {orden.shippingCity}, {orden.shippingPostalCode},{" "}
+                  {orden.shippingCountry}
+                </span>
+              </div>
+            ) : (
+              <span className="text-xs text-gray-400 italic">
+                No se registró dirección
+              </span>
+            )}
+          </div>
         </div>
 
-        {/* Botón ver detalles */}
-        <div className="pt-3">
-          <Button variant="outline" size="sm" asChild className="w-full">
+        {/* Total y Botón */}
+        <div className="flex flex-col items-end gap-3 min-w-[140px]">
+          <div className="flex items-center gap-2 font-semibold text-gray-900">
+            <DollarSign className="w-4 h-4 text-gray-500" />
+            <span>€{total}</span>
+          </div>
+          <Button variant="outline" size="sm" asChild className="rounded-full">
             <Link href={`/perfil/compras/${orden.id}`}>Ver detalles</Link>
           </Button>
         </div>
-      </CardContent>
+      </div>
     </Card>
   );
 };
