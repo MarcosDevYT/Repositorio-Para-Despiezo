@@ -1,3 +1,4 @@
+import { Orden } from "@prisma/client";
 import { clsx, type ClassValue } from "clsx";
 import { Session } from "next-auth";
 import { twMerge } from "tailwind-merge";
@@ -111,3 +112,24 @@ export function formatCurrency(amount: number, currency = "EUR") {
 export function formatMinutes(minutes: number) {
   return `${minutes.toFixed(0)} min`;
 }
+
+export const groupOrdersByYearMonth = (orders: Orden[]) => {
+  const grouped: Record<number, Record<number, Orden[]>> = {};
+
+  orders.forEach((order) => {
+    const date = new Date(order.createdAt);
+    const year = date.getFullYear();
+    const month = date.getMonth();
+
+    if (!grouped[year]) {
+      grouped[year] = {};
+    }
+    if (!grouped[year][month]) {
+      grouped[year][month] = [];
+    }
+
+    grouped[year][month].push(order);
+  });
+
+  return grouped;
+};

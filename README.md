@@ -30,6 +30,7 @@ Plataforma de compraventa de piezas de automóvil que conecta desguaces, tallere
 - [ ] **Encontrar una api europea de modelo/año/marca**
 - [ ] **Agregar los badges correspondientes a las analiticas en el producto del vendedor**
 - [ ] **Agregar traducciones a los estados del envio**
+- [ ] **Agregar como ventas por fecha como en wallapop en las ventas del vendedor y las compras del usuario**
 
 ### Crear un boton y funcionalidad de reseñas
 
