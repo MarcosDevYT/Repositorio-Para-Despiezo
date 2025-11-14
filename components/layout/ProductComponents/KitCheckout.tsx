@@ -24,7 +24,6 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { FormCheckout } from "./FormCheckout";
 
-import { EditableBusinessField } from "../vendedor/EditableBusinessField";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,7 +33,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { deletedUserAddress } from "@/actions/user-actions";
-import { Address, Prisma } from "@/lib/generated/prisma/client";
+import { Address, Prisma } from "@prisma/client";
+import { EditableBusinessField } from "../vendedor/negocio/EditableBusinessField";
 
 type PrismaKit = Prisma.KitGetPayload<{
   include: {
