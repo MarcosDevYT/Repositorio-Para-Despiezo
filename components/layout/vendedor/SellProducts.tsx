@@ -17,6 +17,10 @@ import { useEffect, useState, useTransition } from "react";
 import { SellTable } from "./SellTable";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProductType } from "@/types/ProductTypes";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
+import { Package, Plus } from "lucide-react";
 
 /**
  * @description Componente de productos para la venta
@@ -61,6 +65,15 @@ export const SellProducts = () => {
         <CardDescription>
           Gestiona tus productos, agrega, edita o elimina tus productos
         </CardDescription>
+
+        <div className="md:absolute top-0 right-3">
+          <Link
+            href={"/vendedor/importar"}
+            className={cn(buttonVariants(), "rounded-full")}
+          >
+            Importar por CSV
+          </Link>
+        </div>
       </CardHeader>
 
       {isPending ? (
@@ -94,6 +107,25 @@ export const SellProducts = () => {
                 </div>
               </div>
             ))}
+          </div>
+        </CardContent>
+      ) : products.length === 0 ? (
+        <CardContent>
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <Package className="h-16 w-16 text-muted-foreground mb-4" />
+            <h3 className="text-xl font-semibold mb-2">
+              Aún no tienes productos
+            </h3>
+            <p className="text-muted-foreground mb-6 max-w-md">
+              Comienza a vender creando tu primer producto. Es rápido y fácil.
+            </p>
+            <Link
+              href="/vendedor/crear"
+              className={cn(buttonVariants(), "rounded-full")}
+            >
+              <Plus className="size-4 mr-2" />
+              Crear Producto
+            </Link>
           </div>
         </CardContent>
       ) : (

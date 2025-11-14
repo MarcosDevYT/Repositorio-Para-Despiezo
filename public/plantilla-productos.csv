@@ -1,0 +1,9 @@
+name,description,oemNumber,price,brand,model,year,tipoDeVehiculo,condition,typeOfPiece,weight,length,width,height,location,offer,offerPrice
+Filtro de aceite,Filtro de aceite original compatible con Toyota Corolla,123ABC456,45.99,Toyota,Corolla,2015,coche,nuevo,Motor,2.5,30,15,10,Madrid España,false,
+Pastillas de freno delanteras,Pastillas de freno delanteras de alta calidad,456DEF789,89.99,Honda,Civic,2018,coche,como-nuevo,Frenos,3.2,25,20,8,Barcelona España,true,79.99
+Amortiguador trasero derecho,Amortiguador trasero derecho en buen estado,789GHI012,120.50,Ford,Focus,2016,coche,buen-estado,Suspensión,5.0,50,12,12,Valencia España,false,
+Faro delantero izquierdo,Faro delantero izquierdo original,321ZYX654,150.00,Seat,Ibiza,2017,coche,nuevo,Carrocería,4.0,40,30,25,Sevilla España,false,
+Espejo retrovisor eléctrico,Espejo retrovisor eléctrico con calefacción,987POI321,65.00,Volkswagen,Golf,2019,coche,como-nuevo,Carrocería,1.5,20,15,10,Málaga España,true,55.00
+Motor completo,Motor completo 1.6 TDI en perfecto estado,654MNO987,2500.00,Audi,A3,2014,coche,buen-estado,Motor,120.0,80,60,70,Zaragoza España,false,
+Caja de cambios manual,Caja de cambios manual 6 velocidades,147QWE258,850.00,Renault,Megane,2016,coche,buen-estado,Transmisión,45.0,50,40,35,Bilbao España,true,750.00
+Radiador de refrigeración,Radiador de refrigeración con ventilador,369RTY741,180.00,Peugeot,308,2017,coche,como-nuevo,Refrigeración,8.5,60,45,10,Valencia España,false,

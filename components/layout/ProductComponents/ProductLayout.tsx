@@ -39,12 +39,13 @@ import Image from "next/image";
 import { Session } from "next-auth";
 import { differenceInDays, differenceInHours } from "date-fns";
 import ProductsRelationed from "./ProductsRelationed";
-import { User } from "@/lib/generated/prisma/client";
+
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { User } from "@prisma/client";
 
 function Detail({
   icon: Icon,
@@ -390,7 +391,7 @@ export const ProductLayout = ({
             <CardContent className="space-y-3">
               <div className="flex items-center gap-2">
                 <Star className="size-5 text-yellow-500 fill-yellow-500" />
-                <span className="font-medium">5.0</span>
+                <span className="font-medium">{vendedor.averageRating}</span>
                 <span className="text-muted-foreground">(16 reseñas)</span>
               </div>
 

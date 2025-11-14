@@ -4,7 +4,7 @@ import { z } from "zod";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -36,6 +36,8 @@ import { Switch } from "@/components/ui/switch";
 import Image from "next/image";
 import { categories } from "@/lib/constants/data";
 import { conditions } from "@/lib/constants/conts";
+import { getScrapperOemData } from "@/actions/scrapper-action";
+import { cn } from "@/lib/utils";
 
 type SellFormProps = {
   initialValues?: Partial<z.infer<typeof sellSchema>>;
@@ -79,6 +81,26 @@ export const SellForm = ({ initialValues, action }: SellFormProps) => {
       ...initialValues,
     },
   });
+
+  /**
+   * Funcion para obtener datos del scrapper
+   */
+  const handleScrapperSearch = () => {
+    startTransition(async () => {
+      try {
+        const oem = form.getValues("oemNumber");
+        if (!oem) return toast.error("Debes ingresar un número OEM");
+
+        const data = await getScrapperOemData(oem);
+        if (!data) return toast.error("No se encontraron datos");
+
+        form.reset({ ...form.getValues(), ...data });
+      } catch (error) {
+        console.error(error);
+        toast.error("Ocurrio un error buscando datos del numero OEM");
+      }
+    });
+  };
 
   const onSubmit = async (data: z.infer<typeof sellSchema>) => {
     startTransition(async () => {
@@ -129,20 +151,44 @@ export const SellForm = ({ initialValues, action }: SellFormProps) => {
             )}
           />
 
-          {/* OEM Number */}
-          <FormField
-            control={form.control}
-            name="oemNumber"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Número OEM</FormLabel>
-                <FormControl>
-                  <Input {...field} placeholder="Ej. 123ABC456" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="w-full flex items-end justify-center">
+            {/* OEM Number */}
+            <FormField
+              control={form.control}
+              name="oemNumber"
+              render={({ field }) => (
+                <FormItem className="w-full">
+                  <FormLabel>Número OEM</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Ej. 123ABC456"
+                      className="w-full rounded-r-none"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <button
+              type="button"
+              className={cn(
+                buttonVariants(),
+                "rounded-l-none flex items-center gap-2"
+              )}
+              onClick={handleScrapperSearch}
+              disabled={isPending}
+            >
+              {isPending ? (
+                <>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-t-transparent"></div>
+                  Buscando datos, puede tardar...
+                </>
+              ) : (
+                "Buscar datos para el numero OEM"
+              )}
+            </button>
+          </div>
 
           {/* Descripción */}
           <FormField
@@ -455,12 +501,12 @@ export const SellForm = ({ initialValues, action }: SellFormProps) => {
                           key={condition.value}
                           value={condition.value}
                         >
-                          <div className="flex flex-col">
+                          <div className="flex gap-1">
                             <span className="font-medium">
                               {condition.label}
                             </span>
                             <span className="text-sm text-muted-foreground">
-                              {condition.description}
+                              - {condition.description}
                             </span>
                           </div>
                         </SelectItem>

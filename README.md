@@ -28,10 +28,13 @@ Plataforma de compraventa de piezas de automóvil que conecta desguaces, tallere
 - [x] **Hacer diseño para la tienda, pensar si hacer un diseño pro y no pro**
 - [ ] **Hero de busqueda con Tabs, pensado para buscar por oem o marca/modelo/año**
 - [ ] **Encontrar una api europea de modelo/año/marca**
-- [ ] **Agregar los badges correspondientes a las analiticas en el producto del vendedor**
+- [x] **Agregar los badges correspondientes a las analiticas en el producto del vendedor**
 - [ ] **Agregar traducciones a los estados del envio**
 - [x] **Agregar como ventas por fecha como en wallapop en las ventas del vendedor y las compras del usuario**
-- [ ] **Cambiar las reseñas falsas por las reseñas reales del usuario o vendedor**
+- [x] **Cambiar las reseñas falsas por las reseñas reales del usuario o vendedor**
+- [x] **Crear el importador de archivos csv para los productos**
+- [x] **Hacer un endpoint para llamar al scrapper**
+- [x] **Ajustar la barra de busqueda cuando no hay session**
 
 ### Crear un boton y funcionalidad de reseñas
 

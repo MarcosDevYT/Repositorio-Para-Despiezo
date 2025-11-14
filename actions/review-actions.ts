@@ -50,17 +50,16 @@ export async function createReviewAction(
       throw new Error("Ya has reseñado esta orden");
     }
 
-    // 5. Crear reseñas por cada producto del pedido
-    const reviewsToCreate = orden.items.map((item) => ({
-      userId,
-      ordenId,
-      productId: item.productId,
-      vendorId: orden.vendorId,
-      rating: validatedData.rating,
-      comentario: validatedData.comentario || null,
-    }));
-
-    await prisma.review.createMany({ data: reviewsToCreate });
+    // 5. Crear reseña
+    await prisma.review.create({
+      data: {
+        userId,
+        ordenId,
+        vendorId: orden.vendorId,
+        rating: validatedData.rating,
+        comentario: validatedData.comentario || null,
+      },
+    });
 
     // 6. Recalcular promedio de calificaciones del vendedor
     const reviews = await prisma.review.findMany({
@@ -100,7 +99,7 @@ export async function createReviewAction(
   }
 }
 
-// Action para verificar si ya se dejó reseña
+// Action para verificar si el usuario ya dejó una reseña para esta orden (por algún producto)
 export async function checkReviewExists(ordenId: string) {
   try {
     const session = await auth();
@@ -108,12 +107,10 @@ export async function checkReviewExists(ordenId: string) {
       return false;
     }
 
-    const review = await prisma.review.findUnique({
+    const review = await prisma.review.findFirst({
       where: {
-        userId_ordenId: {
-          userId: session.user.id,
-          ordenId,
-        },
+        userId: session.user.id,
+        ordenId,
       },
     });
 
@@ -128,11 +125,15 @@ export type VendedorReview = Awaited<
   ReturnType<typeof getVendedorReviews>
 >[number];
 
-// Action para obtener las reviews del vendedor
+// Acción para obtener las reviews del vendedor
 export async function getVendedorReviews(vendedorId: string) {
   const reviews = await prisma.review.findMany({
     where: { vendorId: vendedorId },
-    include: {
+    select: {
+      comentario: true,
+      createdAt: true,
+      id: true,
+      rating: true,
       user: {
         select: {
           id: true,
@@ -140,11 +141,23 @@ export async function getVendedorReviews(vendedorId: string) {
           image: true,
         },
       },
-      product: {
+      orden: {
         select: {
-          id: true,
-          name: true,
-          images: true,
+          items: {
+            select: {
+              product: {
+                select: {
+                  name: true,
+                  images: true,
+                },
+              },
+              kit: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
         },
       },
     },

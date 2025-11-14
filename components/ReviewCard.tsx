@@ -1,14 +1,14 @@
 "use client";
 
+import { VendedorReview } from "@/actions/review-actions";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Star } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { VendedorReview } from "@/actions/review-actions";
 
 export function ReviewCard({ review }: { review: VendedorReview }) {
-  const { user, rating, comentario, createdAt, product } = review;
+  const { user, rating, comentario, createdAt, orden } = review;
 
   const stars = Array.from({ length: 5 }, (_, i) => (
     <Star
@@ -18,6 +18,17 @@ export function ReviewCard({ review }: { review: VendedorReview }) {
       }`}
     />
   ));
+
+  // Tomamos el primer item de la orden
+  const firstItem = orden?.items?.[0];
+  const product = firstItem?.product;
+  const kit = firstItem?.kit;
+
+  // Nombre del producto o kit
+  const itemName = kit?.name || product?.name || "Artículo";
+
+  // Primera imagen del producto si existe
+  const image = product?.images?.[0];
 
   return (
     <Card className="w-full bg-background border rounded-2xl shadow-sm">
@@ -42,17 +53,17 @@ export function ReviewCard({ review }: { review: VendedorReview }) {
           <p className="text-sm text-muted-foreground">{comentario}</p>
         )}
 
-        {product && (
+        {orden && (
           <div className="flex items-center gap-3 mt-2 border-t pt-3">
-            {product.images?.[0] && (
+            {image && (
               <img
-                src={product.images[0]}
-                alt={product.name}
+                src={image}
+                alt={itemName}
                 className="h-12 w-12 rounded-md object-cover"
               />
             )}
             <div>
-              <p className="text-sm font-medium">{product.name}</p>
+              <p className="text-sm font-medium">{itemName}</p>
             </div>
           </div>
         )}

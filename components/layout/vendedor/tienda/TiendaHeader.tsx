@@ -145,6 +145,9 @@ export const TiendaHeader = ({
                 {analytics?.averageRating}{" "}
                 <Star className="text-[#ffdf20]" fill="#ffdf20" />
               </p>
+              <span className="text-sm text-muted-foreground text-center">
+                {vendedorInfo?.totalReviews || 0} Reseñas
+              </span>
             </Card>
 
             {/* Productos */}

@@ -6,7 +6,6 @@ import { sellSchema } from "@/lib/zodSchemas/sellSchema";
 import { prisma } from "@/lib/prisma";
 import { buildTsQueryFromQueries } from "@/lib/utils";
 import { Product } from "@prisma/client";
-import { redis } from "@/lib/redis";
 
 type ProductFilter = {
   query?: string; // nombre o descripción
@@ -1086,6 +1085,143 @@ export async function calculateProductAndDispatchMetrics(vendorId: string) {
     avgDispatchDays,
     isFastShipper,
   };
+}
+
+/**
+ * Importar productos masivamente desde CSV
+ */
+export async function importCSVProductsAction(
+  products: Array<{
+    name: string;
+    description: string;
+    oemNumber: string;
+    price: string;
+    brand: string;
+    model: string;
+    year: string;
+    tipoDeVehiculo: "coche" | "moto" | "furgoneta";
+    condition: string;
+    typeOfPiece: string;
+    weight: string;
+    length: string;
+    width: string;
+    height: string;
+    location: string;
+    offer: string;
+    offerPrice?: string;
+    images: string[];
+    category: string;
+    subcategory?: string;
+  }>
+) {
+  try {
+    const session = await auth();
+
+    if (!session?.user) {
+      return { error: "No estás autenticado" };
+    }
+
+    // Verificar que el usuario sea Pro
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      include: { products: true },
+    });
+
+    if (!user) {
+      return { error: "Usuario no encontrado" };
+    }
+
+    if (!user.pro) {
+      return {
+        error:
+          "Esta funcionalidad es exclusiva para usuarios Pro. Actualiza tu cuenta para continuar.",
+      };
+    }
+
+    // Filtrar solo productos que NO estén vendidos
+    const activeProducts = user.products.filter(
+      (product) => product.status !== "vendido"
+    );
+
+    // Verificar límite (aunque sea Pro, podemos tener un límite razonable)
+    const remainingSlots = user.pro ? 1000 : 40 - activeProducts.length;
+
+    if (products.length > remainingSlots) {
+      return {
+        error: `Solo puedes importar ${remainingSlots} productos más. Tienes ${activeProducts.length} productos activos.`,
+      };
+    }
+
+    let imported = 0;
+    let failed = 0;
+    const errors: string[] = [];
+
+    // Importar productos uno por uno
+    for (const product of products) {
+      try {
+        // Transformar datos
+        const productData = {
+          name: product.name,
+          description: product.description,
+          oemNumber: product.oemNumber,
+          price: product.price,
+          brand: product.brand,
+          model: product.model,
+          year: product.year,
+          tipoDeVehiculo: product.tipoDeVehiculo,
+          condition: product.condition,
+          typeOfPiece: product.typeOfPiece,
+          weight: Number.parseFloat(product.weight),
+          length: Number.parseFloat(product.length),
+          width: Number.parseFloat(product.width),
+          height: Number.parseFloat(product.height),
+          location: product.location,
+          offer: product.offer === "true" || product.offer === "1",
+          offerPrice: product.offerPrice || null,
+          images: product.images,
+          category: product.category,
+          subcategory: product.subcategory || null,
+          status: "publicado" as const,
+          vendorId: session.user.id,
+        };
+
+        // Crear producto
+        await prisma.product.create({
+          data: productData,
+        });
+
+        imported++;
+      } catch (error) {
+        failed++;
+        const errorMsg =
+          error instanceof Error ? error.message : "Error desconocido";
+        errors.push(`${product.name}: ${errorMsg}`);
+        console.error(`Error al importar producto ${product.name}:`, error);
+      }
+    }
+
+    // Retornar resultado
+    if (imported === 0) {
+      return {
+        error: `No se pudo importar ningún producto. Errores: ${errors.join(
+          ", "
+        )}`,
+      };
+    }
+
+    return {
+      success: true,
+      imported,
+      failed,
+      errors: failed > 0 ? errors : undefined,
+    };
+  } catch (error) {
+    console.error("Error en importCSVProductsAction:", error);
+    return {
+      error:
+        error instanceof Error ? error.message : "Error al importar productos",
+    };
+  }
 }
 
 /**

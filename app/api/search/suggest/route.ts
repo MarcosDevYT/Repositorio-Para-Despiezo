@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const q = searchParams.get("q")?.trim() || "";
-  const userId = searchParams.get("userId"); // 👈 opcional
+  const userId = searchParams.get("userId");
 
   let historial: any[] = [];
   let popular: any[] = [];
@@ -58,7 +58,9 @@ export async function GET(req: Request) {
     // 🔹 Deduplicar resultados
     const unique = new Map<string, any>();
     for (const r of results) {
-      const key = `${r.name?.toLowerCase() || ""}-${r.brand?.toLowerCase() || ""}-${r.model?.toLowerCase() || ""}-${r.year || ""}`;
+      const key = `${r.name?.toLowerCase() || ""}-${
+        r.brand?.toLowerCase() || ""
+      }-${r.model?.toLowerCase() || ""}-${r.year || ""}`;
       if (!unique.has(key)) {
         if (
           r.oemNumber &&
@@ -100,6 +102,6 @@ export async function GET(req: Request) {
       query: p.query,
       clicks: p.clicks,
     })),
-    history: historial, // 👈 historial del usuario
+    history: historial,
   });
 }

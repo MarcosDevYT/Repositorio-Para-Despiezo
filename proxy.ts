@@ -21,6 +21,10 @@ export default proxy((req) => {
     "/api/auth/session",
     "/api/auth/providers",
     "/api/auth/csrf",
+    "/api/ocr",
+    "/api/scrapper-oem",
+    "/api/search",
+    "/api/search/suggest",
     "/api/auth/signin/google",
     "/api/auth/verify-email",
     "/api/auth/callback/google",
@@ -35,7 +39,9 @@ export default proxy((req) => {
   ];
 
   const isPublic =
-    publicRouter.includes(pathname) || pathname.startsWith("/productos/"); // permite /productos/42, /productos/xxx
+    publicRouter.includes(pathname) ||
+    pathname.startsWith("/productos/") ||
+    pathname.startsWith("/tienda/"); // permite /productos/42, /productos/xxx, /tienda/
 
   if (!isPublic && !isLoggedIn) {
     return NextResponse.redirect(new URL("/login", nextUrl));

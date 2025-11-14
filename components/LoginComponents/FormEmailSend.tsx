@@ -18,6 +18,10 @@ import { Button } from "../ui/button";
 import { Loader2, MailCheck } from "lucide-react";
 import { forgotPasswordAction } from "@/actions/auth-actions";
 
+/**
+ * Componente para enviar al email el reset de contraseña
+ * @returns devolvemos un formulario para poder obtener los datos del email y poder enviar el mensaje
+ */
 export const FormEmailSend = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);

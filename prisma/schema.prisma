@@ -228,7 +228,6 @@ model Product {
   favorites      Favorite[]
   orderItems     OrderItem[]
   kits           KitProduct[]
-  reviews         Review[]
   compatibilidades Compatibilidad[]
 
   // Relación inversa con vistas de usuarios
@@ -396,31 +395,27 @@ enum OrderStatus {
 
 /// Modelo de Reseñas
 model Review {
-  id           String   @id @default(cuid())
+  id          String   @id @default(cuid())
 
   // Relación con el usuario que deja la reseña (comprador)
-  userId       String
-  user         User     @relation("UserToReview", fields: [userId], references: [id])
+  userId      String
+  user        User     @relation("UserToReview", fields: [userId], references: [id])
 
   // Relación con la orden (se hace una reseña por compra)
-  ordenId      String
-  orden        Orden    @relation(fields: [ordenId], references: [id])
+  ordenId     String
+  orden       Orden    @relation(fields: [ordenId], references: [id])
 
-  // Relación con el producto que se compró
-  productId    String
-  product      Product  @relation(fields: [productId], references: [id])
-
-  // Relación con el vendedor (usuario dueño del producto)
-  vendorId     String
-  vendor       User     @relation("VendorToReview", fields: [vendorId], references: [id])
+  // Relación con el vendedor (usuario dueño del producto o kit)
+  vendorId    String
+  vendor      User     @relation("VendorToReview", fields: [vendorId], references: [id])
 
   // Datos de la reseña
-  rating       Int       // 1 a 5 estrellas
-  comentario   String?   // opcional
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  rating      Int       // 1 a 5 estrellas
+  comentario  String?   // opcional
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  // Aseguramos que un mismo usuario no pueda reseñar dos veces la misma orden
+  // Solo una reseña por usuario y orden
   @@unique([userId, ordenId])
 }
 

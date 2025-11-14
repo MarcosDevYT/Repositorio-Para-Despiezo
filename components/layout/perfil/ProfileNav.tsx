@@ -1,46 +1,48 @@
-import { auth } from "@/auth";
 import { ProfileLinks } from "@/components/ProfileLinks";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Star, User } from "lucide-react";
+import { Session } from "next-auth";
 
 /**
  * @description Componente de navegacion para el perfil del usuario
  * @returns Componente de navegacion
  * @see ProfileLinks - Componente que renderiza los links del perfil
  */
-export const ProfileNav = async () => {
-  const session = await auth();
+export const ProfileNav = async ({ session }: { session: Session }) => {
+  const user = session.user;
 
-  const { user } = session!;
-  const { name, businessName, image } = user!;
-
-  const slicedName = name?.slice(0, 2);
+  const slicedName = user.name?.slice(0, 2);
 
   const displayBusiness =
-    businessName && businessName.trim() !== "" ? businessName : "";
+    user.businessName && user.businessName.trim() !== ""
+      ? user.businessName
+      : "";
 
   return (
     <Card className="w-full h-fit lg:max-w-sm">
       {/* Card Header con la informacion del usuario */}
       <CardHeader className="flex flex-col items-center justify-center">
         <Avatar className="size-20 mb-4">
-          <AvatarImage className="object-cover" src={image ?? ""} />
+          <AvatarImage className="object-cover" src={user.image ?? ""} />
           <AvatarFallback className="size-full text-xl uppercase">
             {slicedName ?? <User className="size-full" />}
           </AvatarFallback>
         </Avatar>
 
-        <CardTitle className="text-2xl font-bold">{name}</CardTitle>
+        <CardTitle className="text-2xl font-bold">{user.name}</CardTitle>
 
         <p className="text-lg text-muted-foreground">{displayBusiness}</p>
 
         <div className="flex items-center gap-1">
           <Star className="size-4 text-yellow-500" fill="currentColor" />
           <p className="text-base">
-            <span className="font-semibold">4.8</span>
-            <span className="text-muted-foreground"> (123 reseñas)</span>
+            <span className="font-semibold">{user.averageRating}</span>
+            <span className="text-muted-foreground">
+              {" "}
+              ({user.totalReviews || 0} reseñas)
+            </span>
           </p>
         </div>
 

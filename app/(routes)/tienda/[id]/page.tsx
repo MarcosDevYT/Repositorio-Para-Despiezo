@@ -26,8 +26,6 @@ export default async function TiendaUserPage({
     getVendedorReviews(id),
   ]);
 
-  console.log(reviews);
-
   return (
     <MainContainer className="min-h-[82.5vh] container mx-auto px-4 py-12">
       <TiendaLayout

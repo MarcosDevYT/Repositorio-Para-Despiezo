@@ -7,15 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Building2,
-  Calendar,
-  CheckSquare,
-  Mail,
-  MapPin,
-  Pencil,
-  Phone,
-} from "lucide-react";
+import { Building2, Calendar, Mail, MapPin, Pencil, Phone } from "lucide-react";
 import { Session } from "next-auth";
 import Link from "next/link";
 
@@ -25,15 +17,8 @@ import Link from "next/link";
  * @returns Componente de informacion del perfil
  */
 export const ProfileResume = ({ session }: { session: Session }) => {
-  const {
-    name,
-    email,
-    phoneNumber,
-    location,
-    businessName,
-    phoneVerified,
-    createdAt,
-  } = session!.user!;
+  const { name, email, phoneNumber, location, businessName, createdAt } =
+    session!.user!;
 
   // Normalizar campos opcionales
   const displayPhone =
@@ -92,18 +77,6 @@ export const ProfileResume = ({ session }: { session: Session }) => {
             <div className="font-medium flex items-center gap-2">
               <Phone className="size-4" />
               {displayPhone}
-              {phoneNumber &&
-                phoneNumber.trim() !== "" &&
-                (phoneVerified ? (
-                  <CheckSquare className="size-4" />
-                ) : (
-                  <Button
-                    className="text-xs px-2.5 h-6 rounded-full bg-primary text-primary-foreground hover:bg-blue-500 hover:text-white"
-                    variant="ghost"
-                  >
-                    Verificar Telefono
-                  </Button>
-                ))}
             </div>
           </div>
 

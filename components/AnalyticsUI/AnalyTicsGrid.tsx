@@ -29,7 +29,7 @@ export const AnalyticsGrid = ({ analytics, isPro }: AnalyticsGridProps) => {
       {/* KPI Principal: Ganancias */}
       <KPICard
         label="Ganancias Totales"
-        value={formatCurrency(analytics.totalEarnings, "EUR")}
+        value={formatCurrency(analytics.totalEarnings / 100, "EUR")}
         icon={<EuroIcon className="w-5 h-5" />}
         trend={analytics.totalEarnings > 0 ? "up" : "neutral"}
       />
@@ -81,7 +81,7 @@ export const AnalyticsGrid = ({ analytics, isPro }: AnalyticsGridProps) => {
       {/* Ganancias últimos 30 días */}
       <KPICard
         label="Ganancias (30 días)"
-        value={formatCurrency(analytics.earningsLast30Days, "EUR")}
+        value={formatCurrency(analytics.earningsLast30Days / 100, "EUR")}
         icon={
           analytics.earningsLast30Days > 0 ? (
             <TrendingUp className="w-5 h-5 text-green-500" />
@@ -95,7 +95,7 @@ export const AnalyticsGrid = ({ analytics, isPro }: AnalyticsGridProps) => {
         label="Prom. Ganancia/Orden"
         value={
           analytics.avgEarningsPerOrder
-            ? formatCurrency(analytics.avgEarningsPerOrder, "EUR")
+            ? formatCurrency(analytics.avgEarningsPerOrder / 100, "EUR")
             : "—"
         }
         isLocked={!isPro}

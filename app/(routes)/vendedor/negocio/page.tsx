@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
-import { SellBusinessUser } from "@/components/layout/vendedor/SellBusinessUser";
-import { SellBusinessVerify } from "@/components/layout/vendedor/SellBusinessVerify";
+import { SellBusinessUser } from "@/components/layout/vendedor/negocio/SellBusinessUser";
+import { SellBusinessVerify } from "@/components/layout/vendedor/negocio/SellBusinessVerify";
+
 import { verifySeller } from "@/lib/utils";
 import { redirect } from "next/navigation";
 

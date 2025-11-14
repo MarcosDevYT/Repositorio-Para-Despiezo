@@ -81,6 +81,10 @@ export default async function SubscriptionsPage() {
                 <CheckCircle className="text-gray-400 w-4 h-4" />
                 Sin dashboard exclusivo
               </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle className="text-gray-400 w-4 h-4" />
+                Sin importacion por CSV
+              </li>
             </ul>
 
             {/* Botón */}
@@ -210,6 +214,10 @@ export default async function SubscriptionsPage() {
                         <li className="flex items-center gap-2">
                           <CheckCircle className="text-green-500 w-4 h-4" />
                           Dashboard exclusivo para tu negocio
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <CheckCircle className="text-green-500 w-4 h-4" />
+                          Importacion de productos por CSV
                         </li>
                       </ul>
 

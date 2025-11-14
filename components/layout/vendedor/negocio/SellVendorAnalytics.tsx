@@ -102,6 +102,8 @@ export const SellVendorAnalytics = ({
     setMode(mode === "basic" ? "pro" : "basic");
   };
 
+  console.log(analytics);
+
   return (
     <div className="space-y-6">
       {/* Header con Badge y Toggle */}
@@ -141,7 +143,7 @@ export const SellVendorAnalytics = ({
                   Ganancias Totales
                 </p>
                 <p className="text-3xl font-bold text-foreground mt-3">
-                  {formatCurrency(analytics.totalEarnings, "EUR")}
+                  {formatCurrency(analytics.totalEarnings / 100, "EUR")}
                 </p>
                 <div className="mt-4 h-1 bg-linear-to-r from-green-400 to-green-600 rounded-full" />
               </Card>

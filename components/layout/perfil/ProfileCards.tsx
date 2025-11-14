@@ -7,20 +7,30 @@ import { Session } from "next-auth";
  * @returns Componente de cards con las estadisticas del usuario
  */
 export const ProfileCards = ({ session }: { session: Session }) => {
+  const user = session.user;
+
+  // Filtramos los productos según su estado
+  const activeProducts = user.products?.filter(
+    (product) => product.status === "publicado"
+  );
+  const soldProducts = user.products?.filter(
+    (product) => product.status === "vendido"
+  );
+
   const cards = [
     {
       title: "Anuncios activos",
-      description: session.user.products.length,
+      description: activeProducts?.length || 0,
       icon: <Package className="text-blue-500 size-20" />,
     },
     {
       title: "Ventas realizadas",
-      description: "12",
+      description: soldProducts?.length || 0,
       icon: <ShoppingBag className="text-green-500 size-20" />,
     },
     {
       title: "Valoración media",
-      description: "4.8",
+      description: user.averageRating ?? "—",
       icon: <Star className="text-yellow-500 size-20" />,
     },
   ];
