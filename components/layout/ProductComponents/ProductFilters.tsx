@@ -51,6 +51,8 @@ export const ProductFilters = ({
 }: Props) => {
   const router = useRouter();
 
+  console.log(modelo);
+
   // Estados internos
   const [minPrice, setMinPrice] = useState(priceMin || "");
   const [maxPrice, setMaxPrice] = useState(priceMax || "");

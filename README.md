@@ -26,8 +26,8 @@ Plataforma de compraventa de piezas de automóvil que conecta desguaces, tallere
 - [x] **Preparar las analiticas para despues agregar en la tienda y negocio del vendedor**
 - [x] **Agregar input para banner en el negocio y agregar ese banner en la tienda si es que hay**
 - [x] **Hacer diseño para la tienda, pensar si hacer un diseño pro y no pro**
-- [ ] **Hero de busqueda con Tabs, pensado para buscar por oem o marca/modelo/año**
-- [ ] **Encontrar una api europea de modelo/año/marca**
+- [x] **Hero de busqueda con Tabs, pensado para buscar por oem o marca/modelo/año**
+- [ ] **Integrar los datos del hero marca/modelo/año**
 - [x] **Agregar los badges correspondientes a las analiticas en el producto del vendedor**
 - [ ] **Agregar traducciones a los estados del envio**
 - [x] **Agregar como ventas por fecha como en wallapop en las ventas del vendedor y las compras del usuario**
@@ -123,7 +123,6 @@ Plataforma de compraventa de piezas de automóvil que conecta desguaces, tallere
   - Top piezas por beneficio y volumen
   - Tasa de devoluciones y motivos
   - Mapa de demanda por provincia
-- [ ] Export CSV de métricas
 - [x] Dashboard con gráficas interactivas
 
 ### 👥 5. Validación por la Comunidad
@@ -159,7 +158,7 @@ Plataforma de compraventa de piezas de automóvil que conecta desguaces, tallere
 #### Cuotas PRO
 
 - [x] Suscripción mensual para profesionales
-- [ ] Subida masiva por CSV
+- [x] Subida masiva por CSV
 - [x] Análisis de mercado avanzado
 
 ### 💳 7. Mejoras de Pago y Confianza

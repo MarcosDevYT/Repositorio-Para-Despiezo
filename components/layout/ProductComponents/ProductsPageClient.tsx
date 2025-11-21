@@ -40,6 +40,7 @@ export const ProductsPageClient = ({ params, initialFilters }: Props) => {
     categoria,
     oem,
     marca,
+    modelo,
     estado,
     año,
     tipoDeVehiculo,
@@ -48,6 +49,9 @@ export const ProductsPageClient = ({ params, initialFilters }: Props) => {
     page,
     limit,
   } = params;
+
+  console.log(modelo);
+
   const pageNumber = Number(page) || 1;
   const limitNumber = Number(limit) || 10;
   const router = useRouter();
