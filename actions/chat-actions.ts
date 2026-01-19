@@ -203,6 +203,18 @@ export const getChats = async () => {
             image: true,
           },
         },
+        messages: {
+          orderBy: {
+            createdAt: "desc",
+          },
+          take: 1,
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            senderId: true,
+          },
+        },
       },
       orderBy: {
         createdAt: "desc",

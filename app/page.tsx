@@ -41,30 +41,34 @@ export default async function Home() {
 
   return (
     <MainContainer>
-      <div className="border-b bg-blue-50 px-4 lg:px-12 py-4 w-full">
+      {/* Barra de categorías con diseño mejorado */}
+      <div className="sticky top-20 z-40 border-b bg-gradient-to-r from-muted/50 via-background to-muted/50 backdrop-blur-xl shadow-sm px-4 lg:px-12 py-3 w-full">
         <Categories />
       </div>
 
+      {/* Hero Section */}
       <Hero />
 
-      <div className="container mx-auto px-4 pt-4">
+      {/* Contenido Principal */}
+      <div className="container mx-auto px-4 lg:px-6 space-y-4">
         {/* Ultimos productos vistos */}
         <HistoryProducts products={lastProductView} />
 
-        {/* Productos recomendados vistos */}
+        {/* Productos recomendados */}
         <RecommendedProducts products={recommendedProductsByUser} />
 
         {/* Categorias */}
         <ProductCategories />
 
-        {/* Productos recomendados vistos */}
+        {/* Productos destacados */}
         <FeaturedProducts products={featuredProducts} />
 
-        {/* Productos recomendados vistos */}
+        {/* Productos más buscados */}
         <MostSearchProducts products={popularProducts} />
 
         {/* Herramienta para buscar */}
         <ToolsSection />
+        
         {/* Nuevos Productos Recientes */}
         <RecentProducts products={products} />
       </div>

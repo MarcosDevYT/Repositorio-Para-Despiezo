@@ -58,10 +58,12 @@ function Detail({
 }) {
   if (!value) return null;
   return (
-    <div className="flex items-center gap-2 text-sm">
-      <Icon className="size-4 text-muted-foreground" />
-      <span className="font-medium">{label}:</span>
-      <span className="text-muted-foreground">{value}</span>
+    <div className="flex flex-col gap-1">
+      <span className="text-xs text-muted-foreground font-medium">{label}</span>
+      <div className="flex items-center gap-1.5">
+        <Icon className="size-4 text-primary flex-shrink-0" />
+        <span className="text-sm font-semibold text-foreground line-clamp-1">{value}</span>
+      </div>
     </div>
   );
 }
@@ -98,6 +100,11 @@ export const ProductLayout = ({
 
   // Funcion para llamar al action asi crear un chat con el vendedor
   const handleInitChat = () => {
+    if (!session?.user) {
+      router.push(`/login?callbackUrl=/productos/${product.id}`);
+      return;
+    }
+
     startTransition(async () => {
       const res = await startChatAction(product.id);
       if (!res?.success) {
@@ -113,35 +120,25 @@ export const ProductLayout = ({
 
   return (
     <>
-      <section className="container mx-auto flex flex-col lg:flex-row gap-12">
+      <section className="container mx-auto px-4 lg:px-6 py-6 flex flex-col lg:flex-row gap-6 lg:gap-8">
         {/* Gallery & Info */}
-        <article className="relative flex flex-col gap-6 w-full lg:w-3/5">
+        <article className="relative flex flex-col gap-4 w-full lg:w-[58%]">
           {product.featuredUntil &&
             new Date(product.featuredUntil) > new Date() && (
-              <div className="absolute top-3 left-3 z-10 p-1 rounded-full shadow-md bg-white flex flex-row items-center justify-center gap-2">
-                <Image
-                  src={"/destacado-icon-green.png"}
-                  alt="Icono de Patrocinado"
-                  width={48}
-                  height={48}
-                />
-
+              <div className="absolute top-2.5 left-2.5 z-10 px-3 py-1.5 rounded-full shadow-lg bg-gradient-to-r from-green-500 to-emerald-500 flex items-center gap-1.5">
+                <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
                 {session?.user.id === vendedor.id && (
-                  <span className="pr-2 font-medium">
+                  <span className="text-white text-xs font-semibold">
                     {(() => {
                       const now = new Date();
                       const end = new Date(product.featuredUntil);
-
                       const days = differenceInDays(end, now);
                       const totalHours = differenceInHours(end, now);
                       const hours = totalHours - days * 24;
-
-                      // Si ya expiró
-                      if (totalHours <= 0) return "El destacado ha finalizado";
-
-                      return `Faltan ${days} ${
-                        days === 1 ? "día" : "días"
-                      } y ${hours} ${hours === 1 ? "hora" : "horas"}`;
+                      if (totalHours <= 0) return "Finalizado";
+                      return `${days}d ${hours}h`;
                     })()}
                   </span>
                 )}
@@ -150,14 +147,14 @@ export const ProductLayout = ({
 
           <Button
             size="icon"
-            variant="outline"
-            className="z-10 absolute top-2 right-2 rounded-full size-10"
+            variant="ghost"
+            className="z-10 absolute top-2.5 right-2.5 rounded-full h-9 w-9 backdrop-blur-xl bg-white/95 hover:bg-white shadow-md border border-white/50 transition-all hover:scale-110"
             disabled={isFavoritePending}
             onClick={handleFavorite}
           >
             <Heart
-              className={`size-6 ${
-                isFavorite ? "fill-current text-red-500" : ""
+              className={`size-5 transition-colors ${
+                isFavorite ? "fill-red-500 text-red-500" : "text-gray-600"
               }`}
             />
           </Button>
@@ -165,91 +162,98 @@ export const ProductLayout = ({
           <ProductThumbnails product={product} />
 
           {/* Description & Details */}
-          <div className="space-y-6 hidden lg:block">
-            <div>
-              <h3 className="text-xl font-semibold mb-3">
-                Detalles del producto
-              </h3>
-              <div className="grid sm:grid-cols-2 gap-3">
-                <Detail icon={Factory} label="Marca" value={product.brand} />
-                <Detail icon={Tag} label="Modelo" value={product.model} />
-                <Detail icon={Calendar} label="Año" value={product.year} />
-                <Detail
-                  icon={Car}
-                  label="Vehículo"
-                  value={product.tipoDeVehiculo}
-                />
-                <Detail icon={Hash} label="OEM" value={product.oemNumber} />
-                <Detail
-                  icon={Star}
-                  label="Condición"
-                  value={product.condition}
-                />
-              </div>
-            </div>
+          <div className="space-y-5 hidden lg:block">
+            <Card className="border border-border/50">
+              <CardHeader className="pb-3">
+                <h3 className="text-lg font-bold">Descripción del producto</h3>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">
+                  {product.description}
+                </p>
+              </CardContent>
+            </Card>
 
-            <Separator />
-
-            <div>
-              <h3 className="text-xl font-semibold mb-2">Descripción</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                {product.description}
-              </p>
-            </div>
+            <Card className="border border-border/50">
+              <CardHeader className="pb-3">
+                <h3 className="text-lg font-bold">Características</h3>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                  <Detail icon={Factory} label="Marca" value={product.brand} />
+                  <Detail icon={Tag} label="Modelo" value={product.model} />
+                  <Detail icon={Calendar} label="Año" value={product.year} />
+                  <Detail
+                    icon={Car}
+                    label="Vehículo"
+                    value={product.tipoDeVehiculo}
+                  />
+                  <Detail icon={Hash} label="OEM" value={product.oemNumber} />
+                  <Detail
+                    icon={Star}
+                    label="Condición"
+                    value={product.condition}
+                  />
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </article>
 
         {/* Purchase & Seller */}
-        <article className="flex-1 flex flex-col gap-6">
+        <article className="flex-1 flex flex-col gap-4">
           {/* Product Info */}
-          <Card>
-            <CardHeader className="space-y-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge
-                  variant="secondary"
-                  className="flex items-center gap-1 border border-border"
-                >
-                  <Car className="size-3" /> {product.tipoDeVehiculo}
-                </Badge>
-                <Badge
-                  variant="outline"
-                  className="bg-blue-500/10 text-blue-600 border-blue-500/20"
-                >
-                  {product.category}
-                </Badge>
-                <Badge variant="outline" className={conditionColor}>
-                  {product.condition}
-                </Badge>
-                {hasOffer && (
-                  <Badge className="bg-red-500/10 text-red-500 border-red-500/20">
-                    Oferta
-                  </Badge>
-                )}
-              </div>
-
-              <h1 className="text-2xl font-bold">{product.name}</h1>
+          <Card className="border border-border/50 lg:sticky lg:top-24 z-10">
+            <CardHeader className="space-y-3 pb-4">
+              <h1 className="text-xl lg:text-2xl font-bold text-foreground leading-tight">
+                {product.name}
+              </h1>
 
               {hasOffer ? (
-                <div className="flex items-baseline gap-3">
-                  <span className="text-3xl font-bold text-green-600">
-                    Precio: €{product.offerPrice}
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl lg:text-4xl font-black text-primary">
+                    €{product.offerPrice}
                   </span>
-                  <span className="line-through text-muted-foreground">
+                  <span className="text-lg line-through text-muted-foreground">
                     €{product.price}
                   </span>
                 </div>
               ) : (
-                <span className="text-3xl font-bold text-primary">
-                  Precio: €{product.price}
+                <span className="text-3xl lg:text-4xl font-black text-foreground">
+                  €{product.price}
                 </span>
               )}
+
+              <div className="flex flex-wrap items-center gap-1.5">
+                <Badge
+                  variant="secondary"
+                  className="text-xs font-medium px-2.5 py-0.5"
+                >
+                  {product.category}
+                </Badge>
+                <Badge variant="outline" className={`${conditionColor} text-xs font-semibold px-2.5 py-0.5`}>
+                  {product.condition}
+                </Badge>
+                <Badge
+                  variant="secondary"
+                  className="text-xs font-medium px-2.5 py-0.5"
+                >
+                  {product.tipoDeVehiculo}
+                </Badge>
+                {hasOffer && (
+                  <Badge className="bg-red-500/10 text-red-600 border-red-500/20 text-xs font-semibold px-2.5 py-0.5">
+                    OFERTA
+                  </Badge>
+                )}
+              </div>
             </CardHeader>
 
-            <CardContent className="flex flex-col gap-3">
+            <CardContent className="flex flex-col gap-2.5">
               {isSold ? (
                 <Button
                   variant={"destructive"}
-                  className="rounded-full w-full cursor-auto"
+                  className="rounded-xl h-12 w-full cursor-not-allowed font-bold text-base"
+                  disabled
                 >
                   VENDIDO
                 </Button>
@@ -257,16 +261,34 @@ export const ProductLayout = ({
                 <>
                   <Button
                     asChild
-                    className="text-base w-full rounded-full bg-blue-500 text-white hover:bg-blue-600"
+                    className="h-12 text-base w-full rounded-xl font-bold shadow-md hover:shadow-lg transition-all bg-primary hover:bg-primary/90"
                   >
                     <Link href={`/productos/${product.id}/checkout`}>
-                      <ShoppingCart className="size-6" />
+                      <ShoppingCart className="size-5" />
                       Comprar ahora
                     </Link>
                   </Button>
 
+                  {session?.user.id !== vendedor.id && (
+                    <Button
+                      onClick={handleInitChat}
+                      disabled={isPending}
+                      variant="outline"
+                      className="h-12 rounded-xl border-2 font-bold text-base hover:bg-muted/50 transition-all"
+                    >
+                      {isPending ? (
+                        <Loader2 className="size-5 animate-spin" />
+                      ) : (
+                        <>
+                          <MessageCircle className="size-5" />
+                          Contactar vendedor
+                        </>
+                      )}
+                    </Button>
+                  )}
+
                   {session?.user.id === vendedor.id && (
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-2 mt-1">
                       {product.featuredUntil &&
                       new Date(product.featuredUntil) > new Date() ? (
                         <div className="flex flex-row gap-2 w-full">
@@ -323,130 +345,117 @@ export const ProductLayout = ({
           </Card>
 
           {/* Seller Info */}
-          <Card>
-            <CardHeader className="gap-4">
-              {session?.user.id === vendedor.id ? null : (
-                <div className="flex items-start justify-between gap-4">
-                  <Button className="cursor-auto font-semibold rounded-full border border-blue-400 text-blue-600 bg-blue-50 hover:bg-blue-50">
-                    <Truck className="size-5" /> Envío rápido
-                  </Button>
-
-                  <Button
-                    onClick={handleInitChat}
-                    disabled={isPending}
-                    variant="outline"
-                    className="w-40 rounded-full border-green-500 text-green-600 hover:text-green-700 hover:bg-green-50"
-                  >
-                    {isPending ? (
-                      <Loader2 className="size-4 animate-spin" />
-                    ) : (
-                      <>
-                        <MessageCircle className="size-5" /> Chat/Preguntar
-                      </>
-                    )}
-                  </Button>
-                </div>
-              )}
-
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <Link href={`/tienda/${vendedor.id}`}>
-                    <Avatar className="size-12">
-                      <AvatarImage
-                        className="object-cover"
-                        src={vendedor.image || ""}
-                      />
-                      <AvatarFallback>
-                        {vendedor.name?.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Link>
-
+          <Card className="border border-border/50">
+            <CardHeader className="pb-3">
+              <div className="flex items-start gap-3">
+                <Link href={`/tienda/${vendedor.id}`} className="relative flex-shrink-0">
+                  <Avatar className="size-14">
+                    <AvatarImage
+                      className="object-cover"
+                      src={vendedor.image || ""}
+                    />
+                    <AvatarFallback className="text-lg font-bold">
+                      {vendedor.name?.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
                   <Tooltip>
-                    <TooltipTrigger className="absolute -top-2 -right-2 z-10">
-                      <div className="rounded-full size-6 flex items-center justify-center bg-primary text-background ">
-                        <Zap size={16} />
+                    <TooltipTrigger className="absolute -bottom-1 -right-1 z-10">
+                      <div className="rounded-full size-6 flex items-center justify-center bg-primary text-white shadow-md">
+                        <Zap size={14} />
                       </div>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Miembro Pro</p>
+                      <p>Vendedor Pro</p>
                     </TooltipContent>
                   </Tooltip>
-                </div>
-                <div>
+                </Link>
+                <div className="flex-1 min-w-0">
                   <Link href={`/tienda/${vendedor.id}`}>
-                    <CardTitle className="text-lg line-clamp-1">
+                    <p className="font-bold text-base text-foreground line-clamp-1 hover:text-primary transition-colors">
                       {vendedor.name}
-                    </CardTitle>
+                    </p>
                   </Link>
                   <Link href={`/tienda/${vendedor.id}`}>
-                    <CardDescription className="text-base text-gray-600 line-clamp-1">
-                      {vendedor.businessName}
-                    </CardDescription>
+                    <p className="text-sm text-muted-foreground line-clamp-1 hover:text-foreground transition-colors">
+                      {vendedor.businessName || "Vendedor profesional"}
+                    </p>
                   </Link>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <Star className="size-4 text-yellow-500 fill-yellow-500" />
+                    <span className="text-sm font-semibold">{vendedor.averageRating}</span>
+                    <span className="text-xs text-muted-foreground">(16 valoraciones)</span>
+                  </div>
                 </div>
               </div>
             </CardHeader>
 
-            <CardContent className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Star className="size-5 text-yellow-500 fill-yellow-500" />
-                <span className="font-medium">{vendedor.averageRating}</span>
-                <span className="text-muted-foreground">(16 reseñas)</span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Calendar className="size-5 text-primary" />
-                <span className="font-medium">
-                  Vendedor desde{" "}
-                  {new Date(vendedor.createdAt).toLocaleDateString("es-AR", {
-                    year: "numeric",
-                    month: "short",
-                  })}
+            <CardContent className="space-y-2.5 pt-3">
+              <Separator />
+              <div className="flex items-center gap-2 text-sm">
+                <Calendar className="size-4 text-muted-foreground" />
+                <span className="text-muted-foreground">
+                  En Despiezo desde{" "}
+                  <span className="font-semibold text-foreground">
+                    {new Date(vendedor.createdAt).toLocaleDateString("es-ES", {
+                      year: "numeric",
+                      month: "short",
+                    })}
+                  </span>
                 </span>
               </div>
 
               {product.location && (
-                <div className="flex items-center gap-2">
-                  <MapPin className="size-5 text-primary" />
-                  <span className="font-medium">{product.location}</span>
+                <div className="flex items-center gap-2 text-sm">
+                  <MapPin className="size-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">
+                    Ubicación: <span className="font-semibold text-foreground">{product.location}</span>
+                  </span>
                 </div>
               )}
+
+              <div className="flex items-center gap-2 text-sm bg-muted/50 rounded-lg px-3 py-2">
+                <Truck className="size-4 text-primary" />
+                <span className="font-semibold text-sm">Envío disponible a toda España</span>
+              </div>
             </CardContent>
           </Card>
 
-          {/* Description & Details */}
-          <div className="space-y-6 lg:hidden">
-            <div>
-              <h3 className="text-xl font-semibold mb-3">
-                Detalles del producto
-              </h3>
-              <div className="grid sm:grid-cols-2 gap-3">
-                <Detail icon={Factory} label="Marca" value={product.brand} />
-                <Detail icon={Tag} label="Modelo" value={product.model} />
-                <Detail icon={Calendar} label="Año" value={product.year} />
-                <Detail
-                  icon={Car}
-                  label="Vehículo"
-                  value={product.tipoDeVehiculo}
-                />
-                <Detail icon={Hash} label="OEM" value={product.oemNumber} />
-                <Detail
-                  icon={Star}
-                  label="Condición"
-                  value={product.condition}
-                />
-              </div>
-            </div>
+          {/* Description & Details - Mobile */}
+          <div className="space-y-4 lg:hidden">
+            <Card className="border border-border/50">
+              <CardHeader className="pb-3">
+                <h3 className="text-lg font-bold">Descripción</h3>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">
+                  {product.description}
+                </p>
+              </CardContent>
+            </Card>
 
-            <Separator />
-
-            <div>
-              <h3 className="text-xl font-semibold mb-2">Descripción</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                {product.description}
-              </p>
-            </div>
+            <Card className="border border-border/50">
+              <CardHeader className="pb-3">
+                <h3 className="text-lg font-bold">Características</h3>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                  <Detail icon={Factory} label="Marca" value={product.brand} />
+                  <Detail icon={Tag} label="Modelo" value={product.model} />
+                  <Detail icon={Calendar} label="Año" value={product.year} />
+                  <Detail
+                    icon={Car}
+                    label="Vehículo"
+                    value={product.tipoDeVehiculo}
+                  />
+                  <Detail icon={Hash} label="OEM" value={product.oemNumber} />
+                  <Detail
+                    icon={Star}
+                    label="Condición"
+                    value={product.condition}
+                  />
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </article>
       </section>
