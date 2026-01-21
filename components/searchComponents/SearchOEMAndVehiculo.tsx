@@ -6,11 +6,7 @@ import { Input } from "../ui/input";
 
 import Form from "next/form";
 
-export const SearchOEMAndVehiculo = ({
-  tipoDeVehiculo,
-}: {
-  tipoDeVehiculo: "coche" | "moto" | "furgoneta";
-}) => {
+export const SearchOEMAndVehiculo = () => {
   const [query, setQuery] = useState("");
 
   return (
@@ -35,12 +31,9 @@ export const SearchOEMAndVehiculo = ({
             name="oem"
             autoComplete="off"
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Referencia OEM"
+            placeholder="Referencia OEM - Ej: 04465-42180"
             className="flex-1 h-10 text-sm text-gray-700"
           />
-
-          {/* Input oculto para el tipo de vehículo */}
-          <input type="hidden" name="tipoDeVehiculo" value={tipoDeVehiculo} />
 
           <Button type="submit" disabled={!query.trim()} className="px-8">
             <Search className="size-5" />

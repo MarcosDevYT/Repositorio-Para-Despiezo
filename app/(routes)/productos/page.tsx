@@ -1,4 +1,5 @@
 import { ProductsPageClient } from "@/components/layout/ProductComponents/ProductsPageClient";
+import { getVehicleByPlate } from "@/actions/matricula-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,7 @@ export default async function ProductsPage({ searchParams }: any) {
     priceMax,
     page = "1",
     limit = "20",
+    matricula,
   } = await searchParams;
 
   const params = {
@@ -49,5 +51,14 @@ export default async function ProductsPage({ searchParams }: any) {
     priceMax,
   };
 
-  return <ProductsPageClient params={params} initialFilters={initialFilters} />;
+  // Obtener datos del vehículo si hay matrícula
+  const vehicleData = matricula ? await getVehicleByPlate(matricula) : null;
+
+  return (
+    <ProductsPageClient 
+      params={params} 
+      initialFilters={initialFilters}
+      vehicleData={vehicleData}
+    />
+  );
 }

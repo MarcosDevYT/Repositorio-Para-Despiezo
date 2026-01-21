@@ -1,20 +1,8 @@
 "use client";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Bike, Car, Truck } from "lucide-react";
-
-import { useState } from "react";
-
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { SearchOEMAndVehiculo } from "@/components/searchComponents/SearchOEMAndVehiculo";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BuscadorMMY } from "@/components/searchComponents/BuscadorMMY";
+import { SearchMatricula } from "@/components/searchComponents/SearchMatricula";
 
 const heroInfo = {
   id: 1,
@@ -26,15 +14,6 @@ const heroInfo = {
 };
 
 export function Hero() {
-  const [selectedVehicleType, setSelectedVehicleType] = useState<
-    "coche" | "moto" | "furgoneta"
-  >("coche");
-
-  const vehicleTypes = [
-    { id: "coche" as const, label: "Coche", icon: Car },
-    { id: "furgoneta" as const, label: "Furgoneta", icon: Truck },
-    { id: "moto" as const, label: "Moto", icon: Bike },
-  ];
 
   return (
     <section className="relative w-full min-h-[80vh] lg:min-h-[75vh] flex flex-col items-center justify-center overflow-hidden">
@@ -71,82 +50,42 @@ export function Hero() {
           </h1>
           
           <p className="text-lg sm:text-xl md:text-2xl text-blue-50 max-w-2xl mx-auto font-light leading-relaxed">
-            Busca por referencia OEM o por marca/modelo/año. Los mejores precios en autopartes de calidad verificada.
+            Busca por OEM, matrícula o por marca/modelo/año. Los mejores precios en autopartes de calidad verificada.
           </p>
         </div>
 
         {/* Tabs de búsqueda mejorados */}
         <Tabs defaultValue="oem" className="w-full max-w-3xl mx-auto">
-          <TabsList className="grid grid-cols-2 w-full max-w-md mx-auto mb-6 bg-white/10 backdrop-blur-md border border-white/20 p-1">
+          <TabsList className="grid grid-cols-3 w-full max-w-2xl mx-auto mb-6 bg-white/10 backdrop-blur-md border border-white/20 p-1">
             <TabsTrigger 
               value="oem" 
-              className="data-[state=active]:bg-white data-[state=active]:text-primary font-semibold rounded-lg transition-all"
+              className="data-[state=active]:bg-white data-[state=active]:text-primary font-semibold rounded-lg transition-all text-xs sm:text-sm"
             >
-              Búsqueda por OEM
+              OEM
+            </TabsTrigger>
+            <TabsTrigger 
+              value="matricula"
+              className="data-[state=active]:bg-white data-[state=active]:text-primary font-semibold rounded-lg transition-all text-xs sm:text-sm"
+            >
+              Matrícula
             </TabsTrigger>
             <TabsTrigger 
               value="mmy"
-              className="data-[state=active]:bg-white data-[state=active]:text-primary font-semibold rounded-lg transition-all"
+              className="data-[state=active]:bg-white data-[state=active]:text-primary font-semibold rounded-lg transition-all text-xs sm:text-sm"
             >
               Marca/Modelo/Año
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="oem" className="w-full space-y-4 mt-0">
-            {/* Selector de tipo de vehículo */}
-            <div className="flex justify-center">
-              <Card className="p-1.5 border-white/20 bg-white/95 backdrop-blur-sm shadow-xl">
-                {/* Select para pantallas pequeñas */}
-                <div className="md:hidden">
-                  <Select
-                    value={selectedVehicleType}
-                    onValueChange={(value: "coche" | "moto" | "furgoneta") =>
-                      setSelectedVehicleType(value)
-                    }
-                  >
-                    <SelectTrigger className="w-full min-w-[200px] border-0 font-medium">
-                      <SelectValue placeholder="Selecciona un tipo de vehículo" />
-                    </SelectTrigger>
-                    <SelectContent align="center">
-                      {vehicleTypes.map((type) => {
-                        const Icon = type.icon;
-                        return (
-                          <SelectItem key={type.id} value={type.id}>
-                            <div className="flex items-center gap-2">
-                              <Icon className="h-4 w-4" />
-                              <span>{type.label}</span>
-                            </div>
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Botones para pantallas md y mayores */}
-                <div className="hidden md:flex space-x-1.5">
-                  {vehicleTypes.map((type) => {
-                    const Icon = type.icon;
-                    return (
-                      <Button
-                        key={type.id}
-                        variant={selectedVehicleType === type.id ? "default" : "ghost"}
-                        size="sm"
-                        onClick={() => setSelectedVehicleType(type.id)}
-                        className="flex items-center gap-2 px-6 font-medium transition-all hover:scale-105"
-                      >
-                        <Icon className="h-4 w-4" />
-                        <span>{type.label}</span>
-                      </Button>
-                    );
-                  })}
-                </div>
-              </Card>
-            </div>
-
-            {/* Buscador principal */}
+          <TabsContent value="oem" className="w-full mt-0">
             <div className="transform transition-all duration-300 hover:scale-[1.01]">
-              <SearchOEMAndVehiculo tipoDeVehiculo={selectedVehicleType} />
+              <SearchOEMAndVehiculo />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="matricula" className="w-full mt-0">
+            <div className="transform transition-all duration-300 hover:scale-[1.01]">
+              <SearchMatricula />
             </div>
           </TabsContent>
 

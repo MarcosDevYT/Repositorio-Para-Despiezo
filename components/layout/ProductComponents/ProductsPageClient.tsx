@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { ProductFilterSheet } from "./ProductFilterSheet";
 import { ProductType } from "@/types/ProductTypes";
 import { ProductsSkeleton } from "@/components/skeletons/ProductsSkeleton";
+import { VehicleCard } from "@/components/searchComponents/VehicleCard";
 
 type Props = {
   params: {
@@ -31,9 +32,10 @@ type Props = {
     limit?: string;
   };
   initialFilters: Record<string, string | undefined>;
+  vehicleData?: any;
 };
 
-export const ProductsPageClient = ({ params, initialFilters }: Props) => {
+export const ProductsPageClient = ({ params, initialFilters, vehicleData }: Props) => {
   const {
     query,
     subcategoria,
@@ -147,6 +149,13 @@ export const ProductsPageClient = ({ params, initialFilters }: Props) => {
               </Button>
             </div>
           </div>
+
+          {/* Ficha del vehículo si existe matrícula */}
+          {vehicleData && (
+            <div className="mb-4">
+              <VehicleCard vehicle={vehicleData} />
+            </div>
+          )}
 
           {isPending ? (
             <ProductsSkeleton />

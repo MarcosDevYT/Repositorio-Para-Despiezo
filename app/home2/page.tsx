@@ -2,7 +2,6 @@ import { Hero2 } from "@/components/layout/home2/Hero2";
 import { MainContainer } from "@/components/layout/MainContainer";
 import { ProductSection2 } from "@/components/layout/home2/ProductSection2";
 import { Categories2 } from "@/components/layout/home2/Categories2";
-import { ToolsSection } from "@/components/layout/home/ToolsSection";
 import {
   getLastViewedProducts,
   getRecommendedProductsForUser,
@@ -96,11 +95,6 @@ export default async function Home2() {
             />
           </div>
         )}
-
-        {/* Herramientas de búsqueda */}
-        <div className="container mx-auto px-4 lg:px-6">
-          <ToolsSection />
-        </div>
 
         {/* Recién llegados */}
         {products && products.length > 0 && (

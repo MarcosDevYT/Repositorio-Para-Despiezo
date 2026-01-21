@@ -8,6 +8,38 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Modelo para almacenar datos de vehículos por matrícula (caché)
+model Vehicle {
+  id                String   @id @default(cuid())
+  plate             String   @unique
+  source            String   // "Autodoc", etc.
+  title             String
+  fullName          String
+  
+  // Detalles del vehículo
+  tipo              String?
+  yearRange         String?
+  bodyType          String?
+  driveType         String?
+  powerKw           String?
+  powerHp           String?
+  displacement      String?
+  cylinders         String?
+  valves            String?
+  engineType        String?
+  engineCode        String?
+  transmission      String?
+  fuelType          String?
+  fuelPreparation   String?
+  brakeSystem       String?
+  
+  // Metadatos
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([plate])
+}
+
 model User {
   id                      String               @id @default(cuid())
   email                   String               @unique

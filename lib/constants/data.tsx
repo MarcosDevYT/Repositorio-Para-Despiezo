@@ -1,4 +1,3 @@
-import { CarIcon, MotorIcon } from "@/components/icons/Icons";
 import {
   Heart,
   MessageCircleMore,
@@ -8,17 +7,14 @@ import {
   User,
   Disc3,
   Filter,
-  Fuel,
-  Gauge,
   Settings,
-  Wrench,
   Zap,
   Cog,
-  Cpu,
   Thermometer,
   Wind,
-  Puzzle,
   Store,
+  Car,
+  Gauge,
 } from "lucide-react";
 
 //  https://repositorio-para-despiezo.vercel.app/payment/subscriptions
@@ -196,8 +192,7 @@ export const categories = [
     id: 1,
     name: "Carroceria",
     slug: "carroceria",
-    isLocalIcon: true,
-    icon: CarIcon,
+    icon: Car,
     count: "2,450 productos",
     subcategories: [
       {
@@ -218,9 +213,8 @@ export const categories = [
     id: 2,
     name: "Motor",
     slug: "motor",
-    isLocalIcon: true,
-    icon: MotorIcon,
-    count: "2,450 productos",
+    icon: Gauge,
+    count: "3,200 productos",
     subcategories: [
       { id: "m1", name: "Bloque de motor", slug: "bloque-de-motor" },
       { id: "m2", name: "Culata", slug: "culata" },
@@ -232,6 +226,8 @@ export const categories = [
         name: "Correa / Cadena de distribución",
         slug: "correa-cadena-de-distribucion",
       },
+      { id: "m7", name: "Inyectores", slug: "inyectores" },
+      { id: "m8", name: "Bomba de combustible", slug: "bomba-de-combustible" },
     ],
   },
   {
@@ -271,13 +267,15 @@ export const categories = [
     name: "Sistema Eléctrico",
     slug: "sistema-electrico",
     icon: Zap,
-    count: "1,560 productos",
+    count: "2,100 productos",
     subcategories: [
       { id: "e1", name: "Alternadores", slug: "alternadores" },
       { id: "e2", name: "Motores de arranque", slug: "motores-de-arranque" },
       { id: "e3", name: "Baterías", slug: "baterias" },
       { id: "e4", name: "Sensores", slug: "sensores" },
       { id: "e5", name: "Fusibles y relés", slug: "fusibles-y-reles" },
+      { id: "e6", name: "ECU", slug: "ecu" },
+      { id: "e7", name: "Luces y faros", slug: "luces-faros" },
     ],
   },
   {
@@ -299,55 +297,6 @@ export const categories = [
   },
   {
     id: 7,
-    name: "Combustible",
-    slug: "combustible",
-    icon: Fuel,
-    count: "560 productos",
-    subcategories: [
-      { id: "c1", name: "Inyectores", slug: "inyectores" },
-      { id: "c2", name: "Bomba de combustible", slug: "bomba-de-combustible" },
-      { id: "c3", name: "Carburador", slug: "carburador" },
-      { id: "c4", name: "Riel de inyección", slug: "riel-de-inyeccion" },
-      { id: "c5", name: "Regulador de presión", slug: "regulador-de-presion" },
-    ],
-  },
-  {
-    id: 8,
-    name: "Instrumentos",
-    slug: "instrumentos",
-    icon: Gauge,
-    count: "340 productos",
-    subcategories: [
-      { id: "i1", name: "Velocímetro", slug: "velocimetro" },
-      { id: "i2", name: "Tacómetro", slug: "tacometro" },
-      {
-        id: "i3",
-        name: "Indicador de combustible",
-        slug: "indicador-de-combustible",
-      },
-      { id: "i4", name: "Tablero completo", slug: "tablero-completo" },
-    ],
-  },
-  {
-    id: 9,
-    name: "Herramientas",
-    slug: "herramientas",
-    icon: Wrench,
-    count: "920 productos",
-    subcategories: [
-      { id: "h1", name: "Llaves", slug: "llaves" },
-      { id: "h2", name: "Gatos hidráulicos", slug: "gatos-hidraulicos" },
-      {
-        id: "h3",
-        name: "Cajas de herramientas",
-        slug: "cajas-de-herramientas",
-      },
-      { id: "h4", name: "Multímetros", slug: "multimetros" },
-      { id: "h5", name: "Compresores", slug: "compresores" },
-    ],
-  },
-  {
-    id: 10,
     name: "Transmisión",
     slug: "transmision",
     icon: Cog,
@@ -359,23 +308,7 @@ export const categories = [
     ],
   },
   {
-    id: 11,
-    name: "Electrónica",
-    slug: "electronica",
-    icon: Cpu,
-    count: "445 productos",
-    subcategories: [
-      { id: "el1", name: "ECU", slug: "ecu" },
-      {
-        id: "el2",
-        name: "Sensores electrónicos",
-        slug: "sensores-electronicos",
-      },
-      { id: "el3", name: "Actuadores", slug: "actuadores" },
-    ],
-  },
-  {
-    id: 12,
+    id: 8,
     name: "Refrigeración",
     slug: "refrigeracion",
     icon: Thermometer,
@@ -384,10 +317,11 @@ export const categories = [
       { id: "r1", name: "Radiador", slug: "radiador" },
       { id: "r2", name: "Ventilador", slug: "ventilador" },
       { id: "r3", name: "Termostato", slug: "termostato" },
+      { id: "r4", name: "Bomba de agua", slug: "bomba-de-agua" },
     ],
   },
   {
-    id: 13,
+    id: 9,
     name: "Climatización",
     slug: "climatizacion",
     icon: Wind,
@@ -400,31 +334,6 @@ export const categories = [
         name: "Filtros de climatización",
         slug: "filtros-de-climatizacion",
       },
-    ],
-  },
-  {
-    id: 14,
-    name: "Accesorios y Repuestos",
-    slug: "accesorios-repuestos",
-    icon: Puzzle,
-    count: "1,150 productos",
-    subcategories: [
-      { id: "ar1", name: "Neumáticos y llantas", slug: "neumaticos-llantas" },
-      { id: "ar2", name: "Baterías", slug: "baterias" },
-      { id: "ar3", name: "Luces y faros", slug: "luces-faros" },
-      { id: "ar4", name: "Audio y multimedia", slug: "audio-multimedia" },
-      {
-        id: "ar5",
-        name: "Accesorios interiores",
-        slug: "accesorios-interiores",
-      },
-      {
-        id: "ar6",
-        name: "Accesorios exteriores",
-        slug: "accesorios-exteriores",
-      },
-      { id: "ar7", name: "Repuestos mecánicos", slug: "repuestos-mecanicos" },
-      { id: "ar8", name: "Seguridad y confort", slug: "seguridad-confort" },
     ],
   },
 ];

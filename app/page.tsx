@@ -2,7 +2,6 @@ import { Hero } from "@/components/layout/home/Hero";
 import { MainContainer } from "@/components/layout/MainContainer";
 import { RecentProducts } from "@/components/layout/home/RecentProducts";
 import { ProductCategories } from "@/components/layout/home/ProductCategories";
-import { ToolsSection } from "@/components/layout/home/ToolsSection";
 import { Categories } from "@/components/layout/Categories/Categories";
 import {
   getLastViewedProducts,
@@ -65,9 +64,6 @@ export default async function Home() {
 
         {/* Productos más buscados */}
         <MostSearchProducts products={popularProducts} />
-
-        {/* Herramienta para buscar */}
-        <ToolsSection />
         
         {/* Nuevos Productos Recientes */}
         <RecentProducts products={products} />
