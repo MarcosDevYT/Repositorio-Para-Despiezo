@@ -78,21 +78,15 @@ export function Hero() {
           </TabsList>
 
           <TabsContent value="oem" className="w-full mt-0">
-            <div className="transform transition-all duration-300 hover:scale-[1.01]">
-              <SearchOEMAndVehiculo />
-            </div>
+            <SearchOEMAndVehiculo />
           </TabsContent>
 
           <TabsContent value="matricula" className="w-full mt-0">
-            <div className="transform transition-all duration-300 hover:scale-[1.01]">
-              <SearchMatricula />
-            </div>
+            <SearchMatricula />
           </TabsContent>
 
           <TabsContent value="mmy" className="mt-0">
-            <div className="transform transition-all duration-300 hover:scale-[1.01]">
-              <BuscadorMMY />
-            </div>
+            <BuscadorMMY />
           </TabsContent>
         </Tabs>
 
