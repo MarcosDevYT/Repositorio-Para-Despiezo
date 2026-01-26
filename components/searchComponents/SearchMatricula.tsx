@@ -122,8 +122,7 @@ export const SearchMatricula = () => {
           // Extraer año del campo "Año de fabricación"
           const details = result.data as any;
           if (details.details && details.details["Año de fabricación (desde - hasta)"]) {
-            const yearMatch = details.details["Año de fabricación (desde - hasta)"].match(/(\d{2})\.(\d{4})/);
-            year = yearMatch ? yearMatch[2] : "";
+            year = details.details["Año de fabricación (desde - hasta)"];
           }
         }
 

@@ -4,7 +4,7 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { sellSchema } from "@/lib/zodSchemas/sellSchema";
 import { prisma } from "@/lib/prisma";
-import { buildTsQueryFromQueries } from "@/lib/utils";
+import { buildTsQueryFromQueries, getYearsFromRange } from "@/lib/utils";
 import { Product } from "@prisma/client";
 
 type ProductFilter = {
@@ -15,7 +15,7 @@ type ProductFilter = {
   marca?: string; // brand
   modelo?: string; // modelo
   estado?: string; // condition
-  año?: string; // año del vehículo
+  año?: string | string[]; // año del vehículo
   tipoDeVehiculo?: string; // coche, moto, furgoneta
   priceMin?: number; // precio mínimo
   priceMax?: number; // precio máximo
@@ -625,7 +625,15 @@ export const getProductsByFilterAction = async (filters: ProductFilter) => {
       }
     }
 
-    if (filters.año) where.year = filters.año;
+    if (filters.año) {
+      const yearValues = Array.isArray(filters.año)
+        ? filters.año.flatMap(y => getYearsFromRange(y))
+        : getYearsFromRange(filters.año);
+      
+      if (yearValues.length > 0) {
+        where.year = { in: yearValues };
+      }
+    }
     if (filters.tipoDeVehiculo) where.tipoDeVehiculo = filters.tipoDeVehiculo;
 
     if (filters.priceMin !== undefined || filters.priceMax !== undefined) {

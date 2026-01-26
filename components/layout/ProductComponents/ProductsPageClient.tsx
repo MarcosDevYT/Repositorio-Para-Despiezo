@@ -13,6 +13,7 @@ import { ProductFilterSheet } from "./ProductFilterSheet";
 import { ProductType } from "@/types/ProductTypes";
 import { ProductsSkeleton } from "@/components/skeletons/ProductsSkeleton";
 import { VehicleCard } from "@/components/searchComponents/VehicleCard";
+import { getYearsFromRange } from "@/lib/utils";
 
 type Props = {
   params: {
@@ -52,6 +53,10 @@ export const ProductsPageClient = ({ params, initialFilters, vehicleData }: Prop
     limit,
   } = params;
 
+  // Use vehicleData.yearRange as fallback for año if searching by plate
+  const rawAño = año || (vehicleData?.yearRange ? vehicleData.yearRange : undefined);
+  const initialAño = rawAño ? getYearsFromRange(rawAño).join(",") : undefined;
+
   console.log(modelo);
 
   const pageNumber = Number(page) || 1;
@@ -76,7 +81,7 @@ export const ProductsPageClient = ({ params, initialFilters, vehicleData }: Prop
           oem,
           marca,
           estado,
-          año,
+          año: initialAño,
           tipoDeVehiculo,
           priceMin: priceMin ? Number(priceMin) : undefined,
           priceMax: priceMax ? Number(priceMax) : undefined,
@@ -92,6 +97,15 @@ export const ProductsPageClient = ({ params, initialFilters, vehicleData }: Prop
       }
     });
   };
+
+  // Sync expanded years with URL if needed
+  useEffect(() => {
+    if (rawAño && rawAño.includes("...") && initialAño && initialAño !== año) {
+      const params = new URLSearchParams(window.location.search);
+      params.set("año", initialAño);
+      router.push(`/productos?${params.toString()}`, { scroll: false });
+    }
+  }, [initialAño, año, rawAño, router]);
 
   const handleOpenSheet = () => {
     setOpen(true);
@@ -113,6 +127,7 @@ export const ProductsPageClient = ({ params, initialFilters, vehicleData }: Prop
       <div className="lg:hidden">
         <ProductFilterSheet
           {...initialFilters}
+          año={initialAño}
           open={open}
           onOpenChange={setOpen}
         />
@@ -120,7 +135,11 @@ export const ProductsPageClient = ({ params, initialFilters, vehicleData }: Prop
 
       <div className="flex gap-4 relative">
         <aside className="hidden lg:flex w-72 h-[80vh] sticky top-20 left-0 right-0 ">
-          <ProductFilters counts={counts} {...initialFilters} />
+          <ProductFilters 
+            counts={counts} 
+            {...initialFilters} 
+            año={initialAño}
+          />
         </aside>
 
         <section className="flex flex-col gap-4 flex-1 min-h-screen">

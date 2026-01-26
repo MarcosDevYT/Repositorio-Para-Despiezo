@@ -79,7 +79,7 @@ export const VehicleCard = ({ vehicle }: VehicleCardProps) => {
                   <span className="text-xs font-medium text-muted-foreground uppercase">Año</span>
                 </div>
                 <p className="text-base font-bold break-words">
-                  {yearInfo.display}{yearInfo.isCurrent && <span className="text-xs text-muted-foreground ml-1">- actual 2026</span>}
+                  {yearInfo.display}{yearInfo.isCurrent && <span > actual 2026</span>}
                 </p>
               </div>
             )}

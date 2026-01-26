@@ -55,8 +55,9 @@ export function Hero() {
         </div>
 
         {/* Tabs de búsqueda mejorados */}
-        <Tabs defaultValue="oem" className="w-full max-w-3xl mx-auto">
-          <TabsList className="grid grid-cols-3 w-full max-w-2xl mx-auto mb-6 bg-white/10 backdrop-blur-md border border-white/20 p-1">
+        <div className="w-full max-w-2xl mx-auto space-y-6">
+          <Tabs defaultValue="oem" className="w-full">
+            <TabsList className="grid grid-cols-3 w-full bg-white/10 backdrop-blur-md border border-white/20 p-1">
             <TabsTrigger 
               value="oem" 
               className="data-[state=active]:bg-white data-[state=active]:text-primary font-semibold rounded-lg transition-all text-xs sm:text-sm"
@@ -88,7 +89,8 @@ export function Hero() {
           <TabsContent value="mmy" className="mt-0">
             <BuscadorMMY />
           </TabsContent>
-        </Tabs>
+          </Tabs>
+        </div>
 
         {/* Stats o confianza */}
         <div className="flex flex-wrap items-center justify-center gap-8 pt-6 text-white">
