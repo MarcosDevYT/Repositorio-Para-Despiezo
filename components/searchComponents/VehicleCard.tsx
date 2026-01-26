@@ -25,30 +25,43 @@ interface VehicleCardProps {
 }
 
 export const VehicleCard = ({ vehicle }: VehicleCardProps) => {
+  // Función para procesar el año y detectar si termina en "..."
+  const processYear = (yearRange: string | null | undefined) => {
+    if (!yearRange) return null;
+    if (yearRange.endsWith('...')) {
+      const startYear = yearRange.replace('...', '').trim();
+      return {
+        display: startYear,
+        isCurrent: true
+      };
+    }
+    return {
+      display: yearRange,
+      isCurrent: false
+    };
+  };
+
+  const yearInfo = processYear(vehicle.yearRange);
+
   return (
     <Card className="relative overflow-hidden border-2 border-primary/30 shadow-xl">
       {/* Header con fondo degradado */}
-      <div className="bg-gradient-to-r from-primary to-primary/80 p-6 text-white">
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-2 flex-1">
-            <div className="flex items-center gap-3">
-              <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
-                <Car className="h-6 w-6" />
+      <div className="bg-gradient-to-r from-primary to-primary/80 p-4 sm:p-6 text-white">
+        <div className="space-y-2">
+          <h2 className="text-lg sm:text-xl font-bold leading-tight">
+            {vehicle.fullName}
+          </h2>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <div className="bg-white/20 backdrop-blur-sm p-1.5 rounded-lg">
+                <Car className="h-4 w-4" />
               </div>
-              <div>
-                <h2 className="text-2xl font-bold leading-tight">
-                  {vehicle.fullName}
-                </h2>
-                <p className="text-sm text-white/90 mt-1">
-                  {vehicle.title}
-                </p>
-              </div>
+              <span className="text-xs font-medium text-white/80 uppercase">Ficha Técnica</span>
             </div>
+            <Badge className="bg-white text-primary hover:bg-white/90 font-bold text-sm px-3 py-1.5 shrink-0">
+              {vehicle.plate.toUpperCase()}
+            </Badge>
           </div>
-          
-          <Badge className="bg-white text-primary hover:bg-white/90 font-bold text-base px-4 py-2">
-            {vehicle.plate.toUpperCase()}
-          </Badge>
         </div>
       </div>
 
@@ -57,7 +70,7 @@ export const VehicleCard = ({ vehicle }: VehicleCardProps) => {
         <div className="space-y-4">
           {/* Grid principal de especificaciones */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {vehicle.yearRange && (
+            {yearInfo && (
               <div className="bg-background rounded-lg p-4 border border-border hover:border-primary/50 transition-colors">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="bg-primary/10 p-2 rounded-md">
@@ -65,7 +78,9 @@ export const VehicleCard = ({ vehicle }: VehicleCardProps) => {
                   </div>
                   <span className="text-xs font-medium text-muted-foreground uppercase">Año</span>
                 </div>
-                <p className="text-lg font-bold">{vehicle.yearRange}</p>
+                <p className="text-base font-bold break-words">
+                  {yearInfo.display}{yearInfo.isCurrent && <span className="text-xs text-muted-foreground ml-1">- actual 2026</span>}
+                </p>
               </div>
             )}
 
@@ -77,7 +92,7 @@ export const VehicleCard = ({ vehicle }: VehicleCardProps) => {
                   </div>
                   <span className="text-xs font-medium text-muted-foreground uppercase">Carrocería</span>
                 </div>
-                <p className="text-lg font-bold">{vehicle.bodyType}</p>
+                <p className="text-base font-bold truncate">{vehicle.bodyType}</p>
               </div>
             )}
 
@@ -89,10 +104,10 @@ export const VehicleCard = ({ vehicle }: VehicleCardProps) => {
                   </div>
                   <span className="text-xs font-medium text-muted-foreground uppercase">Potencia</span>
                 </div>
-                <p className="text-lg font-bold">
+                <p className="text-base font-bold truncate">
                   {vehicle.powerHp}
                   {vehicle.powerKw && (
-                    <span className="text-sm text-muted-foreground ml-1">
+                    <span className="text-xs text-muted-foreground ml-1">
                       ({vehicle.powerKw})
                     </span>
                   )}
@@ -108,7 +123,7 @@ export const VehicleCard = ({ vehicle }: VehicleCardProps) => {
                   </div>
                   <span className="text-xs font-medium text-muted-foreground uppercase">Cilindrada</span>
                 </div>
-                <p className="text-lg font-bold">{vehicle.displacement}</p>
+                <p className="text-base font-bold truncate">{vehicle.displacement}</p>
               </div>
             )}
 
@@ -120,7 +135,9 @@ export const VehicleCard = ({ vehicle }: VehicleCardProps) => {
                   </div>
                   <span className="text-xs font-medium text-muted-foreground uppercase">Combustible</span>
                 </div>
-                <p className="text-lg font-bold">{vehicle.fuelType}</p>
+                <p className="text-base font-bold truncate" title={vehicle.fuelType}>
+                  {vehicle.fuelType}
+                </p>
               </div>
             )}
 
@@ -132,7 +149,7 @@ export const VehicleCard = ({ vehicle }: VehicleCardProps) => {
                   </div>
                   <span className="text-xs font-medium text-muted-foreground uppercase">Código Motor</span>
                 </div>
-                <p className="text-lg font-bold">{vehicle.engineCode}</p>
+                <p className="text-base font-bold truncate">{vehicle.engineCode}</p>
               </div>
             )}
 
@@ -144,7 +161,7 @@ export const VehicleCard = ({ vehicle }: VehicleCardProps) => {
                   </div>
                   <span className="text-xs font-medium text-muted-foreground uppercase">Transmisión</span>
                 </div>
-                <p className="text-lg font-bold">{vehicle.transmission}</p>
+                <p className="text-base font-bold truncate">{vehicle.transmission}</p>
               </div>
             )}
 
@@ -156,7 +173,7 @@ export const VehicleCard = ({ vehicle }: VehicleCardProps) => {
                   </div>
                   <span className="text-xs font-medium text-muted-foreground uppercase">Cilindros</span>
                 </div>
-                <p className="text-lg font-bold">{vehicle.cylinders}</p>
+                <p className="text-base font-bold truncate">{vehicle.cylinders}</p>
               </div>
             )}
           </div>
