@@ -3,8 +3,8 @@
 import { z } from "zod";
 import { auth } from "@/auth";
 import { sellSchema } from "@/lib/zodSchemas/sellSchema";
-import { prisma } from "@/lib/prisma";
-import { buildTsQueryFromQueries } from "@/lib/utils";
+import prisma from "@/lib/prisma";
+import { buildTsQueryFromQueries, getYearsFromRange } from "@/lib/utils";
 import { Product } from "@prisma/client";
 
 type ProductFilter = {
@@ -15,7 +15,7 @@ type ProductFilter = {
   marca?: string; // brand
   modelo?: string; // modelo
   estado?: string; // condition
-  año?: string; // año del vehículo
+  año?: string | string[]; // año del vehículo
   tipoDeVehiculo?: string; // coche, moto, furgoneta
   priceMin?: number; // precio mínimo
   priceMax?: number; // precio máximo
@@ -46,7 +46,7 @@ export const createProductAction = async (data: z.infer<typeof sellSchema>) => {
 
     // Filtrar solo productos que NO estén vendidos
     const activeProducts = user.products.filter(
-      (product) => product.status !== "vendido"
+      (product) => product.status !== "vendido",
     );
 
     // Si no es pro y ya tiene 40 productos activos → error
@@ -78,7 +78,7 @@ export const createProductAction = async (data: z.infer<typeof sellSchema>) => {
 // Editar un producto
 export async function updateProductAction(
   id: string,
-  data: z.infer<typeof sellSchema>
+  data: z.infer<typeof sellSchema>,
 ) {
   try {
     const session = await auth();
@@ -295,7 +295,7 @@ export async function getFeaturedProducts(userId?: string) {
  */
 export async function getPopularProductsFromSearchLogs(
   userId?: string,
-  limit = 10
+  limit = 10,
 ): Promise<(Product & { isFavorite: boolean })[]> {
   try {
     // 1️ Obtener top 5 términos más buscados
@@ -320,7 +320,7 @@ export async function getPopularProductsFromSearchLogs(
     const combinedQueries = [
       ...logs.map((l) => (l.query || "").trim()),
       ...topClickedProducts.map((p) =>
-        [p.name, p.brand, p.model].filter(Boolean).join(" ")
+        [p.name, p.brand, p.model].filter(Boolean).join(" "),
       ),
     ].filter(Boolean);
 
@@ -356,7 +356,7 @@ export async function getPopularProductsFromSearchLogs(
     `,
       tsQuery,
       plain,
-      limit
+      limit,
     );
 
     const ids = idsResult.map((r) => r.id);
@@ -438,7 +438,7 @@ export async function getLastViewedProducts(userId?: string) {
  */
 export async function getRecommendedProductsForUser(
   userId?: string,
-  limit = 10
+  limit = 10,
 ): Promise<(Product & { isFavorite: boolean })[]> {
   try {
     if (!userId) return [];
@@ -498,7 +498,7 @@ export async function getRecommendedProductsForUser(
         tsQuery,
         plain,
         viewedIds,
-        limit
+        limit,
       );
     } else {
       // fallback: sin tsquery, usar similarity + vistos
@@ -525,7 +525,7 @@ export async function getRecommendedProductsForUser(
       `,
         plain,
         viewedIds,
-        limit
+        limit,
       );
     }
 
@@ -542,7 +542,7 @@ export async function getRecommendedProductsForUser(
 
     const byId = new Map(fullProducts.map((p) => [p.id, p]));
     const favoriteSet = new Set(
-      fullProducts.filter((p) => p.favorites?.length).map((p) => p.id)
+      fullProducts.filter((p) => p.favorites?.length).map((p) => p.id),
     );
 
     // 4) Mantener orden y devolver
@@ -625,7 +625,15 @@ export const getProductsByFilterAction = async (filters: ProductFilter) => {
       }
     }
 
-    if (filters.año) where.year = filters.año;
+    if (filters.año) {
+      const yearValues = Array.isArray(filters.año)
+        ? filters.año.flatMap((y) => getYearsFromRange(y))
+        : getYearsFromRange(filters.año);
+
+      if (yearValues.length > 0) {
+        where.year = { in: yearValues };
+      }
+    }
     if (filters.tipoDeVehiculo) where.tipoDeVehiculo = filters.tipoDeVehiculo;
 
     if (filters.priceMin !== undefined || filters.priceMax !== undefined) {
@@ -674,7 +682,7 @@ export const getProductsByFilterAction = async (filters: ProductFilter) => {
         ...acc,
         [curr.condition]: curr._count.condition,
       }),
-      {}
+      {},
     );
 
     // --------------------------
@@ -807,7 +815,7 @@ export const getProductByIdAction = async (id: string) => {
 export async function getRecommendedProductsByProductId(
   productId: string,
   userId?: string,
-  limit = 10
+  limit = 10,
 ) {
   const now = new Date();
 
@@ -869,7 +877,7 @@ export async function getRecommendedProductsByProductId(
 export async function getRelatedProducts(
   productId: string,
   vendedorId: string,
-  userId?: string
+  userId?: string,
 ) {
   const now = new Date();
 
@@ -928,7 +936,7 @@ export async function incrementClicksProduct(productId: string) {
  */
 export async function registerUserProductView(
   userId: string,
-  productId: string
+  productId: string,
 ) {
   if (!userId) return;
 
@@ -945,7 +953,7 @@ export async function registerUserProductView(
 export async function getVendorProductsPaginated(
   vendorId: string,
   page = 1,
-  limit = 20
+  limit = 20,
 ) {
   try {
     if (!vendorId) return null;
@@ -1112,7 +1120,7 @@ export async function importCSVProductsAction(
     images: string[];
     category: string;
     subcategory?: string;
-  }>
+  }>,
 ) {
   try {
     const session = await auth();
@@ -1140,7 +1148,7 @@ export async function importCSVProductsAction(
 
     // Filtrar solo productos que NO estén vendidos
     const activeProducts = user.products.filter(
-      (product) => product.status !== "vendido"
+      (product) => product.status !== "vendido",
     );
 
     // Verificar límite (aunque sea Pro, podemos tener un límite razonable)
@@ -1204,7 +1212,7 @@ export async function importCSVProductsAction(
     if (imported === 0) {
       return {
         error: `No se pudo importar ningún producto. Errores: ${errors.join(
-          ", "
+          ", ",
         )}`,
       };
     }
@@ -1253,7 +1261,7 @@ export async function calculateSalesMetrics(vendorId: string) {
   const recentOrders = orders.filter((o) => o.createdAt >= last30Days);
   const earningsLast30Days = recentOrders.reduce(
     (sum, o) => sum + o.vendorAmount,
-    0
+    0,
   );
   const ordersLast30Days = recentOrders.length;
   const avgEarningsLast30Days = earningsLast30Days / 30;

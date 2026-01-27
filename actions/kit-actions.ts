@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
 
 export async function createKit(data: {
@@ -25,7 +25,7 @@ export async function createKit(data: {
     // Verificar que el usuario haya seleccionado mas de 2 productos
     if (data.productIds.length < 2) {
       throw new Error(
-        "Debes seleccionar al menos 2 productos para crear un Kit."
+        "Debes seleccionar al menos 2 productos para crear un Kit.",
       );
     }
 
@@ -73,7 +73,7 @@ export async function updateKit(
     discount?: number;
     images?: string[];
     productIds?: string[];
-  }
+  },
 ) {
   try {
     const session = await auth();
@@ -103,7 +103,7 @@ export async function updateKit(
       // Validamos que haya al menos 2 productos válidos
       if (disponibles.length < 2) {
         throw new Error(
-          "El kit debe tener al menos 2 productos disponibles (no vendidos)."
+          "El kit debe tener al menos 2 productos disponibles (no vendidos).",
         );
       }
 
@@ -176,7 +176,7 @@ export async function getKitById(kitId: string) {
 
     // Verificar si alguno de los productos del kit fue vendido
     const hasSoldProducts = kit.products.some(
-      (kp) => kp.product.status === "vendido"
+      (kp) => kp.product.status === "vendido",
     );
 
     // Si tiene productos vendidos, opcionalmente podrías marcarlo o excluirlo

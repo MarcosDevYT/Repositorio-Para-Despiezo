@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 import { auth } from "@/auth";
 
 export async function POST(request: NextRequest) {
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     if (!room) {
       return NextResponse.json(
         { error: "Chat no encontrado" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     console.error("Error creating message:", error);
     return NextResponse.json(
       { error: "Error al enviar mensaje" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

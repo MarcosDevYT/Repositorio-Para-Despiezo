@@ -16,9 +16,10 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { hasAnyFilter } from "@/lib/utils";
+import { hasAnyFilter, getYearsFromRange } from "@/lib/utils";
 import { categories } from "@/lib/constants/data";
 
 interface SidebarProps {
@@ -65,7 +66,8 @@ export const ProductFilterSheet = ({
   const [marcaInput, setMarcaInput] = useState(marca || "");
   const [modeloInput, setModeloInput] = useState(modelo || "");
   const [selectEstado, setSelectEstado] = useState(estado || "");
-  const [year, setYear] = useState(año || "");
+  const [years, setYears] = useState<string[]>(año ? año.split(",") : []);
+  const [yearInput, setYearInput] = useState("");
   const [selectTipoVehiculo, setSelectTipoVehiculo] = useState(
     tipoDeVehiculo || ""
   );
@@ -81,7 +83,7 @@ export const ProductFilterSheet = ({
   useEffect(() => {
     setMinPrice(priceMin || "");
     setMaxPrice(priceMax || "");
-    setYear(año || "");
+    setYears(año ? año.split(",") : []);
     setOemInput(oem || "");
     setMarcaInput(marca || "");
     setModeloInput(modelo || "");
@@ -125,10 +127,10 @@ export const ProductFilterSheet = ({
     marca,
     modelo,
     estado,
-    año,
+    año: years.length > 0 ? years.join(",") : undefined,
     tipoDeVehiculo,
-    priceMax,
-    priceMin,
+    priceMax: priceMax ? parseFloat(priceMax) : undefined,
+    priceMin: priceMin ? parseFloat(priceMin) : undefined,
   };
 
   const hayFiltros = hasAnyFilter(filtros);
@@ -180,7 +182,7 @@ export const ProductFilterSheet = ({
     if (oem) params.set("oem", oem);
     if (marca) params.set("marca", marca);
     if (estado) params.set("estado", estado);
-    if (año) params.set("año", año);
+    if (years.length > 0) params.set("año", years.join(","));
     if (tipoDeVehiculo) params.set("tipoDeVehiculo", tipoDeVehiculo);
 
     router.push(`/productos?${params.toString()}`);
@@ -202,7 +204,7 @@ export const ProductFilterSheet = ({
     if (oem) params.set("oem", oem);
     if (marca) params.set("marca", marca);
     if (estado) params.set("estado", estado);
-    if (año) params.set("año", año);
+    if (years.length > 0) params.set("año", years.join(","));
     if (selectedSubcategory) params.set("subcategoria", selectedSubcategory);
 
     router.push(`/productos?${params.toString()}`);
@@ -227,7 +229,7 @@ export const ProductFilterSheet = ({
     if (query) params.set("query", query);
     if (marcaInput) params.set("marca", marcaInput);
     if (estado) params.set("estado", estado);
-    if (year) params.set("año", year);
+    if (years.length > 0) params.set("año", years.join(","));
     if (selectTipoVehiculo) params.set("tipoDeVehiculo", selectTipoVehiculo);
 
     router.push(`/productos?${params.toString()}`);
@@ -252,7 +254,7 @@ export const ProductFilterSheet = ({
     if (query) params.set("query", query);
     if (oemInput) params.set("oem", oemInput);
     if (estado) params.set("estado", estado);
-    if (year) params.set("año", year);
+    if (years.length > 0) params.set("año", years.join(","));
     if (selectTipoVehiculo) params.set("tipoDeVehiculo", selectTipoVehiculo);
 
     router.push(`/productos?${params.toString()}`);
@@ -290,7 +292,7 @@ export const ProductFilterSheet = ({
     if (oemInput) params.set("oem", oemInput);
     if (marcaInput) params.set("marca", marcaInput);
     if (estado) params.set("estado", estado);
-    if (year) params.set("año", year);
+    if (years.length > 0) params.set("año", years.join(","));
     if (selectTipoVehiculo) params.set("tipoDeVehiculo", selectTipoVehiculo);
 
     router.push(`/productos?${params.toString()}`);
@@ -314,15 +316,32 @@ export const ProductFilterSheet = ({
     router.push(`/productos?${params.toString()}`);
   };
 
-  const onYearChange = (year: string) => {
-    const params = new URLSearchParams(window.location.search);
+  const onYearChange = (newYear: string) => {
+    if (!newYear) return;
+    
+    const updatedYears = [...years];
+    if (!updatedYears.includes(newYear)) {
+      updatedYears.push(newYear);
+    }
+    
+    setYears(updatedYears);
+    setYearInput("");
 
-    if (year) {
-      params.set("año", year);
+    const params = new URLSearchParams(window.location.search);
+    params.set("año", updatedYears.join(","));
+    router.push(`/productos?${params.toString()}`);
+  };
+
+  const removeYear = (y: string) => {
+    const updatedYears = years.filter((item) => item !== y);
+    setYears(updatedYears);
+    
+    const params = new URLSearchParams(window.location.search);
+    if (updatedYears.length > 0) {
+      params.set("año", updatedYears.join(","));
     } else {
       params.delete("año");
     }
-
     router.push(`/productos?${params.toString()}`);
   };
 
@@ -503,17 +522,33 @@ export const ProductFilterSheet = ({
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
-                  onYearChange(year);
+                  onYearChange(yearInput);
                 }}
               >
                 <Label className="text-sm mb-2 font-medium">
                   Año del vehiculo
                 </Label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {years.map((y) => (
+                    <Badge key={y} variant="secondary" className="flex items-center gap-1 pr-1">
+                      {y}
+                      <button
+                        type="button"
+                        onClick={() => removeYear(y)}
+                        className="hover:bg-muted rounded-full p-0.5"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
                 <input
                   type="number"
-                  placeholder="2015"
-                  value={year}
-                  onChange={(e) => setYear(e.target.value)}
+                  placeholder="Ej: 2015"
+                  value={yearInput}
+                  onChange={(e) => setYearInput(e.target.value)}
                   className="w-full border rounded px-2 py-1.5 text-xs"
                 />
                 <Button

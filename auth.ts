@@ -9,7 +9,7 @@ import authConfig from "@/auth.config";
 import NextAuth from "next-auth";
 
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 import { stripe } from "./lib/stripe";
 
 // Configuración de NextAuth
@@ -19,6 +19,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   session: { strategy: "jwt" },
   ...authConfig,
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      // Si la URL es relativa, concatenar con la baseUrl
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      // Si la URL ya es de la misma base, permitirla
+      else if (new URL(url).origin === baseUrl) return url;
+      return baseUrl;
+    },
     async session({ session, token }) {
       if (token.sub && session.user) {
         const user = await prisma.user.findUnique({

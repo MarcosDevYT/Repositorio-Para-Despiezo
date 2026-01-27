@@ -10,7 +10,7 @@ interface FilterCheck {
   oem?: string;
   marca?: string;
   estado?: string;
-  año?: string;
+  año?: string | string[];
   tipoDeVehiculo?: string;
   priceMax?: number;
   priceMin?: number;
@@ -66,10 +66,57 @@ export const verifySeller = (session: Session): boolean => {
   );
 };
 
+export const getYearsFromRange = (yearRange: string) => {
+  if (!yearRange) return [];
+  
+  // Clean the input
+  const cleanRange = yearRange.replace(/\s+/g, "");
+  const parts = cleanRange.split(",");
+  let allYears: string[] = [];
+
+  parts.forEach(part => {
+    // Check for open ranges: "2020...", "2020-", "01.2020-..."
+    if (part.includes("...") || part.endsWith("-")) {
+      const yearsInPart = part.match(/\b(19|20)\d{2}\b/g);
+      if (yearsInPart && yearsInPart.length > 0) {
+        const startYear = parseInt(yearsInPart[0]);
+        const currentYear = new Date().getFullYear();
+        for (let i = startYear; i <= currentYear; i++) {
+          const y = i.toString();
+          if (!allYears.includes(y)) allYears.push(y);
+        }
+      }
+    } else if (part.includes("-")) {
+      // Closed range: "2015-2018" or "01.2015-12.2018"
+      const yearsInPart = part.match(/\b(19|20)\d{2}\b/g);
+      if (yearsInPart && yearsInPart.length >= 2) {
+        const startYear = parseInt(yearsInPart[0]);
+        const endYear = parseInt(yearsInPart[1]);
+        const start = Math.min(startYear, endYear);
+        const end = Math.max(startYear, endYear);
+        for (let i = start; i <= end; i++) {
+          const y = i.toString();
+          if (!allYears.includes(y)) allYears.push(y);
+        }
+      }
+    } else {
+      // Single year
+      const yearMatch = part.match(/\b(19|20)\d{2}\b/);
+      if (yearMatch) {
+        const y = yearMatch[0];
+        if (!allYears.includes(y)) allYears.push(y);
+      }
+    }
+  });
+
+  return allYears;
+};
+
 export const hasAnyFilter = (filters: FilterCheck): boolean => {
   return Object.values(filters).some((value) => {
-    // Para strings: no vacíos, para números: no null/undefined
+    // Para strings: no vacíos, para números: no null/undefined, para arrays: no vacíos
     if (typeof value === "string") return value.trim() !== "";
+    if (Array.isArray(value)) return value.length > 0;
     if (typeof value === "number") return !isNaN(value);
     return false;
   });

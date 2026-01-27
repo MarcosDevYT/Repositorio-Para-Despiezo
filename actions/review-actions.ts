@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 import {
   compatibilidadSchema,
   reviewSchema,
@@ -15,7 +15,7 @@ import { z } from "zod";
  */
 export async function createReviewAction(
   orden: OrdenFull,
-  data: z.infer<typeof reviewSchema>
+  data: z.infer<typeof reviewSchema>,
 ) {
   try {
     // 1. Validar datos del formulario
@@ -171,7 +171,7 @@ export async function getVendedorReviews(vendedorId: string) {
 export async function saveCompatibilidadAction(
   orden: OrdenFull,
   productIds: string[],
-  data: z.infer<typeof compatibilidadSchema>
+  data: z.infer<typeof compatibilidadSchema>,
 ) {
   try {
     // 1. Validar datos del formulario
@@ -193,14 +193,14 @@ export async function saveCompatibilidadAction(
 
     if (orden.buyerId !== userId) {
       throw new Error(
-        "No tienes permiso para registrar compatibilidad en esta orden"
+        "No tienes permiso para registrar compatibilidad en esta orden",
       );
     }
 
     // Permitir solo si el status es 'completed' o 'delivered'
     if (orden.status !== "completed" && orden.status !== "delivered") {
       throw new Error(
-        `Solo puedes registrar compatibilidad en órdenes completadas o entregadas (Estado actual: ${orden.status})`
+        `Solo puedes registrar compatibilidad en órdenes completadas o entregadas (Estado actual: ${orden.status})`,
       );
     }
 
@@ -250,7 +250,7 @@ export async function saveCompatibilidadAction(
 // Acción para verificar si ya se registró compatibilidad
 export async function checkCompatibilidadExists(
   ordenId: string,
-  productId: string
+  productId: string,
 ) {
   try {
     const session = await auth();

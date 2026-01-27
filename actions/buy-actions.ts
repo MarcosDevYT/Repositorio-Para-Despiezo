@@ -3,7 +3,7 @@
 import { auth } from "@/auth";
 import { stripePlans } from "@/lib/constants/data";
 
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import { baseUrl } from "@/lib/utils";
 import { revalidatePath } from "next/cache";
@@ -18,7 +18,7 @@ import type Stripe from "stripe";
 export async function buyProductActions(
   productId: string,
   userAddressId: string,
-  userPhoneNumber: string
+  userPhoneNumber: string,
 ) {
   try {
     const session = await auth();
@@ -112,7 +112,7 @@ export async function buyKitProductsActions(
   productIds: string[],
   kitId: string,
   userAddressId: string,
-  userPhoneNumber: string
+  userPhoneNumber: string,
 ) {
   try {
     const session = await auth();
@@ -140,7 +140,7 @@ export async function buyKitProductsActions(
 
     // Validar que el usuario no compre su propio kit
     const isOwnProduct = validProducts.some(
-      (p) => p.vendorId === session.user.id
+      (p) => p.vendorId === session.user.id,
     );
     if (isOwnProduct) return { error: "No puedes comprar tu propio kit" };
 
@@ -208,7 +208,7 @@ export async function buyKitProductsActions(
 export async function destacarProductAction(
   productId: string,
   price: number,
-  days: string
+  days: string,
 ) {
   try {
     const session = await auth();
@@ -274,12 +274,11 @@ export async function destacarProductAction(
  *  Action para cancelar las subscripciones de stripe
  */
 export const handleCancelStripeSubscription = async (
-  subscriptionId: string
+  subscriptionId: string,
 ) => {
   try {
-    const canceledSubscription = await stripe.subscriptions.cancel(
-      subscriptionId
-    );
+    const canceledSubscription =
+      await stripe.subscriptions.cancel(subscriptionId);
 
     console.log("Subscripcion cancelada: ", canceledSubscription.id);
 
@@ -296,7 +295,7 @@ export const handleCancelStripeSubscription = async (
  *  Maneja el customer.subscription.deleted
  */
 export const handleCustomerSubscriptionDeleted = async (
-  sessionObj: Stripe.Customer.Shipping
+  sessionObj: Stripe.Customer.Shipping,
 ) => {
   try {
     console.log("Iniciando handleCustomerSubscriptionDeleted");
@@ -335,7 +334,7 @@ export const handleCustomerSubscriptionDeleted = async (
  * Maneja checkout.session.completed
  */
 export async function handleCheckoutCompleted(
-  sessionObj: Stripe.Checkout.Session
+  sessionObj: Stripe.Checkout.Session,
 ) {
   console.log("Iniciando handleCheckoutSessionCompleted");
 
@@ -585,7 +584,7 @@ async function handleKitPurchase(sessionObj: Stripe.Checkout.Session) {
  */
 async function handlePlanProUser(
   sessionObj: Stripe.Checkout.Session,
-  priceId: string
+  priceId: string,
 ) {
   try {
     const customerId = sessionObj.customer as string;
@@ -658,7 +657,7 @@ async function handleProductDestacar(sessionObj: Stripe.Checkout.Session) {
     });
 
     console.log(
-      `✅ Producto ${product.id} destacado hasta ${featuredUntil.toISOString()}`
+      `✅ Producto ${product.id} destacado hasta ${featuredUntil.toISOString()}`,
     );
 
     return product;
@@ -675,7 +674,7 @@ async function handleProductDestacar(sessionObj: Stripe.Checkout.Session) {
  */
 export async function releasePaymentAction(
   productId: string,
-  motivo: "delivery" | "timeout"
+  motivo: "delivery" | "timeout",
 ) {
   try {
     // 1. Buscar el OrderItem activo para ese producto
@@ -700,7 +699,7 @@ export async function releasePaymentAction(
     if (!orderItem) {
       console.error(
         "No se encontró una orden 'paid' para productId:",
-        productId
+        productId,
       );
       return null;
     }
@@ -735,7 +734,7 @@ export async function releasePaymentAction(
     });
 
     console.log(
-      `Pago liberado para la orden ${orden.id}, transferencia ${transferencia.id}`
+      `Pago liberado para la orden ${orden.id}, transferencia ${transferencia.id}`,
     );
 
     return ordenLiberada;

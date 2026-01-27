@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
@@ -52,7 +52,7 @@ export async function GET(req: Request) {
       LIMIT 50;
       `,
       tsQuery,
-      q
+      q,
     );
 
     // 🔹 Deduplicar resultados

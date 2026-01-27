@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { type NextRequest } from "next/server";
 
@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     if (!token) {
       return Response.json(
         { error: "No se encontró el token" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 

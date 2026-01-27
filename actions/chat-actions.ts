@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 import { PrismaOrden } from "@/types/ProductTypes";
 import { redirect } from "next/navigation";
 
@@ -201,6 +201,18 @@ export const getChats = async () => {
             name: true,
             email: true,
             image: true,
+          },
+        },
+        messages: {
+          orderBy: {
+            createdAt: "desc",
+          },
+          take: 1,
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            senderId: true,
           },
         },
       },

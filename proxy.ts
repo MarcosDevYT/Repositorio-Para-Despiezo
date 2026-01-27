@@ -36,12 +36,14 @@ export default proxy((req) => {
     "/api/sendcloud/webhook",
     "/api/stripe",
     "/api/stripe/connect",
+    "/api/vehicles",
   ];
 
   const isPublic =
     publicRouter.includes(pathname) ||
     pathname.startsWith("/productos/") ||
-    pathname.startsWith("/tienda/"); // permite /productos/42, /productos/xxx, /tienda/
+    pathname.startsWith("/tienda/") ||
+    pathname.startsWith("/api/vehicles"); // permite /productos/42, /productos/xxx, /tienda/, /api/vehicles/*
 
   if (!isPublic && !isLoggedIn) {
     return NextResponse.redirect(new URL("/login", nextUrl));

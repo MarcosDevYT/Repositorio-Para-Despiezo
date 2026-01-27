@@ -2,7 +2,7 @@
 
 import { auth, signIn } from "@/auth";
 import { sendEmailVerification, sendResetPasswordEmail } from "@/lib/mail";
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 import {
   forgotPasswordSchema,
   loginSchema,
@@ -45,7 +45,7 @@ export const loginAction = async (values: z.infer<typeof loginSchema>) => {
  * @returns - Resultado del registro
  */
 export const registerAction = async (
-  values: z.infer<typeof registerSchema>
+  values: z.infer<typeof registerSchema>,
 ) => {
   try {
     // Parseamos los datos y verificamos si son válidos con zod
@@ -124,7 +124,7 @@ export const registerAction = async (
  * @returns Resultado de la acción
  */
 export const forgotPasswordAction = async (
-  values: z.infer<typeof forgotPasswordSchema>
+  values: z.infer<typeof forgotPasswordSchema>,
 ) => {
   try {
     const validated = forgotPasswordSchema.safeParse(values);
@@ -181,7 +181,7 @@ export const forgotPasswordAction = async (
  * @returns Resultado de la acción
  */
 export const resetPasswordAction = async (
-  values: z.infer<typeof resetPasswordSchema>
+  values: z.infer<typeof resetPasswordSchema>,
 ) => {
   try {
     // Parseamos los datos y verificamos si son válidos con zod

@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 
 export interface ParcelItem {
   description: string;
@@ -224,7 +224,7 @@ export async function createEtiqueta(parcelData: ParcelType) {
             Buffer.from(username + ":" + password).toString("base64"),
         },
         body: JSON.stringify(parcelData),
-      }
+      },
     );
 
     if (!response.ok) {
@@ -258,7 +258,7 @@ export async function createEtiqueta(parcelData: ParcelType) {
  * Obtener seguimiento de la orden
  */
 export async function getTrackingStatus(
-  tracking_number: string
+  tracking_number: string,
 ): Promise<TrackingResponse> {
   try {
     if (!tracking_number) {
@@ -275,7 +275,7 @@ export async function getTrackingStatus(
             "Basic " +
             Buffer.from(username + ":" + password).toString("base64"),
         },
-      }
+      },
     );
 
     if (!response.ok) {

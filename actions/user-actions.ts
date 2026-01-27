@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import { baseUrl } from "@/lib/utils";
 import { userContactSchema } from "@/lib/zodSchemas/userContactSchema";
@@ -61,7 +61,7 @@ export const editProfileAction = async (
     | z.infer<typeof editProfileSchema>
     | z.infer<typeof editBusinessDataSchema>,
   isPhoneChange: boolean,
-  isBusinessData: boolean = false
+  isBusinessData: boolean = false,
 ) => {
   try {
     // Verifica si el usuario está autenticado
@@ -114,7 +114,7 @@ export const editProfileAction = async (
  */
 export const editProfileFieldAction = async (
   field: EditableField,
-  value: string
+  value: string,
 ): Promise<{ success?: string; error?: string }> => {
   try {
     const session = await auth();
@@ -312,6 +312,7 @@ export async function createStripeAccountLinkAction() {
 
 /**
  * Función para obtener el link del dashboard de Stripe para el usuario
+ * Si el onboarding no está completo, redirige automáticamente al proceso de onboarding
  */
 export async function getStripeDashboardLinkAction() {
   const session = await auth();
@@ -330,32 +331,76 @@ export async function getStripeDashboardLinkAction() {
     throw new Error("El usuario no tiene una cuenta de Stripe conectada");
   }
 
-  // Crear link de login al dashboard de Stripe
-  const loginLink = await stripe.accounts.createLoginLink(
-    userData.connectedAccountId
-  );
+  try {
+    // Intentar crear link de login al dashboard de Stripe
+    const loginLink = await stripe.accounts.createLoginLink(
+      userData.connectedAccountId,
+    );
 
-  // Redirigir al usuario al dashboard
-  return redirect(loginLink.url);
+    // Redirigir al usuario al dashboard
+    return redirect(loginLink.url);
+  } catch (error: unknown) {
+    // Si el error es porque el onboarding no está completo,
+    // redirigir al usuario al proceso de onboarding
+    const stripeError = error as { type?: string; message?: string };
+
+    if (
+      stripeError.type === "StripeInvalidRequestError" &&
+      stripeError.message?.includes("has not completed onboarding")
+    ) {
+      console.log(
+        "[Stripe] Cuenta no completó onboarding, redirigiendo a onboarding...",
+      );
+
+      // Actualizar el estado en la DB para reflejar que no está completamente conectado
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: { stripeConnectedLinked: false },
+      });
+
+      // Crear link de onboarding en lugar de login
+      const accountLink = await stripe.accountLinks.create({
+        account: userData.connectedAccountId,
+        refresh_url: `${baseUrl}/perfil/configuracion`,
+        return_url: `${baseUrl}/payment/return/${userData.connectedAccountId}`,
+        type: "account_onboarding",
+      });
+
+      return redirect(accountLink.url);
+    }
+
+    // Si es otro tipo de error, lo lanzamos
+    throw error;
+  }
 }
 
 /**
  * Funcion para cambiar el estado de stripeConnect con el webhook
+ * Verifica que el onboarding esté realmente completo antes de marcar como conectado
  */
 export async function updateStripeConnectStatusAction(account: Stripe.Account) {
   try {
+    // Verificar que el onboarding esté realmente completo:
+    // - details_submitted: el usuario completó el formulario de onboarding
+    // - charges_enabled: la cuenta puede procesar pagos
+    // - transfers === 'active': las transferencias están habilitadas
+    const isOnboardingComplete =
+      account.details_submitted === true &&
+      account.charges_enabled === true &&
+      account.capabilities?.transfers === "active";
+
     const userUpdate = await prisma.user.update({
       where: {
         connectedAccountId: account.id,
       },
       data: {
-        stripeConnectedLinked:
-          account.capabilities?.transfers === "pending" ||
-          account.capabilities?.transfers === "inactive"
-            ? false
-            : true,
+        stripeConnectedLinked: isOnboardingComplete,
       },
     });
+
+    console.log(
+      `[Stripe Webhook] Account ${account.id} - details_submitted: ${account.details_submitted}, charges_enabled: ${account.charges_enabled}, transfers: ${account.capabilities?.transfers} => stripeConnectedLinked: ${isOnboardingComplete}`,
+    );
 
     return userUpdate;
   } catch (error) {
@@ -376,7 +421,7 @@ export async function updateStripeConnectStatusAction(account: Stripe.Account) {
 export const createUserAddress = async (
   data: z.infer<typeof userContactSchema>,
   addressId?: string,
-  isEdit?: boolean
+  isEdit?: boolean,
 ) => {
   try {
     const session = await auth();

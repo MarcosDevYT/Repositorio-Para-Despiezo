@@ -58,4 +58,10 @@ export interface Chat {
     email: string;
     image: string | null;
   };
+  messages?: {
+    id: string;
+    content: string;
+    createdAt: Date;
+    senderId: string;
+  }[];
 }

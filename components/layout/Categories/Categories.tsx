@@ -80,7 +80,7 @@ export const Categories = () => {
                 variant="ghost"
                 asChild
                 className={cn(
-                  "h-11 flex items-center space-x-2 text-sm font-medium hover:bg-blue-500/10 hover:text-blue-500 rounded-full px-4  whitespace-nowrap"
+                  "h-11 flex items-center gap-2 text-sm font-semibold hover:bg-primary/10 hover:text-primary rounded-xl px-5 whitespace-nowrap transition-all"
                 )}
               >
                 <Link href={"/productos"}>
@@ -103,7 +103,7 @@ export const Categories = () => {
           {/* Items Visibles */}
           <div
             ref={containerRef}
-            className="flex flex-nowrap items-center justify-center container mx-auto"
+            className="flex flex-nowrap items-center justify-center container mx-auto gap-1"
             onMouseEnter={() => setIsAnyHovered(true)}
             onMouseLeave={() => setIsAnyHovered(false)}
           >
@@ -112,7 +112,7 @@ export const Categories = () => {
                 variant="ghost"
                 asChild
                 className={cn(
-                  "h-11 flex items-center space-x-2 text-sm font-medium  hover:bg-blue-500/10 hover:text-blue-500 rounded-full px-4  whitespace-nowrap"
+                  "h-11 flex items-center gap-2 text-sm font-semibold hover:bg-primary/10 hover:text-primary rounded-xl px-5 whitespace-nowrap transition-all"
                 )}
               >
                 <Link href={"/productos"}>
@@ -136,10 +136,10 @@ export const Categories = () => {
                 variant="ghost"
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                 className={cn(
-                  "h-11 flex items-center space-x-2 text-sm font-medium hover:bg-blue-500/10 hover:text-blue-500 rounded-full px-4  whitespace-nowrap",
+                  "h-11 flex items-center gap-2 text-sm font-semibold hover:bg-primary/10 hover:text-primary rounded-xl px-5 whitespace-nowrap transition-all",
                   isActiveCategoryHidden &&
                     !isAnyHovered &&
-                    "bg-white border-primary"
+                    "bg-primary/10 text-primary"
                 )}
               >
                 Todas las Categorias
