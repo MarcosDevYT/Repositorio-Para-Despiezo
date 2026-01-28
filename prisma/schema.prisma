@@ -549,3 +549,51 @@ model Message {
   @@index([roomId])
   @@index([senderId])
 }
+
+// Modelo para almacenar compatibilidades de piezas por OEM (catálogo externo)
+model OemPieza {
+  id              String   @id @default(cuid())
+  oem             String   @unique // Número OEM de la pieza
+  site            String?  // Fuente de los datos (eBay, etc.)
+  name            String?  // Nombre completo de la pieza
+  price           String?  // Precio original
+  priceEUR        String?  // Precio en EUR
+  url             String?  // URL de origen
+  
+  // Features como JSON (campos variables)
+  features        Json?    // Almacena todos los atributos de features
+  
+  // Relación con compatibilidades
+  compatibilidades OemCompatibilidad[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([oem])
+}
+
+// Modelo para almacenar cada registro de compatibilidad de una pieza OEM
+model OemCompatibilidad {
+  id              String   @id @default(cuid())
+  oemPiezaId      String
+  oemPieza        OemPieza @relation(fields: [oemPiezaId], references: [id], onDelete: Cascade)
+  
+  // Campos comunes de compatibilidad
+  marca           String?
+  modelo          String?
+  anio            String?
+  variante        String?
+  tipo            String?
+  chasis          String?
+  motor           String?
+  
+  // Atributos adicionales dinámicos como JSON
+  atributosExtra  Json?
+  
+  createdAt       DateTime @default(now())
+  
+  @@index([oemPiezaId])
+  @@index([marca])
+  @@index([modelo])
+  @@index([anio])
+}
