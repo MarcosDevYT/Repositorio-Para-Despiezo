@@ -33,7 +33,7 @@ export default async function EditPage({ params }: { params: { id: string } }) {
 
   const updateWithId = async (data: z.infer<typeof sellSchema>) => {
     "use server";
-    return updateProductAction(params.id, data);
+    return updateProductAction(id, data);
   };
 
   return (

@@ -38,6 +38,7 @@ import { categories } from "@/lib/constants/data";
 import { conditions } from "@/lib/constants/conts";
 import { getScrapperOemData } from "@/actions/scrapper-action";
 import { cn } from "@/lib/utils";
+import { useMarcas } from "@/hooks/use-marcas";
 
 type SellFormProps = {
   initialValues?: Partial<z.infer<typeof sellSchema>>;
@@ -53,6 +54,7 @@ export const SellForm = ({ initialValues, action }: SellFormProps) => {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  const { marcas, loading: marcasLoading } = useMarcas();
 
   const form = useForm<z.infer<typeof sellSchema>>({
     resolver: zodResolver(sellSchema),
@@ -216,9 +218,29 @@ export const SellForm = ({ initialValues, action }: SellFormProps) => {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Marca</FormLabel>
-                <FormControl>
-                  <Input {...field} placeholder="Toyota" />
-                </FormControl>
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona una marca" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {marcasLoading ? (
+                      <div className="flex items-center justify-center py-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      </div>
+                    ) : (
+                      marcas.map((m) => (
+                        <SelectItem key={m.id} value={m.marca}>
+                          {m.marca}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
@@ -427,8 +449,8 @@ export const SellForm = ({ initialValues, action }: SellFormProps) => {
                             !selectedCategory
                               ? "Seleccioná primero una categoría"
                               : hasSubcategories
-                              ? "Seleccioná una subcategoría"
-                              : "Esta categoría no tiene subcategorías"
+                                ? "Seleccioná una subcategoría"
+                                : "Esta categoría no tiene subcategorías"
                           }
                         />
                       </SelectTrigger>

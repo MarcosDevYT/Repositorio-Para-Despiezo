@@ -37,13 +37,18 @@ export default proxy((req) => {
     "/api/stripe",
     "/api/stripe/connect",
     "/api/vehicles",
+    "/api/marcas",
+    "/api/compatibilidades-oem",
+    "/tools/compatibilidad",
   ];
 
   const isPublic =
     publicRouter.includes(pathname) ||
     pathname.startsWith("/productos/") ||
     pathname.startsWith("/tienda/") ||
-    pathname.startsWith("/api/vehicles"); // permite /productos/42, /productos/xxx, /tienda/, /api/vehicles/*
+    pathname.startsWith("/api/vehicles") ||
+    pathname.startsWith("/api/compatibilidades-oem") ||
+    pathname.startsWith("/tools/"); // permite /productos/42, /productos/xxx, /tienda/, /api/vehicles/*, /tools/*
 
   if (!isPublic && !isLoggedIn) {
     return NextResponse.redirect(new URL("/login", nextUrl));

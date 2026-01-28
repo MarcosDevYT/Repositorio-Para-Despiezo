@@ -12,43 +12,23 @@ import {
 } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
-// Tipado completo
-type Vehicles = {
-  [marca: string]: {
-    [modelo: string]: {
-      [year: string]: any[];
-    };
-  };
-};
-
-const vehicles: Vehicles = {
-  Toyota: {
-    Corolla: {
-      "2014": [],
-      "2015": [],
-    },
-    Hilux: {
-      "2018": [],
-    },
-  },
-  Honda: {
-    Civic: {
-      "2016": [],
-    },
-  },
-};
+import { Input } from "@/components/ui/input";
+import { useMarcas } from "@/hooks/use-marcas";
+import { Loader2 } from "lucide-react";
 
 export function BuscadorMMY() {
   const router = useRouter();
+  const { marcas, loading: marcasLoading } = useMarcas();
 
   const [marca, setMarca] = useState<string>("");
   const [modelo, setModelo] = useState<string>("");
   const [year, setYear] = useState<string>("");
 
-  const marcas = Object.keys(vehicles);
-  const modelos = marca ? Object.keys(vehicles[marca]) : [];
-  const years = marca && modelo ? Object.keys(vehicles[marca][modelo]) : [];
+  // Generar años desde 1990 hasta el año actual
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: currentYear - 1989 }, (_, i) =>
+    String(currentYear - i)
+  );
 
   const buscar = () => {
     if (!marca || !modelo || !year) return;
@@ -75,34 +55,28 @@ export function BuscadorMMY() {
           <SelectValue placeholder="Marca" />
         </SelectTrigger>
         <SelectContent>
-          {marcas.map((m) => (
-            <SelectItem key={m} value={m}>
-              {m}
-            </SelectItem>
-          ))}
+          {marcasLoading ? (
+            <div className="flex items-center justify-center py-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+            </div>
+          ) : (
+            marcas.map((m) => (
+              <SelectItem key={m.id} value={m.marca}>
+                {m.marca}
+              </SelectItem>
+            ))
+          )}
         </SelectContent>
       </Select>
 
       {/* Modelo */}
-      <Select
+      <Input
         value={modelo}
-        onValueChange={(v) => {
-          setModelo(v);
-          setYear("");
-        }}
+        onChange={(e) => setModelo(e.target.value)}
+        placeholder="Modelo"
+        className="rounded-none border-x-0 w-40 h-9"
         disabled={!marca}
-      >
-        <SelectTrigger className="rounded-none border-x-0 w-40">
-          <SelectValue placeholder="Modelo" />
-        </SelectTrigger>
-        <SelectContent>
-          {modelos.map((m) => (
-            <SelectItem key={m} value={m}>
-              {m}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      />
 
       {/* Año */}
       <Select value={year} onValueChange={(v) => setYear(v)} disabled={!modelo}>

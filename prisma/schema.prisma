@@ -1,7 +1,7 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
-  runtime  = "vercel-edge"
+  runtime       = "vercel-edge"
 }
 
 datasource db {
@@ -10,112 +10,112 @@ datasource db {
 
 // Modelo para almacenar datos de vehículos por matrícula (caché)
 model Vehicle {
-  id                String   @id @default(cuid())
-  plate             String   @unique
-  source            String   // "Autodoc", etc.
-  title             String
-  fullName          String
-  
+  id       String @id @default(cuid())
+  plate    String @unique
+  source   String // "Autodoc", etc.
+  title    String
+  fullName String
+
   // Detalles del vehículo
-  tipo              String?
-  yearRange         String?
-  bodyType          String?
-  driveType         String?
-  powerKw           String?
-  powerHp           String?
-  displacement      String?
-  cylinders         String?
-  valves            String?
-  engineType        String?
-  engineCode        String?
-  transmission      String?
-  fuelType          String?
-  fuelPreparation   String?
-  brakeSystem       String?
-  
+  tipo            String?
+  yearRange       String?
+  bodyType        String?
+  driveType       String?
+  powerKw         String?
+  powerHp         String?
+  displacement    String?
+  cylinders       String?
+  valves          String?
+  engineType      String?
+  engineCode      String?
+  transmission    String?
+  fuelType        String?
+  fuelPreparation String?
+  brakeSystem     String?
+
   // Metadatos
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([plate])
 }
 
 model User {
-  id                      String               @id @default(cuid())
-  email                   String               @unique
-  password                String?
-  accounts                Account[]
-  passwordResetToken      PasswordResetToken[]
+  id                 String               @id @default(cuid())
+  email              String               @unique
+  password           String?
+  accounts           Account[]
+  passwordResetToken PasswordResetToken[]
 
   /// Campos editables por el usuario
-  name                    String?
-  description             String?
-  image                   String?
-  phoneNumber             String?
-  addresses               Address[]
+  name        String?
+  description String?
+  image       String?
+  phoneNumber String?
+  addresses   Address[]
 
   /// Promedio de calificaciones recibidas como vendedor
-  averageRating     Float?   @default(0)
+  averageRating Float? @default(0)
 
   /// Total de reseñas recibidas (opcional, útil para evitar otro count)
-  totalReviews      Int?     @default(0)
+  totalReviews Int? @default(0)
 
   /// Campos necesarios para Vender
-  emailVerified           DateTime?
-  phoneVerified           DateTime?
-  location                String?
-  businessName            String?
-  businessBannerUrl       String?
-  bussinesCategory        String[] @default([])
+  emailVerified     DateTime?
+  phoneVerified     DateTime?
+  location          String?
+  businessName      String?
+  businessBannerUrl String?
+  bussinesCategory  String[]  @default([])
 
   // Stripe Connect
-  connectedAccountId      String? @unique
-  stripeConnectedLinked   Boolean @default(false)
+  connectedAccountId    String? @unique
+  stripeConnectedLinked Boolean @default(false)
 
   /// Relacion con las analiticas
-  vendorAnalytics         VendorAnalytics?
+  vendorAnalytics VendorAnalytics?
 
   /// Productos del usuario
-  products                Product[]
+  products Product[]
 
   /// Relación con favoritos
-  favorites               Favorite[]
+  favorites Favorite[]
 
   /// Relación con ordenes
-  ordersAsBuyer           Orden[] @relation("BuyerOrders")
-  ordersAsVendor          Orden[] @relation("VendorOrders")
+  ordersAsBuyer  Orden[] @relation("BuyerOrders")
+  ordersAsVendor Orden[] @relation("VendorOrders")
 
   /// Relacion con searchHistory
-  searchHistory           SearchHistory[]
+  searchHistory SearchHistory[]
 
   // Relación con productos vistos
-  viewedProducts          UserProductView[] 
+  viewedProducts UserProductView[]
 
   /// Relación con Kits
-  kits                    Kit[]
+  kits Kit[]
 
   /// Reseñas escritas por el usuario (como comprador)
-  reviewsWritten          Review[]        @relation("UserToReview")
+  reviewsWritten Review[] @relation("UserToReview")
 
   /// Reseñas recibidas (como vendedor)
-  reviewsReceived         Review[]        @relation("VendorToReview")
+  reviewsReceived Review[] @relation("VendorToReview")
 
   /// Relacion con las compatibilidades escritas
-  compatibilidades        Compatibilidad[]
+  compatibilidades Compatibilidad[]
 
   /// Relacion con chats
-  roomsAsVendor           Room[]    @relation("VendorRooms")
-  roomsAsBuyer            Room[]    @relation("BuyerRooms")
-  messages                Message[]
+  roomsAsVendor Room[]    @relation("VendorRooms")
+  roomsAsBuyer  Room[]    @relation("BuyerRooms")
+  messages      Message[]
 
   /// Plan de suscripción
-  pro                     Boolean   @default(false)
-  priceId                 String?
-  customerId              String?   @unique
-  subscriptionId          String?
+  pro            Boolean @default(false)
+  priceId        String?
+  customerId     String? @unique
+  subscriptionId String?
 
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // Modelo de cuenta de Google
@@ -161,143 +161,142 @@ model PasswordResetToken {
 
 // Modelo de datos analiticos
 model VendorAnalytics {
-  id               String   @id @default(cuid())
-  vendorId         String   @unique
-  vendor           User     @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  vendorId String @unique
+  vendor   User   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
 
   // Conteos de productos
-  totalProducts    Int       @default(0)
-  publicados       Int       @default(0)
-  vendidos         Int       @default(0)
-  noVendidos       Int       @default(0)
+  totalProducts Int @default(0)
+  publicados    Int @default(0)
+  vendidos      Int @default(0)
+  noVendidos    Int @default(0)
 
   // Despachos
-  hasDispatched    Boolean   @default(false)
-  totalDispatches  Int       @default(0)
+  hasDispatched   Boolean @default(false)
+  totalDispatches Int     @default(0)
 
   // Métricas de respuesta y envío
-  avgResponseMin   Float?
-  avgDispatchDays  Float?
-  isFastShipper    Boolean   @default(false)
+  avgResponseMin  Float?
+  avgDispatchDays Float?
+  isFastShipper   Boolean @default(false)
 
   // Ventas totales
-  hasSales         Boolean   @default(false)
-  totalOrders      Int       @default(0)
-  totalProductsSold Int      @default(0)
-  totalEarnings    Float     @default(0)
+  hasSales            Boolean @default(false)
+  totalOrders         Int     @default(0)
+  totalProductsSold   Int     @default(0)
+  totalEarnings       Float   @default(0)
   avgEarningsPerOrder Float?
-  avgProductPrice  Float?
+  avgProductPrice     Float?
 
   // Ventas recientes (últimos 30 días)
-  isActiveSeller   Boolean   @default(false)
-  earningsLast30Days Float   @default(0)
-  ordersLast30Days   Int     @default(0)
+  isActiveSeller        Boolean @default(false)
+  earningsLast30Days    Float   @default(0)
+  ordersLast30Days      Int     @default(0)
   avgEarningsLast30Days Float?
 
   // Review promedio
-  averageRating         Float    @default(0)
-  totalReviews          Int      @default(0)
+  averageRating Float @default(0)
+  totalReviews  Int   @default(0)
 
   // Control de tiempo
-  calculatedAt     DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  calculatedAt DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 // Modelo de direccion del usuario
 model Address {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  
-  street    String
-  number    String
-  city      String
-  postalCode String
-  country   String
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 
-  isDefault Boolean  @default(false)
+  street     String
+  number     String
+  city       String
+  postalCode String
+  country    String
+
+  isDefault Boolean @default(false)
 }
 
 // Modelo de producto
 model Product {
-  id             String    @id @default(uuid())
+  id             String   @id @default(uuid())
   name           String
   description    String
-  price          String 
+  price          String
   images         String[]
   oemNumber      String
   brand          String
   model          String
   year           String
   tipoDeVehiculo String
-  condition      String    // "nuevo" | "como-nuevo" | "buen-estado" | "condiciones-aceptables" | "lo-ha-dado-todo"
+  condition      String // "nuevo" | "como-nuevo" | "buen-estado" | "condiciones-aceptables" | "lo-ha-dado-todo"
   status         String
   typeOfPiece    String
   location       String
   category       String
   subcategory    String?
 
-  offer          Boolean?
-  offerPrice     String?
+  offer      Boolean?
+  offerPrice String?
 
   // Campos de medidas
-  weight         Float?     // Peso en kg
-  length         Float?     // Largo en cm
-  width          Float?     // Ancho en cm
-  height         Float?     // Alto en cm
+  weight Float? // Peso en kg
+  length Float? // Largo en cm
+  width  Float? // Ancho en cm
+  height Float? // Alto en cm
 
   // Campos para destacar Producto
-  featuredUntil  DateTime?                   // hasta qué fecha se mantiene destacado
-  featuredAt     DateTime?
+  featuredUntil DateTime? // hasta qué fecha se mantiene destacado
+  featuredAt    DateTime?
 
   // Analíticas
-  clicks         Int       @default(0)       // cantidad de clics
+  clicks Int @default(0) // cantidad de clics
 
   // Relaciones
-  vendorId       String
-  vendor         User       @relation(fields: [vendorId], references: [id])
-  rooms          Room[]
-  favorites      Favorite[]
-  orderItems     OrderItem[]
-  kits           KitProduct[]
+  vendorId         String
+  vendor           User             @relation(fields: [vendorId], references: [id])
+  rooms            Room[]
+  favorites        Favorite[]
+  orderItems       OrderItem[]
+  kits             KitProduct[]
   compatibilidades Compatibilidad[]
 
   // Relación inversa con vistas de usuarios
-  userViews      UserProductView[]
+  userViews UserProductView[]
 
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Kit {
-  id          String     @id @default(uuid())
+  id          String   @id @default(uuid())
   name        String
   description String?
-  price       Float       // Precio total del kit
-  discount    Float?      // Porcentaje o valor de descuento
-  images      String[]    // Imágenes opcionales del kit
+  price       Float // Precio total del kit
+  discount    Float? // Porcentaje o valor de descuento
+  images      String[] // Imágenes opcionales del kit
 
   // Relación con el vendedor
-  vendorId    String
-  vendor      User        @relation(fields: [vendorId], references: [id])
+  vendorId String
+  vendor   User   @relation(fields: [vendorId], references: [id])
 
   // Relación con productos
-  products    KitProduct[]
-  orderItems  OrderItem[]
+  products   KitProduct[]
+  orderItems OrderItem[]
 
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model KitProduct {
-  id          String     @id @default(uuid())
-  kitId       String
-  productId   String
+  id        String @id @default(uuid())
+  kitId     String
+  productId String
 
-  kit         Kit        @relation(fields: [kitId], references: [id])
-  product     Product    @relation(fields: [productId], references: [id])
+  kit     Kit     @relation(fields: [kitId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
 }
-
 
 // Modelo de productos que vio el usuario
 model UserProductView {
@@ -306,108 +305,107 @@ model UserProductView {
   productId String
   viewedAt  DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId]) // un producto por usuario, se puede actualizar clicks
   @@index([userId])
   @@index([productId])
 }
 
-
 // Modelo de orden
 model Orden {
-  id                  String        @id @default(cuid())
+  id String @id @default(cuid())
 
   // Relaciones principales
-  buyerId             String
-  buyer               User          @relation("BuyerOrders", fields: [buyerId], references: [id])
-  vendorId            String
-  vendor              User          @relation("VendorOrders", fields: [vendorId], references: [id])
+  buyerId  String
+  buyer    User   @relation("BuyerOrders", fields: [buyerId], references: [id])
+  vendorId String
+  vendor   User   @relation("VendorOrders", fields: [vendorId], references: [id])
 
   // Nueva relación
   // cada orden puede tener uno o varios productos
-  items               OrderItem[]   
+  items OrderItem[]
 
   // Stripe
-  stripeSessionId     String        @unique
+  stripeSessionId     String  @unique
   stripePaymentIntent String?
 
   // Dinero
-  amountTotal         Int
-  vendorAmount        Int
-  feeAmount           Int
+  amountTotal  Int
+  vendorAmount Int
+  feeAmount    Int
 
   // Estado de la orden
-  status              OrderStatus   @default(created)
-  payoutReleased      Boolean       @default(false)
+  status         OrderStatus @default(created)
+  payoutReleased Boolean     @default(false)
 
   // Envío y logística
-  trackingNumber      String?
-  trackingUrl         String?
-  shippingStatus      String        @default("pending")
-  shippingProvider    String?
-  shippingLabelUrl    String?
+  trackingNumber   String?
+  trackingUrl      String?
+  shippingStatus   String  @default("pending")
+  shippingProvider String?
+  shippingLabelUrl String?
 
   // Para registrar cuándo se despacha la orden
-  despachadoAt        DateTime?
+  despachadoAt DateTime?
 
   // Para registrar cuándo se entrega la orden
-  entregadoAt         DateTime?
+  entregadoAt DateTime?
 
   // Dirección de envío
-  shippingName        String?
+  shippingName         String?
   shippingAddressLine1 String?
   shippingAddressLine2 String?
-  shippingCity        String?
-  shippingPostalCode  String?
-  shippingCountry     String?
-  shippingPhone       String?
+  shippingCity         String?
+  shippingPostalCode   String?
+  shippingCountry      String?
+  shippingPhone        String?
 
   // Control de tiempo de pagos
-  releaseAt           DateTime?
-  releasedAt          DateTime?
-  stripeTransferId    String?
+  releaseAt        DateTime?
+  releasedAt       DateTime?
+  stripeTransferId String?
 
   // Devoluciones
-  refundRequested     Boolean       @default(false)
-  refundProcessed     Boolean       @default(false)
-  refundStripeId      String?
+  refundRequested Boolean @default(false)
+  refundProcessed Boolean @default(false)
+  refundStripeId  String?
 
   // Notas
-  buyerNote           String?
-  vendorNote          String?
+  buyerNote  String?
+  vendorNote String?
 
   // Tipo de orden (producto o kit)
-  orderType           OrderType     @default(PRODUCT)
+  orderType OrderType @default(PRODUCT)
 
   // Relacion con las reviews
-  reviews       Review[]
+  reviews Review[]
 
   // Relacion con compatibilidades
   compatibilidades Compatibilidad[]
 
   // Tiempos
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // Nuevo modelo intermedio
 model OrderItem {
-  id        String   @id @default(cuid())
-  ordenId   String
-  orden     Orden    @relation(fields: [ordenId], references: [id])
+  id      String @id @default(cuid())
+  ordenId String
+  orden   Orden  @relation(fields: [ordenId], references: [id])
 
   // Producto individual
   productId String
-  product   Product  @relation(fields: [productId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
 
   // En caso de que el item provenga de un kit
-  kitId     String?   // opcional, si se trata de un kit
-  kit       Kit?      @relation(fields: [kitId], references: [id])
+  kitId String? // opcional, si se trata de un kit
+  kit   Kit?    @relation(fields: [kitId], references: [id])
 
   // Aunque sea siempre 1, podés dejar este campo por flexibilidad futura
-  quantity  Int       @default(1)
+  quantity Int @default(1)
 }
 
 enum OrderType {
@@ -427,25 +425,25 @@ enum OrderStatus {
 
 /// Modelo de Reseñas
 model Review {
-  id          String   @id @default(cuid())
+  id String @id @default(cuid())
 
   // Relación con el usuario que deja la reseña (comprador)
-  userId      String
-  user        User     @relation("UserToReview", fields: [userId], references: [id])
+  userId String
+  user   User   @relation("UserToReview", fields: [userId], references: [id])
 
   // Relación con la orden (se hace una reseña por compra)
-  ordenId     String
-  orden       Orden    @relation(fields: [ordenId], references: [id])
+  ordenId String
+  orden   Orden  @relation(fields: [ordenId], references: [id])
 
   // Relación con el vendedor (usuario dueño del producto o kit)
-  vendorId    String
-  vendor      User     @relation("VendorToReview", fields: [vendorId], references: [id])
+  vendorId String
+  vendor   User   @relation("VendorToReview", fields: [vendorId], references: [id])
 
   // Datos de la reseña
-  rating      Int       // 1 a 5 estrellas
-  comentario  String?   // opcional
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  rating     Int // 1 a 5 estrellas
+  comentario String? // opcional
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   // Solo una reseña por usuario y orden
   @@unique([userId, ordenId])
@@ -453,32 +451,32 @@ model Review {
 
 /// Modelo de compatibilidades
 model Compatibilidad {
-  id           String   @id @default(cuid())
+  id String @id @default(cuid())
 
   // Relación con el usuario que registra la compatibilidad (comprador)
-  userId       String
-  user         User     @relation(fields: [userId], references: [id])
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 
   // Relación con la orden
-  ordenId      String
-  orden        Orden    @relation(fields: [ordenId], references: [id])
+  ordenId String
+  orden   Orden  @relation(fields: [ordenId], references: [id])
 
   // Relación con el producto
-  productId    String
-  product      Product  @relation(fields: [productId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
 
   // Datos de compatibilidad
-  encajo       Boolean  // Si la pieza encajó o no
-  marca        String   // Marca del vehículo
-  modelo       String   // Modelo del vehículo
-  anio         String   // Año del vehículo
-  version      String?  // Versión/acabado (opcional)
-  motorizacion String?  // Motorización (opcional)
-  combustible  String   // gasolina, diesel, hibrido, electrico
-  transmision  String   // manual, automatica
+  encajo       Boolean // Si la pieza encajó o no
+  marca        String // Marca del vehículo
+  modelo       String // Modelo del vehículo
+  anio         String // Año del vehículo
+  version      String? // Versión/acabado (opcional)
+  motorizacion String? // Motorización (opcional)
+  combustible  String // gasolina, diesel, hibrido, electrico
+  transmision  String // manual, automatica
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Un usuario puede registrar compatibilidad una vez por producto en una orden
   @@unique([userId, ordenId, productId])
@@ -488,16 +486,16 @@ model Compatibilidad {
 
 /// Modelo de Favoritos
 model Favorite {
-  id        String   @id @default(cuid())
+  id        String @id @default(cuid())
   userId    String
   productId String
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 
-  @@unique([userId, productId]) 
+  @@unique([userId, productId])
 }
 
 /// Modelos de tablas para busquedas indexadas
@@ -505,7 +503,7 @@ model Favorite {
 /// Modelo para almacenar las busquedas
 model SearchHistory {
   id        String   @id @default(cuid())
-  query     String 
+  query     String
   userId    String?
   user      User?    @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
@@ -513,13 +511,12 @@ model SearchHistory {
 
 /// Modelo de busquedas populares
 model SearchLog {
-  id     String @id @default(uuid())
-  query  String @unique
-  clicks Int    @default(0)
+  id        String   @id @default(uuid())
+  query     String   @unique
+  clicks    Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
-
 
 // Modelos de chat en tiempo real
 /// Conversaciones (chat)
@@ -530,9 +527,9 @@ model Room {
   buyerId   String
   createdAt DateTime @default(now())
 
-  product Product? @relation(fields: [productId], references: [id])
-  vendor  User     @relation("VendorRooms", fields: [vendorId], references: [id])
-  buyer   User     @relation("BuyerRooms", fields: [buyerId], references: [id])
+  product  Product?  @relation(fields: [productId], references: [id])
+  vendor   User      @relation("VendorRooms", fields: [vendorId], references: [id])
+  buyer    User      @relation("BuyerRooms", fields: [buyerId], references: [id])
   messages Message[]
 }
 
@@ -548,4 +545,52 @@ model Message {
 
   @@index([roomId])
   @@index([senderId])
+}
+
+// Modelo para almacenar compatibilidades de piezas por OEM (catálogo externo)
+model OemPieza {
+  id       String  @id @default(cuid())
+  oem      String  @unique // Número OEM de la pieza
+  site     String? // Fuente de los datos (eBay, etc.)
+  name     String? // Nombre completo de la pieza
+  price    String? // Precio original
+  priceEUR String? // Precio en EUR
+  url      String? // URL de origen
+
+  // Features como JSON (campos variables)
+  features Json? // Almacena todos los atributos de features
+
+  // Relación con compatibilidades
+  compatibilidades OemCompatibilidad[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([oem])
+}
+
+// Modelo para almacenar cada registro de compatibilidad de una pieza OEM
+model OemCompatibilidad {
+  id         String   @id @default(cuid())
+  oemPiezaId String
+  oemPieza   OemPieza @relation(fields: [oemPiezaId], references: [id], onDelete: Cascade)
+
+  // Campos comunes de compatibilidad
+  marca    String?
+  modelo   String?
+  anio     String?
+  variante String?
+  tipo     String?
+  chasis   String?
+  motor    String?
+
+  // Atributos adicionales dinámicos como JSON
+  atributosExtra Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([oemPiezaId])
+  @@index([marca])
+  @@index([modelo])
+  @@index([anio])
 }
