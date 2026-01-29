@@ -14,29 +14,35 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useMarcas } from "@/hooks/use-marcas";
+import { useModelos } from "@/hooks/use-modelos";
 import { Loader2 } from "lucide-react";
 
 export function BuscadorMMY() {
   const router = useRouter();
   const { marcas, loading: marcasLoading } = useMarcas();
+  const { getModelosByMarca, getAniosByModelo, loading: modelosLoading } = useModelos();
 
   const [marca, setMarca] = useState<string>("");
-  const [modelo, setModelo] = useState<string>("");
+  const [modeloId, setModeloId] = useState<number | null>(null);
+  const [modeloNombre, setModeloNombre] = useState<string>("");
   const [year, setYear] = useState<string>("");
 
-  // Generar años desde 1990 hasta el año actual
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: currentYear - 1989 }, (_, i) =>
-    String(currentYear - i)
-  );
+  // Obtener modelos filtrados por marca seleccionada
+  const modelosFiltrados = marca ? getModelosByMarca(marca) : [];
+  
+  // Obtener años filtrados por modelo seleccionado
+  const aniosFiltrados = marca && modeloId ? getAniosByModelo(marca, modeloId) : [];
 
   const buscar = () => {
-    if (!marca || !modelo || !year) return;
+    if (!marca || !modeloNombre || !year) return;
+
+    // Extraer solo el nombre del modelo sin las fechas
+    const modeloLimpio = modeloNombre.replace(/\s*\([^)]*\)\s*$/, "").trim();
 
     router.push(
       `/productos?marca=${encodeURIComponent(
         marca
-      )}&modelo=${encodeURIComponent(modelo)}&año=${encodeURIComponent(year)}`
+      )}&modelo=${encodeURIComponent(modeloLimpio)}&año=${encodeURIComponent(year)}`
     );
   };
 
@@ -47,7 +53,8 @@ export function BuscadorMMY() {
         value={marca}
         onValueChange={(v) => {
           setMarca(v);
-          setModelo("");
+          setModeloId(null);
+          setModeloNombre("");
           setYear("");
         }}
       >
@@ -70,22 +77,37 @@ export function BuscadorMMY() {
       </Select>
 
       {/* Modelo */}
-      <Input
-        value={modelo}
-        onChange={(e) => setModelo(e.target.value)}
-        placeholder="Modelo"
-        className="rounded-none border-x-0 w-40 h-9"
-        disabled={!marca}
-      />
+      <Select
+        value={modeloId?.toString() || ""}
+        onValueChange={(v) => {
+          const id = parseInt(v, 10);
+          setModeloId(id);
+          const modelo = modelosFiltrados.find((m) => m.id === id);
+          setModeloNombre(modelo?.modelo || "");
+          setYear("");
+        }}
+        disabled={!marca || modelosLoading}
+      >
+        <SelectTrigger className="rounded-none border-x-0 w-48 h-9">
+          <SelectValue placeholder={modelosLoading ? "Cargando..." : "Modelo"} />
+        </SelectTrigger>
+        <SelectContent className="max-h-60">
+          {modelosFiltrados.map((m) => (
+            <SelectItem key={m.id} value={m.id.toString()}>
+              {m.modelo}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
       {/* Año */}
-      <Select value={year} onValueChange={(v) => setYear(v)} disabled={!modelo}>
+      <Select value={year} onValueChange={(v) => setYear(v)} disabled={!modeloId || aniosFiltrados.length === 0}>
         <SelectTrigger className="rounded-none border-l-0 w-32">
           <SelectValue placeholder="Año" />
         </SelectTrigger>
-        <SelectContent>
-          {years.map((y) => (
-            <SelectItem key={y} value={y}>
+        <SelectContent className="max-h-60">
+          {aniosFiltrados.map((y) => (
+            <SelectItem key={y} value={y.toString()}>
               {y}
             </SelectItem>
           ))}
@@ -95,7 +117,7 @@ export function BuscadorMMY() {
       {/* Botón buscar */}
       <Button
         className="rounded-l-none h-9"
-        disabled={!marca || !modelo || !year}
+        disabled={!marca || !modeloNombre || !year}
         onClick={buscar}
       >
         Buscar

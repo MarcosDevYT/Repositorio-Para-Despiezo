@@ -15,9 +15,12 @@ import { Badge } from "@/components/ui/badge"; // Removed duplicate import
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { hasAnyFilter, getYearsFromRange } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
 
 import { EstadoVehiculoFilter } from "@/components/EstadoVehiculoFilter";
 import { categories } from "@/lib/constants/data";
+import { useMarcas } from "@/hooks/use-marcas";
+import { useModelos } from "@/hooks/use-modelos";
 
 type Props = {
   subcategoria?: string;
@@ -51,8 +54,8 @@ export const ProductFilters = ({
   counts,
 }: Props) => {
   const router = useRouter();
-
-  console.log(modelo);
+  const { marcas, loading: marcasLoading } = useMarcas();
+  const { getModelosByMarca, getAniosByMarca, loading: modelosLoading } = useModelos();
 
   // Estados internos
   const [minPrice, setMinPrice] = useState(priceMin || "");
@@ -439,93 +442,88 @@ export const ProductFilters = ({
         {/* Marca */}
         <Separator />
         <div className="space-y-2">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              onMarcaChange(marcaInput);
-            }}
-          >
-            <Label className="text-sm mb-2 font-medium">Marca</Label>
-            <input
-              type="text"
-              placeholder="Ej: Toyota"
-              value={marcaInput}
-              onChange={(e) => setMarcaInput(e.target.value)}
-              className="w-full border rounded px-2 py-1.5 text-xs"
-            />
-            <Button
-              type="submit"
-              className="opacity-0 absolute pointer-events-none overflow-hidden"
-            >
-              Aplicar
-            </Button>
-          </form>
+          <Label className="text-sm mb-2 font-medium">Marca</Label>
+          <Select onValueChange={onMarcaChange} value={marcaInput}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder={marcasLoading ? "Cargando..." : "Selecciona marca"} />
+            </SelectTrigger>
+            <SelectContent className="max-h-60">
+              {marcasLoading ? (
+                <div className="flex items-center justify-center py-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                </div>
+              ) : (
+                marcas.map((m) => (
+                  <SelectItem key={m.id} value={m.marca}>
+                    {m.marca}
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
         </div>
         {/* Modelo */}
         <Separator />
         <div className="space-y-2">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              onModeloChange(modeloInput);
-            }}
+          <Label className="text-sm mb-2 font-medium">Modelo</Label>
+          <Select 
+            onValueChange={(v) => {
+              const modeloLimpio = v.replace(/\s*\([^)]*\)\s*$/, "").trim();
+              onModeloChange(modeloLimpio);
+            }} 
+            value={getModelosByMarca(marcaInput).find(m => 
+              m.modelo.replace(/\s*\([^)]*\)\s*$/, "").trim() === modeloInput
+            )?.modelo || ""}
+            disabled={!marcaInput || modelosLoading}
           >
-            <Label className="text-sm mb-2 font-medium">Modelo</Label>
-            <input
-              type="text"
-              placeholder="Ej: Corolla"
-              value={modeloInput}
-              onChange={(e) => setModeloInput(e.target.value)}
-              className="w-full border rounded px-2 py-1.5 text-xs"
-            />
-            <Button
-              type="submit"
-              className="opacity-0 absolute pointer-events-none overflow-hidden"
-            >
-              Aplicar
-            </Button>
-          </form>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder={modelosLoading ? "Cargando..." : "Selecciona modelo"} />
+            </SelectTrigger>
+            <SelectContent className="max-h-60">
+              {getModelosByMarca(marcaInput).map((m) => (
+                <SelectItem key={m.id} value={m.modelo}>
+                  {m.modelo}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         {/* Año */}
         <Separator />
         <div className="space-y-2">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              onYearChange(yearInput);
-            }}
+          <Label className="text-sm mb-2 font-medium">Año del vehiculo</Label>
+          <div className="flex flex-wrap gap-2 mb-2">
+            {years.map((y) => (
+              <Badge key={y} variant="secondary" className="flex items-center gap-1 pr-1">
+                {y}
+                <button
+                  type="button"
+                  onClick={() => removeYear(y)}
+                  className="hover:bg-muted rounded-full p-0.5"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </Badge>
+            ))}
+          </div>
+          <Select 
+            onValueChange={onYearChange} 
+            value=""
+            disabled={!marcaInput || getAniosByMarca(marcaInput).length === 0}
           >
-            <Label className="text-sm mb-2 font-medium">Año del vehiculo</Label>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {years.map((y) => (
-                <Badge key={y} variant="secondary" className="flex items-center gap-1 pr-1">
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Agregar año" />
+            </SelectTrigger>
+            <SelectContent className="max-h-60">
+              {getAniosByMarca(marcaInput).map((y) => (
+                <SelectItem key={y} value={y.toString()}>
                   {y}
-                  <button
-                    type="button"
-                    onClick={() => removeYear(y)}
-                    className="hover:bg-muted rounded-full p-0.5"
-                  >
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </Badge>
+                </SelectItem>
               ))}
-            </div>
-            <input
-              type="number"
-              placeholder="Ej: 2015"
-              value={yearInput}
-              onChange={(e) => setYearInput(e.target.value)}
-              className="w-full border rounded px-2 py-1.5 text-xs"
-            />
-            <Button
-              type="submit"
-              className="opacity-0 absolute pointer-events-none overflow-hidden"
-            >
-              Aplicar
-            </Button>
-          </form>
+            </SelectContent>
+          </Select>
         </div>
         {/* Tipo de Vehiculo */}
         <Separator />

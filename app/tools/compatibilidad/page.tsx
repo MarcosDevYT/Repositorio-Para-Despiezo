@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useMarcas } from "@/hooks/use-marcas";
+import { useModelos } from "@/hooks/use-modelos";
 
 const SECRET_KEY = "catalogosecreto";
 
@@ -67,6 +68,7 @@ export default function CompatibilidadToolsPage() {
   
   // Marcas del API externo
   const { marcas: marcasApi, loading: marcasLoading } = useMarcas();
+  const { getModelosByMarca, getAniosByMarca, loading: modelosLoading } = useModelos();
 
   // Data state
   const [compatibilidades, setCompatibilidades] = useState<CompatibilidadItem[]>([]);
@@ -85,6 +87,10 @@ export default function CompatibilidadToolsPage() {
   const [marcaFilter, setMarcaFilter] = useState("");
   const [modeloFilter, setModeloFilter] = useState("");
   const [anioFilter, setAnioFilter] = useState("");
+
+  // Modelos y años filtrados por marca seleccionada
+  const modelosFiltrados = marcaFilter && marcaFilter !== "all" ? getModelosByMarca(marcaFilter) : [];
+  const aniosFiltrados = marcaFilter && marcaFilter !== "all" ? getAniosByMarca(marcaFilter) : [];
 
   // OEM lookup
   const [oemInput, setOemInput] = useState("");
@@ -352,28 +358,39 @@ export default function CompatibilidadToolsPage() {
                   </SelectContent>
                 </Select>
 
-                <Select value={modeloFilter} onValueChange={setModeloFilter}>
-                  <SelectTrigger className="w-[150px]">
-                    <SelectValue placeholder="Modelo" />
+                <Select 
+                  value={modeloFilter} 
+                  onValueChange={(v) => {
+                    const modeloLimpio = v === "all" ? "all" : v.replace(/\s*\([^)]*\)\s*$/, "").trim();
+                    setModeloFilter(modeloLimpio);
+                  }}
+                  disabled={!marcaFilter || marcaFilter === "all" || modelosLoading}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder={modelosLoading ? "Cargando..." : "Modelo"} />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-60">
                     <SelectItem value="all">Todos</SelectItem>
-                    {filters.modelos.map((m) => (
-                      <SelectItem key={m} value={m}>
-                        {m}
+                    {modelosFiltrados.map((m) => (
+                      <SelectItem key={m.id} value={m.modelo}>
+                        {m.modelo}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
 
-                <Select value={anioFilter} onValueChange={setAnioFilter}>
+                <Select 
+                  value={anioFilter} 
+                  onValueChange={setAnioFilter}
+                  disabled={!marcaFilter || marcaFilter === "all" || aniosFiltrados.length === 0}
+                >
                   <SelectTrigger className="w-[120px]">
                     <SelectValue placeholder="Año" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-60">
                     <SelectItem value="all">Todos</SelectItem>
-                    {filters.anios.map((a) => (
-                      <SelectItem key={a} value={a}>
+                    {aniosFiltrados.map((a) => (
+                      <SelectItem key={a} value={a.toString()}>
                         {a}
                       </SelectItem>
                     ))}

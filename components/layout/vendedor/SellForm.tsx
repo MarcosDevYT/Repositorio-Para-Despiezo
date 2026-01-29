@@ -39,6 +39,7 @@ import { conditions } from "@/lib/constants/conts";
 import { getScrapperOemData } from "@/actions/scrapper-action";
 import { cn } from "@/lib/utils";
 import { useMarcas } from "@/hooks/use-marcas";
+import { useModelos } from "@/hooks/use-modelos";
 
 type SellFormProps = {
   initialValues?: Partial<z.infer<typeof sellSchema>>;
@@ -55,6 +56,7 @@ export const SellForm = ({ initialValues, action }: SellFormProps) => {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const { marcas, loading: marcasLoading } = useMarcas();
+  const { getModelosByMarca, getAniosByMarca, loading: modelosLoading } = useModelos();
 
   const form = useForm<z.infer<typeof sellSchema>>({
     resolver: zodResolver(sellSchema),
@@ -83,6 +85,11 @@ export const SellForm = ({ initialValues, action }: SellFormProps) => {
       ...initialValues,
     },
   });
+
+  // Obtener marca actual del form para filtrar modelos
+  const marcaActual = form.watch("brand");
+  const modelosFiltrados = marcaActual ? getModelosByMarca(marcaActual) : [];
+  const aniosFiltrados = marcaActual ? getAniosByMarca(marcaActual) : [];
 
   /**
    * Funcion para obtener datos del scrapper
@@ -253,9 +260,30 @@ export const SellForm = ({ initialValues, action }: SellFormProps) => {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Modelo</FormLabel>
-                <FormControl>
-                  <Input {...field} placeholder="Corolla" />
-                </FormControl>
+                <Select
+                  onValueChange={(v) => {
+                    // Extraer solo el nombre del modelo sin las fechas
+                    const modeloLimpio = v.replace(/\s*\([^)]*\)\s*$/, "").trim();
+                    field.onChange(modeloLimpio);
+                  }}
+                  value={modelosFiltrados.find(m => 
+                    m.modelo.replace(/\s*\([^)]*\)\s*$/, "").trim() === field.value
+                  )?.modelo || ""}
+                  disabled={!marcaActual || modelosLoading}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder={modelosLoading ? "Cargando..." : "Selecciona un modelo"} />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent className="max-h-60">
+                    {modelosFiltrados.map((m) => (
+                      <SelectItem key={m.id} value={m.modelo}>
+                        {m.modelo}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
@@ -268,9 +296,24 @@ export const SellForm = ({ initialValues, action }: SellFormProps) => {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Año</FormLabel>
-                <FormControl>
-                  <Input {...field} placeholder="2015" />
-                </FormControl>
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value}
+                  disabled={!marcaActual || aniosFiltrados.length === 0}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona un año" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent className="max-h-60">
+                    {aniosFiltrados.map((y) => (
+                      <SelectItem key={y} value={y.toString()}>
+                        {y}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}

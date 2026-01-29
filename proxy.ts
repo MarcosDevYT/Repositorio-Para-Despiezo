@@ -38,6 +38,7 @@ export default proxy((req) => {
     "/api/stripe/connect",
     "/api/vehicles",
     "/api/marcas",
+    "/api/modelos",
     "/api/compatibilidades-oem",
     "/tools/compatibilidad",
   ];
