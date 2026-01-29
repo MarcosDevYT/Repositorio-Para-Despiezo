@@ -47,81 +47,87 @@ export function BuscadorMMY() {
   };
 
   return (
-    <Card className="flex flex-row gap-0 px-2 py-2 w-full max-w-3xl mx-auto items-center">
+    <div className="flex flex-col sm:flex-row w-full max-w-4xl mx-auto items-stretch gap-0 bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
       {/* Marca */}
-      <Select
-        value={marca}
-        onValueChange={(v) => {
-          setMarca(v);
-          setModeloId(null);
-          setModeloNombre("");
-          setYear("");
-        }}
-      >
-        <SelectTrigger className="rounded-none rounded-l-md border-r-0 w-40">
-          <SelectValue placeholder="Marca" />
-        </SelectTrigger>
-        <SelectContent>
-          {marcasLoading ? (
-            <div className="flex items-center justify-center py-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
-            </div>
-          ) : (
-            marcas.map((m) => (
-              <SelectItem key={m.id} value={m.marca}>
-                {m.marca}
-              </SelectItem>
-            ))
-          )}
-        </SelectContent>
-      </Select>
+      <div className="flex-1 min-w-0 border-b sm:border-b-0 sm:border-r border-gray-100">
+        <Select
+          value={marca}
+          onValueChange={(v) => {
+            setMarca(v);
+            setModeloId(null);
+            setModeloNombre("");
+            setYear("");
+          }}
+        >
+          <SelectTrigger className="h-14 w-full border-0 focus:ring-0 focus:ring-offset-0 rounded-none bg-transparent px-4">
+            <SelectValue placeholder="Marca" />
+          </SelectTrigger>
+          <SelectContent>
+            {marcasLoading ? (
+              <div className="flex items-center justify-center py-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+              </div>
+            ) : (
+              marcas.map((m) => (
+                <SelectItem key={m.id} value={m.marca}>
+                  {m.marca}
+                </SelectItem>
+              ))
+            )}
+          </SelectContent>
+        </Select>
+      </div>
 
       {/* Modelo */}
-      <Select
-        value={modeloId?.toString() || ""}
-        onValueChange={(v) => {
-          const id = parseInt(v, 10);
-          setModeloId(id);
-          const modelo = modelosFiltrados.find((m) => m.id === id);
-          setModeloNombre(modelo?.modelo || "");
-          setYear("");
-        }}
-        disabled={!marca || modelosLoading}
-      >
-        <SelectTrigger className="rounded-none border-x-0 w-48 h-9">
-          <SelectValue placeholder={modelosLoading ? "Cargando..." : "Modelo"} />
-        </SelectTrigger>
-        <SelectContent className="max-h-60">
-          {modelosFiltrados.map((m) => (
-            <SelectItem key={m.id} value={m.id.toString()}>
-              {m.modelo}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <div className="flex-[1.5] min-w-0 border-b sm:border-b-0 sm:border-r border-gray-100">
+        <Select
+          value={modeloId?.toString() || ""}
+          onValueChange={(v) => {
+            const id = parseInt(v, 10);
+            setModeloId(id);
+            const modelo = modelosFiltrados.find((m) => m.id === id);
+            setModeloNombre(modelo?.modelo || "");
+            setYear("");
+          }}
+          disabled={!marca || modelosLoading}
+        >
+          <SelectTrigger className="h-14 w-full border-0 focus:ring-0 focus:ring-offset-0 rounded-none bg-transparent px-4">
+            <SelectValue placeholder={modelosLoading ? "Cargando..." : "Modelo"} />
+          </SelectTrigger>
+          <SelectContent className="max-h-60">
+            {modelosFiltrados.map((m) => (
+              <SelectItem key={m.id} value={m.id.toString()}>
+                {m.modelo}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       {/* Año */}
-      <Select value={year} onValueChange={(v) => setYear(v)} disabled={!modeloId || aniosFiltrados.length === 0}>
-        <SelectTrigger className="rounded-none border-l-0 w-32">
-          <SelectValue placeholder="Año" />
-        </SelectTrigger>
-        <SelectContent className="max-h-60">
-          {aniosFiltrados.map((y) => (
-            <SelectItem key={y} value={y.toString()}>
-              {y}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <div className="flex-1 min-w-0 border-b sm:border-b-0 sm:border-r border-gray-100">
+        <Select value={year} onValueChange={(v) => setYear(v)} disabled={!modeloId || aniosFiltrados.length === 0}>
+          <SelectTrigger className="h-14 w-full border-0 focus:ring-0 focus:ring-offset-0 rounded-none bg-transparent px-4">
+            <SelectValue placeholder="Año" />
+          </SelectTrigger>
+          <SelectContent className="max-h-60">
+            {aniosFiltrados.map((y) => (
+              <SelectItem key={y} value={y.toString()}>
+                {y}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       {/* Botón buscar */}
       <Button
-        className="rounded-l-none h-9"
+        className="h-14 px-10 bg-blue-600 hover:bg-blue-700 text-white font-bold transition-all rounded-none sm:w-auto"
         disabled={!marca || !modeloNombre || !year}
         onClick={buscar}
       >
         Buscar
       </Button>
-    </Card>
+    </div>
   );
 }

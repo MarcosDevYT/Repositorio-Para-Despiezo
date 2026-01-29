@@ -15,53 +15,85 @@ export async function GET(req: Request) {
 
     // Filtrar por cantidad de parámetros no nulos
     if (minParams || maxParams) {
-      const min = minParams ? parseInt(minParams) : undefined;
-      const max = maxParams ? parseInt(maxParams) : undefined;
+      const min = minParams ? parseInt(minParams) : 0;
+      const max = maxParams ? parseInt(maxParams) : 999;
 
-      // Obtener todos los vehículos y filtrar en memoria
-      const allVehicles = await prisma.vehicle.findMany({
-        orderBy: { updatedAt: "desc" },
-      });
+      // Usar queryRaw para filtrar por conteo de campos no nulos directamente en la DB
+      const vehiclesResult = await prisma.$queryRawUnsafe<any[]>(`
+        SELECT *, (
+          (CASE WHEN tipo IS NOT NULL AND tipo != '' THEN 1 ELSE 0 END) +
+          (CASE WHEN "yearRange" IS NOT NULL AND "yearRange" != '' THEN 1 ELSE 0 END) +
+          (CASE WHEN "bodyType" IS NOT NULL AND "bodyType" != '' THEN 1 ELSE 0 END) +
+          (CASE WHEN "driveType" IS NOT NULL AND "driveType" != '' THEN 1 ELSE 0 END) +
+          (CASE WHEN "powerKw" IS NOT NULL AND "powerKw" != '' THEN 1 ELSE 0 END) +
+          (CASE WHEN "powerHp" IS NOT NULL AND "powerHp" != '' THEN 1 ELSE 0 END) +
+          (CASE WHEN "displacement" IS NOT NULL AND "displacement" != '' THEN 1 ELSE 0 END) +
+          (CASE WHEN cylinders IS NOT NULL AND cylinders != '' THEN 1 ELSE 0 END) +
+          (CASE WHEN valves IS NOT NULL AND valves != '' THEN 1 ELSE 0 END) +
+          (CASE WHEN "engineType" IS NOT NULL AND "engineType" != '' THEN 1 ELSE 0 END) +
+          (CASE WHEN "engineCode" IS NOT NULL AND "engineCode" != '' THEN 1 ELSE 0 END) +
+          (CASE WHEN transmission IS NOT NULL AND transmission != '' THEN 1 ELSE 0 END) +
+          (CASE WHEN "fuelType" IS NOT NULL AND "fuelType" != '' THEN 1 ELSE 0 END) +
+          (CASE WHEN "fuelPreparation" IS NOT NULL AND "fuelPreparation" != '' THEN 1 ELSE 0 END) +
+          (CASE WHEN "brakeSystem" IS NOT NULL AND "brakeSystem" != '' THEN 1 ELSE 0 END)
+        ) as param_count
+        FROM "Vehicle"
+        WHERE 1=1
+        HAVING (
+          (CASE WHEN tipo IS NOT NULL AND tipo != '' THEN 1 ELSE 0 END) +
+          (CASE WHEN "yearRange" IS NOT NULL AND "yearRange" != '' THEN 1 ELSE 0 END) +
+          (CASE WHEN "bodyType" IS NOT NULL AND "bodyType" != '' THEN 1 ELSE 0 END) +
+          (CASE WHEN "driveType" IS NOT NULL AND "driveType" != '' THEN 1 ELSE 0 END) +
+          (CASE WHEN "powerKw" IS NOT NULL AND "powerKw" != '' THEN 1 ELSE 0 END) +
+          (CASE WHEN "powerHp" IS NOT NULL AND "powerHp" != '' THEN 1 ELSE 0 END) +
+          (CASE WHEN "displacement" IS NOT NULL AND "displacement" != '' THEN 1 ELSE 0 END) +
+          (CASE WHEN cylinders IS NOT NULL AND cylinders != '' THEN 1 ELSE 0 END) +
+          (CASE WHEN valves IS NOT NULL AND valves != '' THEN 1 ELSE 0 END) +
+          (CASE WHEN "engineType" IS NOT NULL AND "engineType" != '' THEN 1 ELSE 0 END) +
+          (CASE WHEN "engineCode" IS NOT NULL AND "engineCode" != '' THEN 1 ELSE 0 END) +
+          (CASE WHEN transmission IS NOT NULL AND transmission != '' THEN 1 ELSE 0 END) +
+          (CASE WHEN "fuelType" IS NOT NULL AND "fuelType" != '' THEN 1 ELSE 0 END) +
+          (CASE WHEN "fuelPreparation" IS NOT NULL AND "fuelPreparation" != '' THEN 1 ELSE 0 END) +
+          (CASE WHEN "brakeSystem" IS NOT NULL AND "brakeSystem" != '' THEN 1 ELSE 0 END)
+        ) BETWEEN $1 AND $2
+        ORDER BY "updatedAt" DESC
+        LIMIT $3 OFFSET $4
+      `, min, max, limit, offset);
 
-      const filteredVehicles = allVehicles.filter((vehicle) => {
-        // Contar parámetros no nulos (excluyendo id, plate, source, title, fullName, createdAt, updatedAt)
-        const paramCount = [
-          vehicle.tipo,
-          vehicle.yearRange,
-          vehicle.bodyType,
-          vehicle.driveType,
-          vehicle.powerKw,
-          vehicle.powerHp,
-          vehicle.displacement,
-          vehicle.cylinders,
-          vehicle.valves,
-          vehicle.engineType,
-          vehicle.engineCode,
-          vehicle.transmission,
-          vehicle.fuelType,
-          vehicle.fuelPreparation,
-          vehicle.brakeSystem,
-        ].filter((param) => param !== null && param !== "").length;
+      const totalResult = await prisma.$queryRawUnsafe<any[]>(`
+        SELECT COUNT(*) as count FROM (
+          SELECT id
+          FROM "Vehicle"
+          WHERE 1=1
+          HAVING (
+            (CASE WHEN tipo IS NOT NULL AND tipo != '' THEN 1 ELSE 0 END) +
+            (CASE WHEN "yearRange" IS NOT NULL AND "yearRange" != '' THEN 1 ELSE 0 END) +
+            (CASE WHEN "bodyType" IS NOT NULL AND "bodyType" != '' THEN 1 ELSE 0 END) +
+            (CASE WHEN "driveType" IS NOT NULL AND "driveType" != '' THEN 1 ELSE 0 END) +
+            (CASE WHEN "powerKw" IS NOT NULL AND "powerKw" != '' THEN 1 ELSE 0 END) +
+            (CASE WHEN "powerHp" IS NOT NULL AND "powerHp" != '' THEN 1 ELSE 0 END) +
+            (CASE WHEN "displacement" IS NOT NULL AND "displacement" != '' THEN 1 ELSE 0 END) +
+            (CASE WHEN cylinders IS NOT NULL AND cylinders != '' THEN 1 ELSE 0 END) +
+            (CASE WHEN valves IS NOT NULL AND valves != '' THEN 1 ELSE 0 END) +
+            (CASE WHEN "engineType" IS NOT NULL AND "engineType" != '' THEN 1 ELSE 0 END) +
+            (CASE WHEN "engineCode" IS NOT NULL AND "engineCode" != '' THEN 1 ELSE 0 END) +
+            (CASE WHEN transmission IS NOT NULL AND transmission != '' THEN 1 ELSE 0 END) +
+            (CASE WHEN "fuelType" IS NOT NULL AND "fuelType" != '' THEN 1 ELSE 0 END) +
+            (CASE WHEN "fuelPreparation" IS NOT NULL AND "fuelPreparation" != '' THEN 1 ELSE 0 END) +
+            (CASE WHEN "brakeSystem" IS NOT NULL AND "brakeSystem" != '' THEN 1 ELSE 0 END)
+          ) BETWEEN $1 AND $2
+        ) as count_table
+      `, min, max);
 
-        if (min !== undefined && max !== undefined) {
-          return paramCount >= min && paramCount <= max;
-        } else if (min !== undefined) {
-          return paramCount >= min;
-        } else if (max !== undefined) {
-          return paramCount <= max;
-        }
-        return true;
-      });
-
-      const paginatedVehicles = filteredVehicles.slice(offset, offset + limit);
+      const total = Number(totalResult[0]?.count || 0);
 
       return NextResponse.json({
         success: true,
-        total: filteredVehicles.length,
-        count: paginatedVehicles.length,
+        total,
+        count: vehiclesResult.length,
         limit,
         offset,
-        vehicles: paginatedVehicles.map((v) => ({
+        vehicles: vehiclesResult.map((v) => ({
           plate: v.plate,
           source: v.source,
           title: v.title,

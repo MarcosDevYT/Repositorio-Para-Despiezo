@@ -688,32 +688,24 @@ export const getProductsByFilterAction = async (filters: ProductFilter) => {
     // --------------------------
     // Traer productos
     // --------------------------
-    const productsRaw = await prisma.product.findMany({
+    const products = await prisma.product.findMany({
       where,
       skip: (page - 1) * limit,
       take: limit,
       include: {
         favorites: userId ? { where: { userId }, select: { id: true } } : false,
       },
-    });
-
-    const now = new Date();
-
-    // --------------------------
-    // Ordenar: destacados arriba
-    // --------------------------
-    const products = productsRaw.sort((a, b) => {
-      const aFeatured = a.featuredUntil && a.featuredUntil >= now ? 1 : 0;
-      const bFeatured = b.featuredUntil && b.featuredUntil >= now ? 1 : 0;
-
-      if (aFeatured !== bFeatured) return bFeatured - aFeatured;
-
-      const aValue = a[orderBy];
-      const bValue = b[orderBy];
-
-      if (aValue === bValue) return 0;
-      if (orderDirection === "asc") return aValue > bValue ? 1 : -1;
-      return aValue < bValue ? 1 : -1;
+      orderBy: [
+        {
+          featuredUntil: {
+            sort: "desc",
+            nulls: "last",
+          },
+        },
+        {
+          [orderBy]: orderDirection,
+        },
+      ],
     });
 
     // --------------------------
@@ -796,9 +788,24 @@ export const getProductByIdAction = async (id: string) => {
       return { error: "El producto no existe" };
     }
 
+    // Obtener compatibilidades OEM basadas en el oemNumber del producto
+    let oemCompatibilidades: any[] = [];
+    if (product.oemNumber) {
+      const oemPieza = await prisma.oemPieza.findUnique({
+        where: { oem: product.oemNumber.toUpperCase() },
+        include: {
+          compatibilidades: {
+            orderBy: { createdAt: "desc" },
+          },
+        },
+      });
+      oemCompatibilidades = oemPieza?.compatibilidades || [];
+    }
+
     return {
       ...product,
       isFavorite: userId ? product.favorites.length > 0 : false,
+      oemCompatibilidades,
     };
   } catch (error) {
     console.log(error);

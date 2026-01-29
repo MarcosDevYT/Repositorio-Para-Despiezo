@@ -92,13 +92,31 @@ export async function getOrders(page: number = 1, limit: number = 10) {
 
     const [ordenes, total] = await Promise.all([
       prisma.orden.findMany({
-        include: {
-          buyer: true,
-          vendor: true,
+        select: {
+          id: true,
+          amountTotal: true,
+          status: true,
+          createdAt: true,
+          shippingLabelUrl: true,
+          trackingNumber: true,
+          buyer: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          vendor: {
+            select: {
+              id: true,
+              name: true,
+              businessName: true,
+            },
+          },
         },
         skip,
         take: limit,
-        orderBy: { createdAt: "desc" }, // opcional
+        orderBy: { createdAt: "desc" },
       }),
       prisma.orden.count(),
     ]);

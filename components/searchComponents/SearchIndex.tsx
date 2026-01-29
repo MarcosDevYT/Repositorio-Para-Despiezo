@@ -14,6 +14,8 @@ export const SearchIndex = ({ userId }: { userId?: string }) => {
 
   const [query, setQuery] = useState(queryParams);
   const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [oemSuggestions, setOemSuggestions] = useState<any[]>([]);
+  const [productsByOem, setProductsByOem] = useState<any[]>([]);
   const [popular, setPopular] = useState<any[]>([]);
   const [history, setHistory] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -47,11 +49,15 @@ export const SearchIndex = ({ userId }: { userId?: string }) => {
       const data = await res.json();
 
       setSuggestions(data.suggestions || []);
+      setOemSuggestions(data.oemSuggestions || []);
+      setProductsByOem(data.productsByOem || []);
       setPopular(data.popular || []);
       setHistory(data.history || []); // 👈 guardamos historial
       setShowSuggestions(true);
     } catch {
       setSuggestions([]);
+      setOemSuggestions([]);
+      setProductsByOem([]);
       setPopular([]);
       setHistory([]);
     } finally {
@@ -148,11 +154,15 @@ export const SearchIndex = ({ userId }: { userId?: string }) => {
         const data = await res.json();
 
         setSuggestions(data.suggestions || []);
+        setOemSuggestions(data.oemSuggestions || []);
+        setProductsByOem(data.productsByOem || []);
         setPopular(data.popular || []);
 
         lastFetchedQuery.current = initialQuery;
       } catch {
         setSuggestions([]);
+        setOemSuggestions([]);
+        setProductsByOem([]);
         setPopular([]);
       }
     };
@@ -232,6 +242,80 @@ export const SearchIndex = ({ userId }: { userId?: string }) => {
                 </>
               )}
 
+              {/* Sección OEM */}
+              {oemSuggestions.length > 0 && (
+                <>
+                  <p className="text-xs text-gray-500 mt-3 mb-1 px-1">
+                    Referencias OEM
+                  </p>
+                  <ul>
+                    {oemSuggestions.map((oem) => (
+                      <li
+                        key={oem.id}
+                        className="p-2 cursor-pointer hover:bg-gray-100 rounded flex items-center justify-between"
+                        onClick={() => handleSearch(oem.oem)}
+                      >
+                        <div>
+                          <span className="font-mono font-semibold text-blue-600">
+                            {oem.oem}
+                          </span>
+                          {oem.name && (
+                            <span className="text-gray-600 ml-2 text-sm">
+                              — {oem.name}
+                            </span>
+                          )}
+                        </div>
+                        {oem.compatCount > 0 && (
+                          <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                            {oem.compatCount} compat.
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+
+              {/* Sección productos por OEM */}
+              {productsByOem.length > 0 && (
+                <>
+                  <p className="text-xs text-gray-500 mt-3 mb-1 px-1">
+                    Productos con este OEM
+                  </p>
+                  <ul>
+                    {productsByOem.map((p) => (
+                      <li
+                        key={p.id}
+                        className="p-2 cursor-pointer hover:bg-gray-100 rounded flex items-center gap-3"
+                        onClick={() => {
+                          setShowSuggestions(false);
+                          window.location.href = `/productos/${p.id}`;
+                        }}
+                      >
+                        {p.image && (
+                          <img
+                            src={p.image}
+                            alt={p.name}
+                            className="w-10 h-10 object-cover rounded"
+                          />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{p.name}</p>
+                          <p className="text-xs text-gray-500">
+                            <span className="font-mono text-blue-600">{p.oemNumber}</span>
+                            {p.brand && ` • ${p.brand}`}
+                            {p.model && ` ${p.model}`}
+                          </p>
+                        </div>
+                        <span className="text-sm font-bold text-green-600">
+                          €{p.price}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+
               {/* Sección sugerencias */}
               {suggestions.length > 0 && (
                 <>
@@ -275,7 +359,7 @@ export const SearchIndex = ({ userId }: { userId?: string }) => {
                 </>
               )}
 
-              {suggestions.length === 0 && popular.length === 0 && (
+              {suggestions.length === 0 && oemSuggestions.length === 0 && productsByOem.length === 0 && popular.length === 0 && (
                 <p className="p-2 text-gray-500 text-sm italic">
                   No se encontraron resultados
                 </p>

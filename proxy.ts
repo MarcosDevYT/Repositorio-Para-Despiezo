@@ -25,6 +25,7 @@ export default proxy((req) => {
     "/api/scrapper-oem",
     "/api/search",
     "/api/search/suggest",
+    "/api/search/suggest/log",
     "/api/auth/signin/google",
     "/api/auth/verify-email",
     "/api/auth/callback/google",

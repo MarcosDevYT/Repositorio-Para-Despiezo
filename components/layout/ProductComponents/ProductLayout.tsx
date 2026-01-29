@@ -19,7 +19,7 @@ import {
   Truck,
   Zap,
 } from "lucide-react";
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect, useRef } from "react";
 import { toggleFavoriteAction } from "@/actions/user-actions";
 import { startChatAction } from "@/actions/chat-actions";
 import { toast } from "sonner";
@@ -39,13 +39,8 @@ import Image from "next/image";
 import { Session } from "next-auth";
 import { differenceInDays, differenceInHours } from "date-fns";
 import ProductsRelationed from "./ProductsRelationed";
-
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { User } from "@prisma/client";
+import { ProductCompatibilities } from "./ProductCompatibilities";
 
 function Detail({
   icon: Icon,
@@ -82,8 +77,24 @@ export const ProductLayout = ({
   const [isFavoritePending, startFavoriteTransition] = useTransition();
 
   const [isFavorite, setIsFavorite] = useState(product.isFavorite ?? false);
+  const [isSticky, setIsSticky] = useState(false);
+  const stickyCardRef = useRef<HTMLDivElement>(null);
 
   const isSold = product.status === "vendido";
+
+  // Detectar cuando el card está en modo sticky
+  useEffect(() => {
+    const handleScroll = () => {
+      if (stickyCardRef.current) {
+        const rect = stickyCardRef.current.getBoundingClientRect();
+        // Consideramos sticky cuando el top del card está cerca del top de la ventana (96px = top-24)
+        setIsSticky(rect.top <= 96);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const handleFavorite = () => {
     startFavoriteTransition(async () => {
@@ -203,28 +214,49 @@ export const ProductLayout = ({
         {/* Purchase & Seller */}
         <article className="flex-1 flex flex-col gap-4">
           {/* Product Info */}
-          <Card className="border border-border/50 lg:sticky lg:top-24 z-10">
-            <CardHeader className="space-y-3 pb-4">
-              <h1 className="text-xl lg:text-2xl font-bold text-foreground leading-tight">
+          <Card 
+            ref={stickyCardRef}
+            className={`border border-border/50 lg:sticky lg:top-24 z-10 transition-all duration-300 ${isSticky ? 'shadow-lg' : ''}`}
+          >
+            <CardHeader className={`transition-all duration-300 ${isSticky ? 'py-2 space-y-1' : 'pb-4 space-y-3'}`}>
+              <h1 className={`font-bold text-foreground leading-tight transition-all duration-300 ${isSticky ? 'text-sm lg:text-base line-clamp-1' : 'text-xl lg:text-2xl'}`}>
                 {product.name}
               </h1>
 
-              {hasOffer ? (
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl lg:text-4xl font-black text-primary">
-                    €{product.offerPrice}
-                  </span>
-                  <span className="text-lg line-through text-muted-foreground">
+              {/* Precio y botón en línea cuando sticky */}
+              <div className={`transition-all duration-300 ${isSticky ? 'flex items-center gap-3' : ''}`}>
+                {hasOffer ? (
+                  <div className="flex items-baseline gap-2">
+                    <span className={`font-black text-primary transition-all duration-300 ${isSticky ? 'text-lg' : 'text-3xl lg:text-4xl'}`}>
+                      €{product.offerPrice}
+                    </span>
+                    <span className={`line-through text-muted-foreground transition-all duration-300 ${isSticky ? 'text-xs' : 'text-lg'}`}>
+                      €{product.price}
+                    </span>
+                  </div>
+                ) : (
+                  <span className={`font-black text-foreground transition-all duration-300 ${isSticky ? 'text-lg' : 'text-3xl lg:text-4xl'}`}>
                     €{product.price}
                   </span>
-                </div>
-              ) : (
-                <span className="text-3xl lg:text-4xl font-black text-foreground">
-                  €{product.price}
-                </span>
-              )}
+                )}
 
-              <div className="flex flex-wrap items-center gap-1.5">
+                {/* Botón comprar - inline en sticky */}
+                {!isSold && isSticky && (
+                  <Button
+                    asChild
+                    size="sm"
+                    className="hidden lg:flex text-sm rounded-lg font-bold shadow-md hover:shadow-lg transition-all bg-primary hover:bg-primary/90 h-8 px-4"
+                  >
+                    <Link href={`/productos/${product.id}/checkout`}>
+                      <ShoppingCart className="size-4" />
+                      Comprar
+                    </Link>
+                  </Button>
+                )}
+              </div>
+
+              {/* Badges - Ocultos en modo sticky en desktop */}
+              <div className={`flex flex-wrap items-center gap-1.5 transition-all duration-300 ${isSticky ? 'hidden' : ''}`}>
                 <Badge
                   variant="secondary"
                   className="text-xs font-medium px-2.5 py-0.5"
@@ -248,7 +280,8 @@ export const ProductLayout = ({
               </div>
             </CardHeader>
 
-            <CardContent className="flex flex-col gap-2.5">
+            {/* CardContent - Oculto en sticky desktop, visible en móvil */}
+            <CardContent className={`flex flex-col gap-2.5 transition-all duration-300 ${isSticky ? 'lg:hidden' : ''}`}>
               {isSold ? (
                 <Button
                   variant={"destructive"}
@@ -261,7 +294,7 @@ export const ProductLayout = ({
                 <>
                   <Button
                     asChild
-                    className="h-12 text-base w-full rounded-xl font-bold shadow-md hover:shadow-lg transition-all bg-primary hover:bg-primary/90"
+                    className="text-base w-full rounded-xl font-bold shadow-md hover:shadow-lg transition-all bg-primary hover:bg-primary/90 h-12"
                   >
                     <Link href={`/productos/${product.id}/checkout`}>
                       <ShoppingCart className="size-5" />
@@ -344,11 +377,16 @@ export const ProductLayout = ({
             </CardContent>
           </Card>
 
+          {/* Compatibilidades OEM */}
+          {product.oemCompatibilidades && product.oemCompatibilidades.length > 0 && (
+            <ProductCompatibilities compatibilidades={product.oemCompatibilidades} />
+          )}
+
           {/* Seller Info */}
           <Card className="border border-border/50">
             <CardHeader className="pb-3">
               <div className="flex items-start gap-3">
-                <Link href={`/tienda/${vendedor.id}`} className="relative flex-shrink-0">
+                <Link href={`/tienda/${vendedor.id}`} className="flex-shrink-0">
                   <Avatar className="size-14">
                     <AvatarImage
                       className="object-cover"
@@ -358,23 +396,20 @@ export const ProductLayout = ({
                       {vendedor.name?.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
-                  <Tooltip>
-                    <TooltipTrigger className="absolute -bottom-1 -right-1 z-10">
-                      <div className="rounded-full size-6 flex items-center justify-center bg-primary text-white shadow-md">
-                        <Zap size={14} />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Vendedor Pro</p>
-                    </TooltipContent>
-                  </Tooltip>
                 </Link>
                 <div className="flex-1 min-w-0">
-                  <Link href={`/tienda/${vendedor.id}`}>
-                    <p className="font-bold text-base text-foreground line-clamp-1 hover:text-primary transition-colors">
-                      {vendedor.name}
-                    </p>
-                  </Link>
+                  <div className="flex items-center justify-between gap-2">
+                    <Link href={`/tienda/${vendedor.id}`}>
+                      <p className="font-bold text-base text-foreground line-clamp-1 hover:text-primary transition-colors">
+                        {vendedor.name}
+                      </p>
+                    </Link>
+                    {/* Badge Vendedor Pro - A la derecha del nombre */}
+                    <Badge className="bg-primary text-white shrink-0 px-2 py-0.5 text-xs flex items-center gap-1">
+                      <Zap className="h-3 w-3" />
+                      Vendedor Pro
+                    </Badge>
+                  </div>
                   <Link href={`/tienda/${vendedor.id}`}>
                     <p className="text-sm text-muted-foreground line-clamp-1 hover:text-foreground transition-colors">
                       {vendedor.businessName || "Vendedor profesional"}

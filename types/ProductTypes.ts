@@ -1,7 +1,8 @@
-import { Prisma, Product } from "@prisma/client";
+import { Prisma, Product, OemCompatibilidad } from "@prisma/client";
 
 export interface ProductType extends Product {
   isFavorite?: boolean | undefined;
+  oemCompatibilidades?: OemCompatibilidad[];
 }
 
 // Tipo para los items de la orden

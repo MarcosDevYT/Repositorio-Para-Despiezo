@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Poppins } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { SessionProvider } from "next-auth/react";
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/navbar/Navbar";
 
-const inter = Inter({
-  variable: "--font-inter",
+const poppins = Poppins({
+  variable: "--font-poppins",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
 });
 
 // Configuración de la metadata de la aplicación
@@ -28,7 +29,7 @@ export default async function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} antialiased bg-slate-50`}>
+      <body className={`${poppins.variable} antialiased bg-slate-50`}>
         <SessionProvider>
           <Navbar />
           {children}
