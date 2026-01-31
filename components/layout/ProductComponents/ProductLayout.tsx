@@ -30,7 +30,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -38,7 +37,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { Session } from "next-auth";
 import { differenceInDays, differenceInHours } from "date-fns";
-import ProductsRelationed from "./ProductsRelationed";
 import { User } from "@prisma/client";
 import { ProductCompatibilities } from "./ProductCompatibilities";
 
@@ -172,8 +170,8 @@ export const ProductLayout = ({
 
           <ProductThumbnails product={product} />
 
-          {/* Description & Details */}
-          <div className="space-y-5 hidden lg:block">
+          {/* Description */}
+          <div className="space-y-5">
             <Card className="border border-border/50">
               <CardHeader className="pb-3">
                 <h3 className="text-lg font-bold">Descripción del producto</h3>
@@ -182,30 +180,6 @@ export const ProductLayout = ({
                 <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">
                   {product.description}
                 </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border border-border/50">
-              <CardHeader className="pb-3">
-                <h3 className="text-lg font-bold">Características</h3>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-                  <Detail icon={Factory} label="Marca" value={product.brand} />
-                  <Detail icon={Tag} label="Modelo" value={product.model} />
-                  <Detail icon={Calendar} label="Año" value={product.year} />
-                  <Detail
-                    icon={Car}
-                    label="Vehículo"
-                    value={product.tipoDeVehiculo}
-                  />
-                  <Detail icon={Hash} label="OEM" value={product.oemNumber} />
-                  <Detail
-                    icon={Star}
-                    label="Condición"
-                    value={product.condition}
-                  />
-                </div>
               </CardContent>
             </Card>
           </div>
@@ -377,10 +351,30 @@ export const ProductLayout = ({
             </CardContent>
           </Card>
 
-          {/* Compatibilidades OEM */}
-          {product.oemCompatibilidades && product.oemCompatibilidades.length > 0 && (
-            <ProductCompatibilities compatibilidades={product.oemCompatibilidades} />
-          )}
+          {/* Características - Posicionado donde antes estaban las compatibilidades */}
+          <Card className="border border-border/50">
+            <CardHeader className="pb-3">
+              <h3 className="text-lg font-bold">Características</h3>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                <Detail icon={Factory} label="Marca" value={product.brand} />
+                <Detail icon={Tag} label="Modelo" value={product.model} />
+                <Detail icon={Calendar} label="Año" value={product.year} />
+                <Detail
+                  icon={Car}
+                  label="Vehículo"
+                  value={product.tipoDeVehiculo}
+                />
+                <Detail icon={Hash} label="OEM" value={product.oemNumber} />
+                <Detail
+                  icon={Star}
+                  label="Condición"
+                  value={product.condition}
+                />
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Seller Info */}
           <Card className="border border-border/50">
@@ -454,52 +448,15 @@ export const ProductLayout = ({
               </div>
             </CardContent>
           </Card>
-
-          {/* Description & Details - Mobile */}
-          <div className="space-y-4 lg:hidden">
-            <Card className="border border-border/50">
-              <CardHeader className="pb-3">
-                <h3 className="text-lg font-bold">Descripción</h3>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">
-                  {product.description}
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border border-border/50">
-              <CardHeader className="pb-3">
-                <h3 className="text-lg font-bold">Características</h3>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-                  <Detail icon={Factory} label="Marca" value={product.brand} />
-                  <Detail icon={Tag} label="Modelo" value={product.model} />
-                  <Detail icon={Calendar} label="Año" value={product.year} />
-                  <Detail
-                    icon={Car}
-                    label="Vehículo"
-                    value={product.tipoDeVehiculo}
-                  />
-                  <Detail icon={Hash} label="OEM" value={product.oemNumber} />
-                  <Detail
-                    icon={Star}
-                    label="Condición"
-                    value={product.condition}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
         </article>
       </section>
 
-      <ProductsRelationed
-        productId={product.id}
-        vendedorId={vendedor.id}
-        userId={session?.user.id}
-      />
+      {/* Compatibilidades - Ocupando todo el ancho abajo */}
+      {product.oemCompatibilidades && product.oemCompatibilidades.length > 0 && (
+        <section className="container mx-auto px-4 lg:px-6 pb-12">
+          <ProductCompatibilities compatibilidades={product.oemCompatibilidades} />
+        </section>
+      )}
     </>
   );
 };

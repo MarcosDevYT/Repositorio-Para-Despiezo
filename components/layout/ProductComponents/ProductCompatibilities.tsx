@@ -37,7 +37,6 @@ export function ProductCompatibilities({
   compatibilidades,
 }: ProductCompatibilitiesProps) {
   const [page, setPage] = useState(0);
-  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
   if (!compatibilidades || compatibilidades.length === 0) {
     return null;
@@ -47,18 +46,6 @@ export function ProductCompatibilities({
   const startIndex = page * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const currentItems = compatibilidades.slice(startIndex, endIndex);
-
-  const toggleExpand = (id: string) => {
-    setExpandedRows((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(id)) {
-        newSet.delete(id);
-      } else {
-        newSet.add(id);
-      }
-      return newSet;
-    });
-  };
 
   const handlePrevPage = () => {
     if (page > 0) setPage(page - 1);
@@ -106,108 +93,137 @@ export function ProductCompatibilities({
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="rounded-md border">
+        <div className="hidden md:block rounded-md border overflow-hidden">
           <Table>
-            <TableHeader>
+            <TableHeader className="bg-muted/50">
               <TableRow>
-                <TableHead className="w-[50px]"></TableHead>
-                <TableHead>Vehículo</TableHead>
-                <TableHead className="hidden sm:table-cell">Año</TableHead>
-                <TableHead className="text-center">Tipo</TableHead>
+                <TableHead className="font-bold">Marca / Modelo</TableHead>
+                <TableHead className="font-bold text-center">Año</TableHead>
+                <TableHead className="font-bold">Motor / Chasis</TableHead>
+                <TableHead className="font-bold">Tipo / Variante</TableHead>
+                <TableHead className="font-bold">Atributos</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {currentItems.map((comp) => {
-                const isExpanded = expandedRows.has(comp.id);
-                return (
-                  <Fragment key={comp.id}>
-                    <TableRow 
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => toggleExpand(comp.id)}
-                    >
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                        >
-                          {isExpanded ? (
-                            <ChevronUp className="h-4 w-4" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium">
-                          {comp.marca} {comp.modelo}
+              {currentItems.map((comp) => (
+                <TableRow key={comp.id} className="hover:bg-muted/30">
+                  <TableCell>
+                    <div className="font-bold text-foreground">
+                      {comp.marca} {comp.modelo}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-center font-medium">
+                    {comp.anio}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-0.5">
+                      {comp.motor && (
+                        <div className="flex items-center gap-1 text-xs">
+                          <Settings className="h-3 w-3 text-primary" />
+                          <span className="font-medium text-muted-foreground">Motor:</span>
+                          <span>{comp.motor}</span>
                         </div>
-                        <div className="text-xs text-muted-foreground sm:hidden">
-                          {comp.anio}
+                      )}
+                      {comp.chasis && (
+                        <div className="flex items-center gap-1 text-xs">
+                          <Car className="h-3 w-3 text-primary" />
+                          <span className="font-medium text-muted-foreground">Chasis:</span>
+                          <span>{comp.chasis}</span>
                         </div>
-                      </TableCell>
-                      <TableCell className="hidden sm:table-cell">
-                        {comp.anio}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {comp.tipo && (
-                          <Badge variant="outline" className="text-xs">
-                            {comp.tipo}
+                      )}
+                      {!comp.motor && !comp.chasis && "-"}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-1">
+                      {comp.tipo && (
+                        <Badge variant="secondary" className="text-[10px] w-fit">
+                          {comp.tipo}
+                        </Badge>
+                      )}
+                      {comp.variante && (
+                        <span className="text-xs text-muted-foreground italic">
+                          {comp.variante}
+                        </span>
+                      )}
+                      {!comp.tipo && !comp.variante && "-"}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1 max-w-[200px]">
+                      {comp.atributosExtra && Object.keys(comp.atributosExtra as object).length > 0 ? (
+                        Object.entries(comp.atributosExtra as object).map(([key, value]) => (
+                          <Badge key={key} variant="outline" className="text-[10px] py-0">
+                            {key}: {String(value)}
                           </Badge>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                    {isExpanded && (
-                      <TableRow className="bg-muted/30 hover:bg-muted/30">
-                        <TableCell colSpan={4} className="p-4">
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-                            {comp.variante && (
-                              <div>
-                                <span className="text-muted-foreground block text-xs">
-                                  Variante
-                                </span>
-                                <span className="font-medium">{comp.variante}</span>
-                              </div>
-                            )}
-                            {comp.chasis && (
-                              <div>
-                                <span className="text-muted-foreground block text-xs">
-                                  Chasis
-                                </span>
-                                <span className="font-medium">{comp.chasis}</span>
-                              </div>
-                            )}
-                            {comp.motor && (
-                              <div>
-                                <span className="text-muted-foreground block text-xs flex items-center gap-1">
-                                  <Settings className="h-3 w-3" /> Motor
-                                </span>
-                                <span className="font-medium">{comp.motor}</span>
-                              </div>
-                            )}
-                            {comp.atributosExtra && Object.keys(comp.atributosExtra as object).length > 0 && (
-                              <div className="col-span-2 sm:col-span-4">
-                                <span className="text-muted-foreground block text-xs mb-1">
-                                  Atributos adicionales
-                                </span>
-                                <div className="flex flex-wrap gap-1">
-                                  {Object.entries(comp.atributosExtra as object).map(([key, value]) => (
-                                    <Badge key={key} variant="secondary" className="text-xs">
-                                      {key}: {String(value)}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </Fragment>
-                );
-              })}
+                        ))
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
+        </div>
+
+        {/* Mobile View - Cards */}
+        <div className="grid grid-cols-1 gap-3 md:hidden">
+          {currentItems.map((comp) => (
+            <div key={comp.id} className="border rounded-xl p-4 space-y-3 bg-muted/10">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h4 className="font-bold text-base">
+                    {comp.marca} {comp.modelo}
+                  </h4>
+                  <p className="text-sm font-semibold text-primary">{comp.anio}</p>
+                </div>
+                {comp.tipo && (
+                  <Badge variant="secondary" className="text-xs">
+                    {comp.tipo}
+                  </Badge>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                {comp.motor && (
+                  <div className="space-y-1">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Settings className="h-3 w-3" /> Motor
+                    </span>
+                    <p className="font-medium">{comp.motor}</p>
+                  </div>
+                )}
+                {comp.chasis && (
+                  <div className="space-y-1">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Car className="h-3 w-3" /> Chasis
+                    </span>
+                    <p className="font-medium">{comp.chasis}</p>
+                  </div>
+                )}
+                {comp.variante && (
+                  <div className="col-span-2 space-y-1">
+                    <span className="text-xs text-muted-foreground block">Variante</span>
+                    <p className="font-medium">{comp.variante}</p>
+                  </div>
+                )}
+              </div>
+
+              {comp.atributosExtra && Object.keys(comp.atributosExtra as object).length > 0 && (
+                <div className="pt-2 border-t">
+                  <div className="flex flex-wrap gap-1">
+                    {Object.entries(comp.atributosExtra as object).map(([key, value]) => (
+                      <Badge key={key} variant="outline" className="text-[10px]">
+                        {key}: {String(value)}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
 
         {totalPages > 1 && (

@@ -59,6 +59,19 @@ export function useModelos(): UseModelosReturn {
 
     async function fetchModelos() {
       try {
+        // 1. Intentar obtener de LocalStorage
+        const cached = localStorage.getItem("modelos_cache");
+        if (cached) {
+          const { data, timestamp } = JSON.parse(cached);
+          const isExpired = Date.now() - timestamp > 1000 * 60 * 60 * 24; // 24 horas
+          
+          if (!isExpired) {
+            setData(data);
+            setLoading(false);
+            return;
+          }
+        }
+
         const res = await fetch("/api/modelos");
         const json = await res.json();
 
@@ -66,6 +79,13 @@ export function useModelos(): UseModelosReturn {
 
         if (json.success && Array.isArray(json.data)) {
           setData(json.data);
+          
+          // 2. Guardar en LocalStorage
+          localStorage.setItem("modelos_cache", JSON.stringify({
+            data: json.data,
+            timestamp: Date.now()
+          }));
+          
           setError(null);
         } else {
           setError(json.error || "Error al obtener modelos");

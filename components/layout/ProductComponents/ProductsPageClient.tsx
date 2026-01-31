@@ -6,7 +6,7 @@ import { ProductFilters } from "@/components/layout/ProductComponents/ProductFil
 import { ProductPagination } from "@/components/layout/ProductComponents/ProductPagination";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
-import { getProductsByFilterAction } from "@/actions/sell-actions";
+import { getProductsByFilterCached } from "@/actions/action-cache";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ProductFilterSheet } from "./ProductFilterSheet";
@@ -74,7 +74,7 @@ export const ProductsPageClient = ({ params, initialFilters, vehicleData }: Prop
   const fetchProducts = () => {
     startTransition(async () => {
       try {
-        const { products, total, counts } = await getProductsByFilterAction({
+        const { products, total, counts } = await getProductsByFilterCached({
           query,
           categoria,
           subcategoria,

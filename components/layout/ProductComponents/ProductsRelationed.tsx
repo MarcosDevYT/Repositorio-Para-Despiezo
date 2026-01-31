@@ -16,24 +16,35 @@ interface Props {
   vendedorId: string;
   productId: string;
   userId?: string;
+  initialRelated?: any[];
+  initialRecommended?: any[];
+  initialKits?: any[];
 }
 
 export default function ProductsRelationed({
   productId,
   vendedorId,
   userId,
+  initialRelated,
+  initialRecommended,
+  initialKits,
 }: Props) {
   const [recomendedProducts, setRecomendedProducts] = useState<
     Product[] | null
-  >(null);
+  >(initialRecommended && initialRecommended.length > 0 ? initialRecommended : null);
   const [vendedorProducts, setVendedorProducts] = useState<Product[] | null>(
-    null
+    initialRelated && initialRelated.length > 0 ? initialRelated : null
   );
-  const [kitsProduct, setKitsProduct] = useState<Kit[] | null>(null);
+  const [kitsProduct, setKitsProduct] = useState<Kit[] | null>(
+    initialKits && initialKits.length > 0 ? initialKits : null
+  );
 
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
+    // Si ya tenemos datos iniciales, no los pedimos de nuevo
+    if (initialRelated || initialRecommended || initialKits) return;
+
     startTransition(async () => {
       const [recommended, vendedor, kits] = await Promise.all([
         getRecommendedProductsByProductId(productId, userId),
@@ -45,7 +56,7 @@ export default function ProductsRelationed({
       setVendedorProducts(vendedor.length > 0 ? vendedor : null);
       setKitsProduct(kits.length > 0 ? kits : null);
     });
-  }, [productId, vendedorId]);
+  }, [productId, vendedorId, initialRelated, initialRecommended, initialKits]);
 
   // 🦴 Skeletons
   const SliderSkeleton = () => (

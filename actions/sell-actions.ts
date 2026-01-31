@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { sellSchema } from "@/lib/zodSchemas/sellSchema";
@@ -68,6 +69,12 @@ export const createProductAction = async (data: z.infer<typeof sellSchema>) => {
       },
     });
 
+    // Revalidar el cache global de productos y búsquedas
+    revalidateTag("products");
+    revalidatePath("/", "layout");
+    revalidatePath("/productos", "layout");
+    revalidatePath("/(routes)/productos/[id]", "layout");
+
     return { success: "Producto creado correctamente" };
   } catch (error) {
     console.log(error);
@@ -111,6 +118,13 @@ export async function updateProductAction(
       data: validatedData,
     });
 
+    // Revalidar el cache global de productos y búsquedas
+    revalidateTag("products");
+    revalidateTag(`product-${id}`);
+    revalidatePath("/", "layout");
+    revalidatePath("/productos", "layout");
+    revalidatePath(`/productos/${id}`);
+
     return { success: "Producto actualizado correctamente" };
   } catch (error) {
     return {
@@ -148,6 +162,13 @@ export async function deleteProductAction(id: string) {
     await prisma.product.delete({
       where: { id },
     });
+
+    // Revalidar el cache global de productos y búsquedas
+    revalidateTag("products");
+    revalidateTag(`product-${id}`);
+    revalidatePath("/", "layout");
+    revalidatePath("/productos", "layout");
+    revalidatePath(`/productos/${id}`);
 
     return { success: "Producto eliminado correctamente" };
   } catch (error) {
@@ -573,9 +594,6 @@ export async function getRecommendedProductsForUser(
  */
 export const getProductsByFilterAction = async (filters: ProductFilter) => {
   try {
-    const session = await auth();
-    const userId = session?.user?.id;
-
     const {
       page = 1,
       limit = 20,
@@ -583,85 +601,95 @@ export const getProductsByFilterAction = async (filters: ProductFilter) => {
       orderDirection = "desc",
     } = filters;
 
-    const where: any = {
-      status: "publicado",
-    };
+    const andConditions: any[] = [{ status: "publicado" }];
 
     // --------------------------
     // Filtros dinámicos
     // --------------------------
-    if (filters.query) {
-      where.OR = [
-        { name: { contains: filters.query, mode: "insensitive" } },
-        { description: { contains: filters.query, mode: "insensitive" } },
-        { brand: { contains: filters.query, mode: "insensitive" } },
-        { model: { contains: filters.query, mode: "insensitive" } },
-        { oemNumber: { contains: filters.query, mode: "insensitive" } },
-      ];
+    if (filters.query && filters.query.trim() !== "") {
+      andConditions.push({
+        OR: [
+          { name: { contains: filters.query, mode: "insensitive" } },
+          { description: { contains: filters.query, mode: "insensitive" } },
+          { brand: { contains: filters.query, mode: "insensitive" } },
+          { model: { contains: filters.query, mode: "insensitive" } },
+          { oemNumber: { contains: filters.query, mode: "insensitive" } },
+        ],
+      });
     }
 
-    if (filters.categoria && filters.subcategoria) {
-      where.AND = [
-        { category: filters.categoria },
-        { subcategory: filters.subcategoria },
-      ];
-    } else if (filters.categoria) {
-      where.category = filters.categoria;
-    } else if (filters.subcategoria) {
-      where.subcategory = filters.subcategoria;
+    if (filters.categoria && filters.categoria.trim() !== "") {
+      andConditions.push({ category: filters.categoria });
     }
 
-    if (filters.oem) where.oemNumber = filters.oem;
-    if (filters.marca)
-      where.brand = { contains: filters.marca, mode: "insensitive" };
-    if (filters.modelo)
-      where.model = { contains: filters.modelo, mode: "insensitive" };
+    if (filters.subcategoria && filters.subcategoria.trim() !== "") {
+      andConditions.push({ subcategory: filters.subcategoria });
+    }
+
+    if (filters.oem && filters.oem.trim() !== "") {
+      andConditions.push({ oemNumber: filters.oem });
+    }
+
+    if (filters.marca && filters.marca.trim() !== "") {
+      andConditions.push({ brand: { contains: filters.marca, mode: "insensitive" } });
+    }
+
+    if (filters.modelo && filters.modelo.trim() !== "") {
+      andConditions.push({ model: { contains: filters.modelo, mode: "insensitive" } });
+    }
 
     if (filters.estado) {
-      if (Array.isArray(filters.estado)) {
-        where.condition = { in: filters.estado };
-      } else {
-        where.condition = filters.estado;
+      if (Array.isArray(filters.estado) && filters.estado.length > 0) {
+        andConditions.push({ condition: { in: filters.estado } });
+      } else if (typeof filters.estado === "string" && filters.estado.trim() !== "") {
+        andConditions.push({ condition: filters.estado });
       }
     }
 
     if (filters.año) {
       const yearValues = Array.isArray(filters.año)
-        ? filters.año.flatMap(y => getYearsFromRange(y))
+        ? filters.año.flatMap((y) => getYearsFromRange(y))
         : getYearsFromRange(filters.año);
-      
+
       if (yearValues.length > 0) {
-        where.year = { in: yearValues };
+        andConditions.push({ year: { in: yearValues } });
       }
     }
-    if (filters.tipoDeVehiculo) where.tipoDeVehiculo = filters.tipoDeVehiculo;
+
+    if (filters.tipoDeVehiculo && filters.tipoDeVehiculo.trim() !== "") {
+      andConditions.push({ tipoDeVehiculo: filters.tipoDeVehiculo });
+    }
 
     if (filters.priceMin !== undefined || filters.priceMax !== undefined) {
-      where.OR = [
-        {
-          offer: true,
-          offerPrice: {
-            ...(filters.priceMin !== undefined && {
-              gte: filters.priceMin.toString(),
-            }),
-            ...(filters.priceMax !== undefined && {
-              lte: filters.priceMax.toString(),
-            }),
+      andConditions.push({
+        OR: [
+          {
+            offer: true,
+            offerPrice: {
+              ...(filters.priceMin !== undefined && {
+                gte: filters.priceMin.toString(),
+              }),
+              ...(filters.priceMax !== undefined && {
+                lte: filters.priceMax.toString(),
+              }),
+            },
           },
-        },
-        {
-          offer: false,
-          price: {
-            ...(filters.priceMin !== undefined && {
-              gte: filters.priceMin.toString(),
-            }),
-            ...(filters.priceMax !== undefined && {
-              lte: filters.priceMax.toString(),
-            }),
+          {
+            offer: false,
+            price: {
+              ...(filters.priceMin !== undefined && {
+                gte: filters.priceMin.toString(),
+              }),
+              ...(filters.priceMax !== undefined && {
+                lte: filters.priceMax.toString(),
+              }),
+            },
           },
-        },
-      ];
+        ],
+      });
     }
+
+    const where = { AND: andConditions };
 
     // --------------------------
     // Conteo total para paginación
@@ -673,7 +701,7 @@ export const getProductsByFilterAction = async (filters: ProductFilter) => {
     // --------------------------
     const conditionCountsRaw = await prisma.product.groupBy({
       by: ["condition"],
-      where, // aplica todos los filtros excepto 'estado'
+      where, 
       _count: { condition: true },
     });
 
@@ -692,9 +720,6 @@ export const getProductsByFilterAction = async (filters: ProductFilter) => {
       where,
       skip: (page - 1) * limit,
       take: limit,
-      include: {
-        favorites: userId ? { where: { userId }, select: { id: true } } : false,
-      },
       orderBy: [
         {
           featuredUntil: {
@@ -715,10 +740,7 @@ export const getProductsByFilterAction = async (filters: ProductFilter) => {
       total,
       page,
       limit,
-      products: products.map((p) => ({
-        ...p,
-        isFavorite: userId ? p.favorites.length > 0 : false,
-      })),
+      products: JSON.parse(JSON.stringify(products)), // Asegurar serialización para cache
       counts: {
         condition: conditionCounts,
       },
@@ -771,17 +793,11 @@ export const getFavoriteProductsAction = async () => {
  * Funciones para obtener productos teniendo encuenta el id del producto
  */
 
-// Obtener producto por id
+// Obtener producto por id (Versión base para cache)
 export const getProductByIdAction = async (id: string) => {
   try {
-    const session = await auth();
-    const userId = session?.user?.id;
-
     const product = await prisma.product.findUnique({
       where: { id },
-      include: {
-        favorites: userId ? { where: { userId }, select: { id: true } } : false,
-      },
     });
 
     if (!product) {
@@ -804,7 +820,6 @@ export const getProductByIdAction = async (id: string) => {
 
     return {
       ...product,
-      isFavorite: userId ? product.favorites.length > 0 : false,
       oemCompatibilidades,
     };
   } catch (error) {
@@ -812,6 +827,29 @@ export const getProductByIdAction = async (id: string) => {
     return { error: "Error al obtener el producto" };
   }
 };
+
+// Obtener estado de favorito de un producto para un usuario
+export const getProductFavoriteStatus = async (productId: string) => {
+  try {
+    const session = await auth();
+    const userId = session?.user?.id;
+    if (!userId) return false;
+
+    const favorite = await prisma.favorite.findUnique({
+      where: {
+        userId_productId: {
+          userId,
+          productId,
+        },
+      },
+    });
+
+    return !!favorite;
+  } catch (error) {
+    return false;
+  }
+};
+
 
 /**
  * Obtiene hasta 10 productos similares al producto actual.
