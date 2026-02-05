@@ -18,10 +18,19 @@ import {
   Loader2,
   Truck,
   Zap,
+  Search,
+  CheckCircle,
+  XCircle,
+  PartyPopper,
+  Frown,
+  ShieldCheck,
+  CalendarDays,
+  Sparkles,
 } from "lucide-react";
 import { useState, useTransition, useEffect, useRef } from "react";
 import { toggleFavoriteAction } from "@/actions/user-actions";
 import { startChatAction } from "@/actions/chat-actions";
+import { searchByMatricula } from "@/actions/matricula-actions";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { ProductThumbnails } from "./ProductThumbnails";
@@ -33,6 +42,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import Image from "next/image";
 import { Session } from "next-auth";
@@ -78,7 +88,100 @@ export const ProductLayout = ({
   const [isSticky, setIsSticky] = useState(false);
   const stickyCardRef = useRef<HTMLDivElement>(null);
 
+  // Verificador de Matrícula State
+  const [matricula, setMatricula] = useState("");
+  const [isVerifying, startVerifyTransition] = useTransition();
+  const [compatibilityStatus, setCompatibilityStatus] = useState<"idle" | "loading" | "compatible" | "incompatible">("idle");
+  const [vehicleInfo, setVehicleInfo] = useState<{ marca: string; modelo: string; anio: string } | null>(null);
+
   const isSold = product.status === "vendido";
+
+  const checkCompatibility = (marca: string, modelo: string, anio: string): boolean => {
+    if (!product.oemCompatibilidades) return false;
+    
+    const normalizedMarca = marca.toLowerCase().trim();
+    const normalizedModelo = modelo.toLowerCase().trim();
+    
+    return product.oemCompatibilidades.some((comp) => {
+      const compMarca = (comp.marca || "").toLowerCase().trim();
+      const compModelo = (comp.modelo || "").toLowerCase().trim();
+      const compAnio = comp.anio || "";
+      
+      const marcaMatch = compMarca.includes(normalizedMarca) || normalizedMarca.includes(compMarca);
+      const modeloMatch = compModelo.includes(normalizedModelo) || normalizedModelo.includes(compModelo);
+      
+      let anioMatch = true;
+      if (anio && compAnio) {
+        if (compAnio.includes("-")) {
+          const [start, end] = compAnio.split("-").map((y: string) => parseInt(y.trim()));
+          const vehicleYear = parseInt(anio);
+          anioMatch = vehicleYear >= start && vehicleYear <= end;
+        } else {
+          anioMatch = compAnio.includes(anio) || anio.includes(compAnio);
+        }
+      }
+      
+      return marcaMatch && modeloMatch && anioMatch;
+    });
+  };
+
+  const handleVerifyMatricula = () => {
+    if (!matricula.trim()) {
+      toast.error("Ingresa una matrícula");
+      return;
+    }
+
+    setCompatibilityStatus("loading");
+
+    startVerifyTransition(async () => {
+      try {
+        const result = await searchByMatricula(matricula);
+
+        if (!result.success) {
+          setCompatibilityStatus("idle");
+          toast.error("error" in result ? result.error : "Matrícula no encontrada");
+          return;
+        }
+
+        const marca = result.data.fullName.split(" ")[0];
+        const isOscaro = "version" in result.data && "label" in result.data;
+        
+        let modelo = "";
+        let anio = "";
+        
+        if (isOscaro) {
+          const parts = result.data.fullName.split(" ");
+          modelo = parts.slice(1, 3).join(" ");
+          const oscaroData = result.data as any;
+          const yearMatch = oscaroData.version?.match(/\b(19|20)\d{2}\b/);
+          anio = yearMatch ? yearMatch[0] : "";
+        } else {
+          modelo = result.data.fullName.split(" ").slice(1, 3).join(" ");
+          const details = result.data as any;
+          if (details.details && details.details["Año de fabricación (desde - hasta)"]) {
+            const yearRange = details.details["Año de fabricación (desde - hasta)"];
+            const yearMatch = yearRange.match(/\b(19|20)\d{2}\b/);
+            anio = yearMatch ? yearMatch[0] : "";
+          }
+        }
+
+        setVehicleInfo({ marca, modelo, anio });
+        
+        const isCompatible = checkCompatibility(marca, modelo, anio);
+        setCompatibilityStatus(isCompatible ? "compatible" : "incompatible");
+        
+        if (isCompatible) {
+          toast.success("¡Esta pieza es compatible con tu vehículo!");
+        } else {
+          toast.warning("Esta pieza no es compatible con tu vehículo");
+        }
+      } catch (error) {
+        console.error(error);
+        setCompatibilityStatus("idle");
+        toast.error("Error al verificar la matrícula");
+      }
+    });
+  };
 
   // Detectar cuando el card está en modo sticky
   useEffect(() => {
@@ -377,76 +480,249 @@ export const ProductLayout = ({
           </Card>
 
           {/* Seller Info */}
-          <Card className="border border-border/50">
-            <CardHeader className="pb-3">
-              <div className="flex items-start gap-3">
+          <Card className="border border-border/50 overflow-hidden">
+            <CardHeader className="pb-4 bg-muted/30">
+              <div className="flex items-start gap-4">
                 <Link href={`/tienda/${vendedor.id}`} className="flex-shrink-0">
-                  <Avatar className="size-14">
+                  <Avatar className="size-20 border-2 border-white shadow-md">
                     <AvatarImage
                       className="object-cover"
                       src={vendedor.image || ""}
                     />
-                    <AvatarFallback className="text-lg font-bold">
+                    <AvatarFallback className="text-2xl font-bold">
                       {vendedor.name?.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
                 </Link>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
+                <div className="flex-1 min-w-0 py-1">
+                  <div className="flex flex-col gap-1">
                     <Link href={`/tienda/${vendedor.id}`}>
-                      <p className="font-bold text-base text-foreground line-clamp-1 hover:text-primary transition-colors">
+                      <p className="font-bold text-xl text-foreground line-clamp-1 hover:text-primary transition-colors leading-tight">
                         {vendedor.name}
                       </p>
                     </Link>
-                    {/* Badge Vendedor Pro - A la derecha del nombre */}
-                    <Badge className="bg-primary text-white shrink-0 px-2 py-0.5 text-xs flex items-center gap-1">
-                      <Zap className="h-3 w-3" />
-                      Vendedor Pro
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-primary text-white shrink-0 px-2 py-0.5 text-[10px] uppercase tracking-wider font-bold flex items-center gap-1">
+                        <Zap className="h-3 w-3" />
+                        Vendedor Pro
+                      </Badge>
+                      <div className="flex items-center gap-1 bg-yellow-500/10 px-2 py-0.5 rounded-full">
+                        <Star className="size-3.5 text-yellow-500 fill-yellow-500" />
+                        <span className="text-xs font-bold text-yellow-700">{vendedor.averageRating}</span>
+                      </div>
+                    </div>
                   </div>
-                  <Link href={`/tienda/${vendedor.id}`}>
-                    <p className="text-sm text-muted-foreground line-clamp-1 hover:text-foreground transition-colors">
-                      {vendedor.businessName || "Vendedor profesional"}
+                  <Link href={`/tienda/${vendedor.id}`} className="mt-2 block">
+                    <p className="text-sm text-muted-foreground line-clamp-1 hover:text-foreground transition-colors font-medium">
+                      {vendedor.businessName || "Vendedor profesional verificado"}
                     </p>
                   </Link>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <Star className="size-4 text-yellow-500 fill-yellow-500" />
-                    <span className="text-sm font-semibold">{vendedor.averageRating}</span>
-                    <span className="text-xs text-muted-foreground">(16 valoraciones)</span>
-                  </div>
                 </div>
               </div>
             </CardHeader>
 
-            <CardContent className="space-y-2.5 pt-3">
-              <Separator />
-              <div className="flex items-center gap-2 text-sm">
-                <Calendar className="size-4 text-muted-foreground" />
-                <span className="text-muted-foreground">
-                  En Despiezo desde{" "}
-                  <span className="font-semibold text-foreground">
-                    {new Date(vendedor.createdAt).toLocaleDateString("es-ES", {
-                      year: "numeric",
-                      month: "short",
-                    })}
-                  </span>
-                </span>
+            <CardContent className="space-y-4 pt-5 pb-6">
+              <div className="grid grid-cols-1 gap-3">
+                <div className="flex items-center gap-3 text-sm p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                    <Calendar className="size-4 text-muted-foreground" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-tight">Miembro desde</span>
+                    <span className="font-semibold text-foreground">
+                      {new Date(vendedor.createdAt).toLocaleDateString("es-ES", {
+                        year: "numeric",
+                        month: "long",
+                      })}
+                    </span>
+                  </div>
+                </div>
+
+                {product.location && (
+                  <div className="flex items-center gap-3 text-sm p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                      <MapPin className="size-4 text-muted-foreground" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-tight">Ubicación</span>
+                      <span className="font-semibold text-foreground line-clamp-1">{product.location}</span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-3 text-sm bg-primary/5 border border-primary/10 rounded-xl p-3 shadow-sm">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Truck className="size-5 text-primary" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-bold text-sm text-primary">Envío garantizado</span>
+                    <span className="text-xs text-primary/70 font-medium">Disponible a toda España</span>
+                  </div>
+                </div>
               </div>
 
-              {product.location && (
-                <div className="flex items-center gap-2 text-sm">
-                  <MapPin className="size-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">
-                    Ubicación: <span className="font-semibold text-foreground">{product.location}</span>
-                  </span>
-                </div>
+              {session?.user.id !== vendedor.id && (
+                <Button 
+                  onClick={handleInitChat}
+                  variant="outline" 
+                  className="w-full border-2 border-primary/20 hover:border-primary hover:bg-primary/5 h-11 rounded-xl font-bold flex items-center gap-2 group transition-all"
+                >
+                  <MessageCircle className="size-5 text-primary group-hover:scale-110 transition-transform" />
+                  Ver perfil y valoraciones
+                </Button>
               )}
+            </CardContent>
+          </Card>
 
-              <div className="flex items-center gap-2 text-sm bg-muted/50 rounded-lg px-3 py-2">
-                <Truck className="size-4 text-primary" />
-                <span className="font-semibold text-sm">Envío disponible a toda España</span>
+          {/* Verificador de Compatibilidad - Diseño más destacado */}
+          <Card className="border-2 border-primary/20 overflow-hidden bg-gradient-to-b from-white to-primary/5 dark:from-gray-950 dark:to-primary/10 shadow-lg shadow-primary/5">
+            <CardContent className="p-6">
+              <div className="flex flex-col gap-5">
+                {/* Cabecera del verificador */}
+                <div className="space-y-1.5 text-center">
+                  <div className="inline-flex items-center justify-center p-2.5 rounded-2xl bg-primary/10 text-primary mb-1">
+                    <ShieldCheck className="h-6 w-6" />
+                  </div>
+                  <h3 className="text-lg font-bold text-foreground tracking-tight">
+                    ¿Es compatible con tu coche?
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Evita devoluciones innecesarias verificando la matrícula de tu vehículo ahora mismo.
+                  </p>
+                </div>
+
+                {/* Campo de Matrícula Estilo Realista */}
+                <div className="space-y-4">
+                  <div className="relative group">
+                    <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-primary/10 rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+                    <div className="relative flex items-stretch gap-0 h-16 rounded-xl overflow-hidden border-2 border-muted-foreground/30 bg-white dark:bg-gray-900 focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10 transition-all shadow-sm">
+                      {/* Franja Europea (estética) */}
+                      <div className="w-10 bg-blue-700 flex flex-col items-center justify-center py-1 flex-shrink-0">
+                        <div className="text-[8px] text-white font-bold mb-0.5">E</div>
+                        <div className="w-5 h-5 rounded-full border border-yellow-400/50 flex items-center justify-center relative">
+                          <Star className="size-2.5 text-yellow-400 fill-yellow-400 absolute top-0" />
+                          <Star className="size-2.5 text-yellow-400 fill-yellow-400 absolute bottom-0" />
+                          <Star className="size-2.5 text-yellow-400 fill-yellow-400 absolute left-0" />
+                          <Star className="size-2.5 text-yellow-400 fill-yellow-400 absolute right-0" />
+                        </div>
+                      </div>
+                      <Input
+                        value={matricula}
+                        onChange={(e) => {
+                          setMatricula(e.target.value.toUpperCase());
+                          if (compatibilityStatus !== "idle" && compatibilityStatus !== "loading") {
+                            setCompatibilityStatus("idle");
+                            setVehicleInfo(null);
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleVerifyMatricula();
+                          }
+                        }}
+                        placeholder="1234ABC"
+                        className="h-full flex-1 border-0 rounded-none text-3xl font-black tracking-[0.25em] uppercase text-center placeholder:text-muted-foreground/20 focus-visible:ring-0 bg-transparent"
+                        maxLength={10}
+                        disabled={isVerifying}
+                      />
+                      <Button
+                        onClick={handleVerifyMatricula}
+                        disabled={!matricula.trim() || isVerifying}
+                        className="h-full px-8 rounded-none bg-primary hover:bg-primary/90 text-white font-bold transition-all flex items-center gap-2 group/btn"
+                      >
+                        {isVerifying ? (
+                          <Loader2 className="h-6 w-6 animate-spin" />
+                        ) : (
+                          <>
+                            <Search className="h-6 w-6 group-hover/btn:scale-110 transition-transform" />
+                            <span className="text-lg">Verificar</span>
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Indicador de carga sutil fuera del botón */}
+                  {isVerifying && (
+                    <div className="flex items-center justify-center gap-2 text-xs text-primary font-medium animate-pulse">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      Consultando bases de datos de tráfico...
+                    </div>
+                  )}
+                </div>
               </div>
             </CardContent>
+
+            <div className="p-0">
+              {/* Card de Resultado de Compatibilidad */}
+              {vehicleInfo && compatibilityStatus === "compatible" && (
+                <div className="relative overflow-hidden border-t-2 border-green-500 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 dark:from-green-950/30 dark:via-emerald-950/20 dark:to-teal-950/20 p-6">
+                  {/* Decorative elements */}
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-green-400/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                  <Sparkles className="absolute top-3 right-3 h-5 w-5 text-green-400/50" />
+                  
+                  <div className="relative flex flex-col items-center text-center gap-4">
+                    {/* Icon Section */}
+                    <div className="relative">
+                      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-green-500/25">
+                        <Car className="h-8 w-8 text-white" />
+                      </div>
+                      <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-white dark:bg-gray-900 flex items-center justify-center shadow-md">
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                      </div>
+                    </div>
+                    
+                    {/* Content Section */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-center gap-2">
+                        <PartyPopper className="h-5 w-5 text-green-600" />
+                        <h3 className="text-xl font-bold text-green-800 dark:text-green-400">
+                          ¡Totalmente Compatible!
+                        </h3>
+                      </div>
+                      <p className="text-sm text-green-700 dark:text-green-300 max-w-[250px] mx-auto leading-snug">
+                        Hemos verificado tu <span className="font-bold">{vehicleInfo.marca} {vehicleInfo.modelo}</span> {vehicleInfo.anio && <span>({vehicleInfo.anio})</span>} y esta pieza es la correcta.
+                      </p>
+                    </div>
+                    
+                    <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+                      <Badge className="bg-green-600 hover:bg-green-600 text-white border-0 shadow-sm text-xs py-0.5 px-3">
+                        ✓ Compra Segura
+                      </Badge>
+                      <Badge variant="outline" className="border-green-600/30 text-green-700 dark:text-green-400 text-[10px] bg-white/50">
+                        Verificado por Despiezo
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {vehicleInfo && compatibilityStatus === "incompatible" && (
+                <div className="relative overflow-hidden border-t border-amber-200 dark:border-amber-800/50 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950/20 dark:via-orange-950/10 dark:to-yellow-950/10 p-6">
+                  <div className="relative flex flex-col items-center text-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
+                      <Frown className="h-7 w-7 text-white" />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <h3 className="text-base font-bold text-amber-800 dark:text-amber-400">
+                        Lo sentimos, no es compatible
+                      </h3>
+                      <p className="text-xs text-amber-700 dark:text-amber-300 leading-tight px-1 max-w-[240px] mx-auto">
+                        Tu <span className="font-semibold">{vehicleInfo.marca} {vehicleInfo.modelo}</span> requiere una referencia diferente.
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-2 w-full pt-1">
+                      <Button variant="outline" size="sm" className="h-8 text-[10px] border-amber-300 text-amber-800 bg-white/40 hover:bg-white/60">
+                        <Search className="h-3 w-3 mr-1.5" />
+                        Buscar pieza para mi vehículo
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </Card>
         </article>
       </section>
