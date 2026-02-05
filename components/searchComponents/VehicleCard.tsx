@@ -1,8 +1,21 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Car, Gauge, Fuel, Settings, Calendar, Zap, Cog } from "lucide-react";
+import { Car, Gauge, Fuel, Settings, Calendar, Zap, Cog, ChevronDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+
+interface VehicleVariation {
+  plate: string;
+  fullName: string;
+  index: number;
+}
 
 interface VehicleCardProps {
   vehicle: {
@@ -21,10 +34,12 @@ interface VehicleCardProps {
     fuelType?: string | null;
     transmission?: string | null;
     engineType?: string | null;
+    availableVariations?: VehicleVariation[];
   };
+  onSwitchVariation?: (newPlate: string) => void;
 }
 
-export const VehicleCard = ({ vehicle }: VehicleCardProps) => {
+export const VehicleCard = ({ vehicle, onSwitchVariation }: VehicleCardProps) => {
   // Función para procesar el año y detectar si termina en "..."
   const processYear = (yearRange: string | null | undefined) => {
     if (!yearRange) return null;
@@ -45,22 +60,58 @@ export const VehicleCard = ({ vehicle }: VehicleCardProps) => {
 
   return (
     <Card className="relative overflow-hidden border-2 border-primary/30 shadow-xl">
+      {/* Selector de Variación si es necesario */}
+      {vehicle.plate.includes("-") && (
+        <div className="absolute top-2 right-2 z-10">
+          <Badge variant="secondary" className="bg-amber-100 text-amber-700 border-amber-200 font-bold">
+            Variación seleccionada
+          </Badge>
+        </div>
+      )}
       {/* Header con fondo degradado */}
       <div className="bg-gradient-to-r from-primary to-primary/80 p-4 sm:p-6 text-white">
-        <div className="space-y-2">
-          <h2 className="text-lg sm:text-xl font-bold leading-tight">
-            {vehicle.fullName}
-          </h2>
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <div className="bg-white/20 backdrop-blur-sm p-1.5 rounded-lg">
-                <Car className="h-4 w-4" />
-              </div>
-              <span className="text-xs font-medium text-white/80 uppercase">Ficha Técnica</span>
+        <div className="space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+            <div className="space-y-1">
+              <h2 className="text-lg sm:text-xl font-bold leading-tight">
+                {vehicle.fullName}
+              </h2>
+              {vehicle.availableVariations && vehicle.availableVariations.length > 1 && onSwitchVariation && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-7 px-2 text-[10px] text-white/90 hover:text-white hover:bg-white/10 border border-white/20 rounded-md gap-1 font-bold uppercase"
+                    >
+                      Cambiar versión
+                      <ChevronDown className="h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-[300px]">
+                    {vehicle.availableVariations.map((v) => (
+                      <DropdownMenuItem 
+                        key={v.plate}
+                        onClick={() => onSwitchVariation(v.plate)}
+                        className={`text-xs py-2 cursor-pointer ${v.plate === vehicle.plate ? 'bg-primary/10 font-bold text-primary' : ''}`}
+                      >
+                        <Car className="mr-2 h-3.5 w-3.5" />
+                        <span className="line-clamp-2">{v.fullName}</span>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
-            <Badge className="bg-white text-primary hover:bg-white/90 font-bold text-sm px-3 py-1.5 shrink-0">
-              {vehicle.plate.toUpperCase()}
+            <Badge className="bg-white text-primary hover:bg-white/90 font-bold text-sm px-3 py-1.5 shrink-0 self-start">
+              {vehicle.plate.includes("-") ? vehicle.plate.split("-")[0].toUpperCase() : vehicle.plate.toUpperCase()}
             </Badge>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="bg-white/20 backdrop-blur-sm p-1.5 rounded-lg">
+              <Car className="h-4 w-4" />
+            </div>
+            <span className="text-xs font-medium text-white/80 uppercase">Ficha Técnica</span>
           </div>
         </div>
       </div>

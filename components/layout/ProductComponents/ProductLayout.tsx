@@ -26,11 +26,12 @@ import {
   ShieldCheck,
   CalendarDays,
   Sparkles,
+  ChevronRight,
 } from "lucide-react";
 import { useState, useTransition, useEffect, useRef } from "react";
 import { toggleFavoriteAction } from "@/actions/user-actions";
 import { startChatAction } from "@/actions/chat-actions";
-import { searchByMatricula } from "@/actions/matricula-actions";
+import { searchByMatricula, type MatriculaResponseSolvedia, type VehicleVersion } from "@/actions/matricula-actions";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { ProductThumbnails } from "./ProductThumbnails";
@@ -42,12 +43,20 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import Image from "next/image";
 import { Session } from "next-auth";
 import { differenceInDays, differenceInHours } from "date-fns";
-import { User } from "@prisma/client";
 import { ProductCompatibilities } from "./ProductCompatibilities";
 
 function Detail({
@@ -76,8 +85,8 @@ export const ProductLayout = ({
   vendedor,
   session,
 }: {
-  product: ProductType;
-  vendedor: User;
+  product: any;
+  vendedor: any;
   session?: Session | null;
 }) => {
   const router = useRouter();
@@ -93,6 +102,8 @@ export const ProductLayout = ({
   const [isVerifying, startVerifyTransition] = useTransition();
   const [compatibilityStatus, setCompatibilityStatus] = useState<"idle" | "loading" | "compatible" | "incompatible">("idle");
   const [vehicleInfo, setVehicleInfo] = useState<{ marca: string; modelo: string; anio: string } | null>(null);
+  const [showVersionModal, setShowVersionModal] = useState(false);
+  const [versions, setVersions] = useState<VehicleVersion[]>([]);
 
   const isSold = product.status === "vendido";
 
@@ -102,7 +113,7 @@ export const ProductLayout = ({
     const normalizedMarca = marca.toLowerCase().trim();
     const normalizedModelo = modelo.toLowerCase().trim();
     
-    return product.oemCompatibilidades.some((comp) => {
+    return product.oemCompatibilidades.some((comp: any) => {
       const compMarca = (comp.marca || "").toLowerCase().trim();
       const compModelo = (comp.modelo || "").toLowerCase().trim();
       const compAnio = comp.anio || "";
@@ -125,6 +136,36 @@ export const ProductLayout = ({
     });
   };
 
+  const handleSelectVersion = (version: VehicleVersion, index: number) => {
+    setShowVersionModal(false);
+    
+    // Actualizar la matrícula con el índice seleccionado
+    const basePlate = matricula.includes("-") ? matricula.split("-")[0] : matricula;
+    const indexedPlate = index === 0 ? basePlate : `${basePlate}-${index}`;
+    setMatricula(indexedPlate.toUpperCase());
+
+    const marca = version.versionName.split(" ")[0];
+    const modelo = version.versionName.split(" ").slice(1, 3).join(" ");
+    const details = version.details;
+    let anio = "";
+    if (details && details["Año de fabricación (desde - hasta)"]) {
+      const yearRange = details["Año de fabricación (desde - hasta)"];
+      const yearMatch = yearRange.match(/\b(19|20)\d{2}\b/);
+      anio = yearMatch ? yearMatch[0] : "";
+    }
+
+    setVehicleInfo({ marca, modelo, anio });
+    
+    const isCompatible = checkCompatibility(marca, modelo, anio);
+    setCompatibilityStatus(isCompatible ? "compatible" : "incompatible");
+    
+    if (isCompatible) {
+      toast.success("¡Esta pieza es compatible con tu vehículo!");
+    } else {
+      toast.warning("Esta pieza no es compatible con tu vehículo");
+    }
+  };
+
   const handleVerifyMatricula = () => {
     if (!matricula.trim()) {
       toast.error("Ingresa una matrícula");
@@ -143,23 +184,39 @@ export const ProductLayout = ({
           return;
         }
 
-        const marca = result.data.fullName.split(" ")[0];
+        // Si tiene múltiples versiones, mostramos el modal
+        if ("data" in result && "processedVersions" in result.data && result.data.processedVersions.length > 1) {
+          setVersions(result.data.processedVersions);
+          setCompatibilityStatus("idle");
+          setShowVersionModal(true);
+          return;
+        }
+
         const isOscaro = "version" in result.data && "label" in result.data;
-        
+        let fullName = "";
+        let details: any = null;
+
+        if (isOscaro) {
+          fullName = (result.data as any).fullName;
+        } else {
+          fullName = (result as MatriculaResponseSolvedia).data.processedVersions[0].versionName;
+          details = (result as MatriculaResponseSolvedia).data.processedVersions[0].details;
+        }
+
+        const marca = fullName.split(" ")[0];
         let modelo = "";
         let anio = "";
         
         if (isOscaro) {
-          const parts = result.data.fullName.split(" ");
+          const parts = fullName.split(" ");
           modelo = parts.slice(1, 3).join(" ");
           const oscaroData = result.data as any;
           const yearMatch = oscaroData.version?.match(/\b(19|20)\d{2}\b/);
           anio = yearMatch ? yearMatch[0] : "";
         } else {
-          modelo = result.data.fullName.split(" ").slice(1, 3).join(" ");
-          const details = result.data as any;
-          if (details.details && details.details["Año de fabricación (desde - hasta)"]) {
-            const yearRange = details.details["Año de fabricación (desde - hasta)"];
+          modelo = fullName.split(" ").slice(1, 3).join(" ");
+          if (details && details["Año de fabricación (desde - hasta)"]) {
+            const yearRange = details["Año de fabricación (desde - hasta)"];
             const yearMatch = yearRange.match(/\b(19|20)\d{2}\b/);
             anio = yearMatch ? yearMatch[0] : "";
           }
@@ -232,6 +289,47 @@ export const ProductLayout = ({
 
   return (
     <>
+      <Dialog open={showVersionModal} onOpenChange={setShowVersionModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Múltiples versiones encontradas</DialogTitle>
+            <DialogDescription>
+              Hemos encontrado varias versiones para la matrícula <strong>{matricula}</strong>. 
+              Por favor, selecciona la que corresponde a tu vehículo para verificar compatibilidad.
+            </DialogDescription>
+          </DialogHeader>
+
+          <ScrollArea className="max-h-[60vh] mt-4 pr-4">
+            <div className="grid gap-3">
+              {versions.map((version, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleSelectVersion(version, index)}
+                  className="flex items-center justify-between p-4 rounded-xl border-2 border-slate-100 hover:border-blue-500 hover:bg-blue-50 transition-all text-left group"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-full bg-slate-100 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
+                      <Car className="size-6" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-slate-900 group-hover:text-blue-700 transition-colors line-clamp-1">
+                        {version.versionName}
+                      </h3>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-sm text-slate-500">
+                        <span><strong>Motor:</strong> {version.details.Tipo}</span>
+                        <span><strong>Año:</strong> {version.details["Año de fabricación (desde - hasta)"]}</span>
+                        <span><strong>Potencia:</strong> {version.details["Potencia [cv]"]} CV</span>
+                      </div>
+                    </div>
+                  </div>
+                  <ChevronRight className="size-5 text-slate-300 group-hover:text-blue-500 transition-colors" />
+                </button>
+              ))}
+            </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
       <section className="container mx-auto px-4 lg:px-6 py-6 flex flex-col lg:flex-row gap-6 lg:gap-8">
         {/* Gallery & Info */}
         <article className="relative flex flex-col gap-4 w-full lg:w-[58%]">
@@ -645,9 +743,12 @@ export const ProductLayout = ({
 
                   {/* Indicador de carga sutil fuera del botón */}
                   {isVerifying && (
-                    <div className="flex items-center justify-center gap-2 text-xs text-primary font-medium animate-pulse">
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      Consultando bases de datos de tráfico...
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-center gap-2 text-xs text-primary font-medium animate-pulse">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        Validando variaciones y compatibilidad, por favor espera...
+                      </div>
+                      <Progress value={undefined} className="h-1 bg-primary/10" />
                     </div>
                   )}
                 </div>

@@ -5,7 +5,7 @@ import { ProductCard } from "@/components/layout/ProductComponents/ProductCard";
 import { ProductFilters } from "@/components/layout/ProductComponents/ProductFilters";
 import { ProductPagination } from "@/components/layout/ProductComponents/ProductPagination";
 import { Badge } from "@/components/ui/badge";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { getProductsByFilterCached } from "@/actions/action-cache";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -62,9 +62,10 @@ export const ProductsPageClient = ({ params, initialFilters, vehicleData }: Prop
   const pageNumber = Number(page) || 1;
   const limitNumber = Number(limit) || 10;
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const [products, setProducts] = useState<ProductType[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
   const [counts, setCounts] = useState<{ condition: Record<string, number> }>({
     condition: {},
   });
@@ -116,6 +117,24 @@ export const ProductsPageClient = ({ params, initialFilters, vehicleData }: Prop
     params.set("page", newPage.toString());
     router.push(`/productos?${params.toString()}`);
     setCurrentPage(newPage);
+  };
+
+  const handleSwitchVariation = (newPlate: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("matricula", newPlate);
+    
+    // Encontrar la variación seleccionada para actualizar filtros
+    const selectedVar = vehicleData?.availableVariations?.find((v: any) => v.plate === newPlate);
+    if (selectedVar) {
+      const marca = selectedVar.fullName.split(" ")[0];
+      const modelo = selectedVar.fullName.split(" ").slice(1, 3).join(" ");
+      
+      if (marca) params.set("marca", marca);
+      if (modelo) params.set("modelo", modelo);
+      if (selectedVar.yearRange) params.set("año", selectedVar.yearRange);
+    }
+
+    router.push(`/productos?${params.toString()}`);
   };
 
   useEffect(() => {
@@ -172,7 +191,10 @@ export const ProductsPageClient = ({ params, initialFilters, vehicleData }: Prop
           {/* Ficha del vehículo si existe matrícula */}
           {vehicleData && (
             <div className="mb-4">
-              <VehicleCard vehicle={vehicleData} />
+              <VehicleCard 
+                vehicle={vehicleData} 
+                onSwitchVariation={handleSwitchVariation}
+              />
             </div>
           )}
 
@@ -180,7 +202,7 @@ export const ProductsPageClient = ({ params, initialFilters, vehicleData }: Prop
             <ProductsSkeleton />
           ) : (
             <article className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 place-content-center place-items-center gap-4">
-              {products.map((product) => (
+              {products.map((product: any) => (
                 <ProductCard
                   key={product.id}
                   product={product}

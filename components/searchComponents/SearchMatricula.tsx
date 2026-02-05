@@ -1,19 +1,30 @@
 "use client";
 
 import { useState, useTransition, useEffect, useRef } from "react";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, Car, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { searchByMatricula } from "@/actions/matricula-actions";
+import { searchByMatricula, type MatriculaResponseSolvedia, type VehicleVersion } from "@/actions/matricula-actions";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { LoadingOverlay } from "@/components/ui/loading-overlay";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export const SearchMatricula = () => {
   const [matricula, setMatricula] = useState("");
   const [isPending, startTransition] = useTransition();
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [showVersionModal, setShowVersionModal] = useState(false);
+  const [versions, setVersions] = useState<VehicleVersion[]>([]);
+  const [searchResult, setSearchResult] = useState<MatriculaResponseSolvedia | null>(null);
   const router = useRouter();
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -68,6 +79,36 @@ export const SearchMatricula = () => {
     await new Promise(resolve => setTimeout(resolve, 1000));
   };
 
+  const handleSelectVersion = async (version: VehicleVersion, index: number) => {
+    setShowVersionModal(false);
+    setIsLoading(true);
+    setProgress(90);
+
+    const basePlate = matricula.trim().toLowerCase().split("-")[0];
+    const selectedPlate = index === 0 ? basePlate : `${basePlate}-${index}`;
+    
+    // Extraer marca del versionName
+    const marca = version.versionName.split(" ")[0];
+    
+    // Extraer modelo
+    const modelo = version.versionName.split(" ").slice(1, 3).join(" ");
+    
+    // Extraer año
+    const year = version.details["Año de fabricación (desde - hasta)"];
+
+    await completeProgress();
+    setIsLoading(false);
+    setProgress(0);
+
+    const searchParams = new URLSearchParams();
+    if (marca) searchParams.set("marca", marca);
+    if (modelo) searchParams.set("modelo", modelo);
+    if (year) searchParams.set("año", year);
+    searchParams.set("matricula", selectedPlate);
+    
+    router.push(`/productos?${searchParams.toString()}`);
+  };
+
   const handleSearch = () => {
     if (!matricula.trim()) {
       toast.error("Por favor ingresa una matrícula");
@@ -82,7 +123,6 @@ export const SearchMatricula = () => {
         const result = await searchByMatricula(matricula);
 
         if (!result.success) {
-          // Resetear estados en caso de error
           setIsLoading(false);
           setProgress(0);
           if (progressIntervalRef.current) {
@@ -93,47 +133,56 @@ export const SearchMatricula = () => {
           return;
         }
 
+        // Si tiene múltiples versiones, mostramos el modal
+        if ("data" in result && "processedVersions" in result.data && result.data.processedVersions.length > 1) {
+          setVersions(result.data.processedVersions);
+          setSearchResult(result as MatriculaResponseSolvedia);
+          
+          if (progressIntervalRef.current) {
+            clearInterval(progressIntervalRef.current);
+            progressIntervalRef.current = null;
+          }
+          setIsLoading(false);
+          setProgress(0);
+          setShowVersionModal(true);
+          return;
+        }
+
         toast.success("Matrícula encontrada");
         
-        // Extraer marca del fullName (ej: "TOYOTA Corolla Cross..." o "VOLKSWAGEN Touran III...")
-        const marca = result.data.fullName.split(" ")[0];
-        
-        // Extraer modelo - varía según el formato
+        // Extraer marca del fullName
+        const isOscaro = "version" in result.data && "label" in result.data;
+        let fullName = "";
+        let details: any = null;
+
+        if (isOscaro) {
+          fullName = (result.data as any).fullName;
+        } else {
+          fullName = (result as MatriculaResponseSolvedia).data.processedVersions[0].versionName;
+          details = (result as MatriculaResponseSolvedia).data.processedVersions[0].details;
+        }
+
+        const marca = fullName.split(" ")[0];
         let modelo = "";
         let year = "";
         
-        // Detectar si es formato Oscaro (tiene version y label)
-        const isOscaro = "version" in result.data && "label" in result.data;
-        
         if (isOscaro) {
-          // Formato Oscaro: VOLKSWAGEN Touran III 2.0 TDI...
-          // Extraer modelo de label o fullName
-          const parts = result.data.fullName.split(" ");
-          modelo = parts.slice(1, 3).join(" "); // ej: "Touran III"
-          
-          // Intentar extraer año de version si existe
+          const parts = fullName.split(" ");
+          modelo = parts.slice(1, 3).join(" ");
           const oscaroData = result.data as any;
           const yearMatch = oscaroData.version?.match(/\b(19|20)\d{2}\b/);
           year = yearMatch ? yearMatch[0] : "";
         } else {
-          // Formato Solvedia/Autodoc con details
-          modelo = result.data.fullName.split(" ").slice(1, 3).join(" ");
-          
-          // Extraer año del campo "Año de fabricación"
-          const details = result.data as any;
-          if (details.details && details.details["Año de fabricación (desde - hasta)"]) {
-            year = details.details["Año de fabricación (desde - hasta)"];
+          modelo = fullName.split(" ").slice(1, 3).join(" ");
+          if (details && details["Año de fabricación (desde - hasta)"]) {
+            year = details["Año de fabricación (desde - hasta)"];
           }
         }
 
-        // Completar progreso a 100% y esperar 1 segundo
         await completeProgress();
-
-        // Resetear estados
         setIsLoading(false);
         setProgress(0);
 
-        // Redirigir a productos con los parámetros de búsqueda Y la matrícula
         const searchParams = new URLSearchParams();
         if (marca) searchParams.set("marca", marca);
         if (modelo) searchParams.set("modelo", modelo);
@@ -143,7 +192,6 @@ export const SearchMatricula = () => {
         router.push(`/productos?${searchParams.toString()}`);
       } catch (error) {
         console.error(error);
-        // Resetear estados en caso de error
         setIsLoading(false);
         setProgress(0);
         if (progressIntervalRef.current) {
@@ -162,6 +210,47 @@ export const SearchMatricula = () => {
         progress={progress}
         message="Buscando vehículo..."
       />
+
+      <Dialog open={showVersionModal} onOpenChange={setShowVersionModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Múltiples versiones encontradas</DialogTitle>
+            <DialogDescription>
+              Hemos encontrado varias versiones para la matrícula <strong>{matricula}</strong>. 
+              Por favor, selecciona la que corresponde a tu vehículo.
+            </DialogDescription>
+          </DialogHeader>
+
+          <ScrollArea className="max-h-[60vh] mt-4 pr-4">
+            <div className="grid gap-3">
+              {versions.map((version, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleSelectVersion(version, index)}
+                  className="flex items-center justify-between p-4 rounded-xl border-2 border-slate-100 hover:border-blue-500 hover:bg-blue-50 transition-all text-left group"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-full bg-slate-100 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
+                      <Car className="size-6" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-slate-900 group-hover:text-blue-700 transition-colors line-clamp-1">
+                        {version.versionName}
+                      </h3>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-sm text-slate-500">
+                        <span><strong>Motor:</strong> {version.details.Tipo}</span>
+                        <span><strong>Año:</strong> {version.details["Año de fabricación (desde - hasta)"]}</span>
+                        <span><strong>Potencia:</strong> {version.details["Potencia [cv]"]} CV</span>
+                      </div>
+                    </div>
+                  </div>
+                  <ChevronRight className="size-5 text-slate-300 group-hover:text-blue-500 transition-colors" />
+                </button>
+              ))}
+            </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
       
       <div className="max-w-2xl w-full bg-white p-2 rounded-lg">
         <div className="flex space-x-2 items-center w-full">
