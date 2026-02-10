@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/form";
 
 import { useState, useTransition } from "react";
-import { Loader2, X } from "lucide-react";
+import { Loader2, X, PenLine, List } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -54,6 +54,8 @@ type SellFormProps = {
 export const SellForm = ({ initialValues, action }: SellFormProps) => {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [customBrand, setCustomBrand] = useState(false);
+  const [customModel, setCustomModel] = useState(false);
   const router = useRouter();
   const { marcas, loading: marcasLoading } = useMarcas();
   const { getModelosByMarca, getAniosByMarca, loading: modelosLoading } = useModelos();
@@ -224,30 +226,58 @@ export const SellForm = ({ initialValues, action }: SellFormProps) => {
             name="brand"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Marca</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  value={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecciona una marca" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {marcasLoading ? (
-                      <div className="flex items-center justify-center py-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      </div>
+                <div className="flex items-center justify-between">
+                  <FormLabel>Marca</FormLabel>
+                  <button
+                    type="button"
+                    className="text-xs text-primary hover:underline flex items-center gap-1"
+                    onClick={() => {
+                      setCustomBrand(!customBrand);
+                      field.onChange("");
+                      form.setValue("model", "");
+                      form.setValue("year", "");
+                      setCustomModel(false);
+                    }}
+                  >
+                    {customBrand ? (
+                      <><List className="size-3" /> Seleccionar de lista</>
                     ) : (
-                      marcas.map((m) => (
-                        <SelectItem key={m.id} value={m.marca}>
-                          {m.marca}
-                        </SelectItem>
-                      ))
+                      <><PenLine className="size-3" /> Agregar manualmente</>
                     )}
-                  </SelectContent>
-                </Select>
+                  </button>
+                </div>
+                {customBrand ? (
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Escribe la marca (ej: Toyota)"
+                    />
+                  </FormControl>
+                ) : (
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona una marca" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {marcasLoading ? (
+                        <div className="flex items-center justify-center py-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        </div>
+                      ) : (
+                        marcas.map((m) => (
+                          <SelectItem key={m.id} value={m.marca}>
+                            {m.marca}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                )}
                 <FormMessage />
               </FormItem>
             )}
@@ -259,31 +289,59 @@ export const SellForm = ({ initialValues, action }: SellFormProps) => {
             name="model"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Modelo</FormLabel>
-                <Select
-                  onValueChange={(v) => {
-                    // Extraer solo el nombre del modelo sin las fechas
-                    const modeloLimpio = v.replace(/\s*\([^)]*\)\s*$/, "").trim();
-                    field.onChange(modeloLimpio);
-                  }}
-                  value={modelosFiltrados.find(m => 
-                    m.modelo.replace(/\s*\([^)]*\)\s*$/, "").trim() === field.value
-                  )?.modelo || ""}
-                  disabled={!marcaActual || modelosLoading}
-                >
+                <div className="flex items-center justify-between">
+                  <FormLabel>Modelo</FormLabel>
+                  {!customBrand && (
+                    <button
+                      type="button"
+                      className="text-xs text-primary hover:underline flex items-center gap-1"
+                      onClick={() => {
+                        setCustomModel(!customModel);
+                        field.onChange("");
+                        form.setValue("year", "");
+                      }}
+                    >
+                      {customModel ? (
+                        <><List className="size-3" /> Seleccionar de lista</>
+                      ) : (
+                        <><PenLine className="size-3" /> Agregar manualmente</>
+                      )}
+                    </button>
+                  )}
+                </div>
+                {customBrand || customModel ? (
                   <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder={modelosLoading ? "Cargando..." : "Selecciona un modelo"} />
-                    </SelectTrigger>
+                    <Input
+                      {...field}
+                      placeholder="Escribe el modelo (ej: Corolla)"
+                    />
                   </FormControl>
-                  <SelectContent className="max-h-60">
-                    {modelosFiltrados.map((m) => (
-                      <SelectItem key={m.id} value={m.modelo}>
-                        {m.modelo}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                ) : (
+                  <Select
+                    onValueChange={(v) => {
+                      // Extraer solo el nombre del modelo sin las fechas
+                      const modeloLimpio = v.replace(/\s*\([^)]*\)\s*$/, "").trim();
+                      field.onChange(modeloLimpio);
+                    }}
+                    value={modelosFiltrados.find(m => 
+                      m.modelo.replace(/\s*\([^)]*\)\s*$/, "").trim() === field.value
+                    )?.modelo || ""}
+                    disabled={!marcaActual || modelosLoading}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={modelosLoading ? "Cargando..." : "Selecciona un modelo"} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent className="max-h-60">
+                      {modelosFiltrados.map((m) => (
+                        <SelectItem key={m.id} value={m.modelo}>
+                          {m.modelo}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
                 <FormMessage />
               </FormItem>
             )}
@@ -296,24 +354,35 @@ export const SellForm = ({ initialValues, action }: SellFormProps) => {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Año</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  value={field.value}
-                  disabled={!marcaActual || aniosFiltrados.length === 0}
-                >
+                {customBrand || customModel ? (
                   <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecciona un año" />
-                    </SelectTrigger>
+                    <Input
+                      {...field}
+                      placeholder="Ej: 2020"
+                      type="text"
+                      maxLength={4}
+                    />
                   </FormControl>
-                  <SelectContent className="max-h-60">
-                    {aniosFiltrados.map((y) => (
-                      <SelectItem key={y} value={y.toString()}>
-                        {y}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                ) : (
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    disabled={!marcaActual || aniosFiltrados.length === 0}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona un año" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent className="max-h-60">
+                      {aniosFiltrados.map((y) => (
+                        <SelectItem key={y} value={y.toString()}>
+                          {y}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
                 <FormMessage />
               </FormItem>
             )}

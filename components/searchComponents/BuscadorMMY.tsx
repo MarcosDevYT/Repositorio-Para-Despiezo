@@ -10,12 +10,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useMarcas } from "@/hooks/use-marcas";
 import { useModelos } from "@/hooks/use-modelos";
-import { Loader2 } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 
 export function BuscadorMMY() {
   const router = useRouter();
@@ -47,9 +45,9 @@ export function BuscadorMMY() {
   };
 
   return (
-    <div className="flex flex-col sm:flex-row w-full max-w-4xl mx-auto items-stretch gap-0 bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
-      {/* Marca */}
-      <div className="flex-1 min-w-0 border-b sm:border-b-0 sm:border-r border-gray-100">
+    <div className="max-w-2xl w-full bg-white p-2 rounded-lg">
+      <div className="flex space-x-2 items-center w-full">
+        {/* Marca */}
         <Select
           value={marca}
           onValueChange={(v) => {
@@ -59,27 +57,23 @@ export function BuscadorMMY() {
             setYear("");
           }}
         >
-          <SelectTrigger className="h-14 w-full border-0 focus:ring-0 focus:ring-offset-0 rounded-none bg-transparent px-4">
-            <SelectValue placeholder="Marca" />
-          </SelectTrigger>
-          <SelectContent>
+          <SelectTrigger className="h-10 flex-1 min-w-0 text-sm text-gray-700">
             {marcasLoading ? (
-              <div className="flex items-center justify-center py-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-              </div>
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              marcas.map((m) => (
-                <SelectItem key={m.id} value={m.marca}>
-                  {m.marca}
-                </SelectItem>
-              ))
+              <SelectValue placeholder="Marca" />
             )}
+          </SelectTrigger>
+          <SelectContent className="max-h-60">
+            {marcas.map((m) => (
+              <SelectItem key={m.id} value={m.marca}>
+                {m.marca}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
-      </div>
 
-      {/* Modelo */}
-      <div className="flex-[1.5] min-w-0 border-b sm:border-b-0 sm:border-r border-gray-100">
+        {/* Modelo */}
         <Select
           value={modeloId?.toString() || ""}
           onValueChange={(v) => {
@@ -91,7 +85,7 @@ export function BuscadorMMY() {
           }}
           disabled={!marca || modelosLoading}
         >
-          <SelectTrigger className="h-14 w-full border-0 focus:ring-0 focus:ring-offset-0 rounded-none bg-transparent px-4">
+          <SelectTrigger className="h-10 flex-[1.5] min-w-0 text-sm text-gray-700">
             <SelectValue placeholder={modelosLoading ? "Cargando..." : "Modelo"} />
           </SelectTrigger>
           <SelectContent className="max-h-60">
@@ -102,12 +96,10 @@ export function BuscadorMMY() {
             ))}
           </SelectContent>
         </Select>
-      </div>
 
-      {/* Año */}
-      <div className="flex-1 min-w-0 border-b sm:border-b-0 sm:border-r border-gray-100">
+        {/* Año */}
         <Select value={year} onValueChange={(v) => setYear(v)} disabled={!modeloId || aniosFiltrados.length === 0}>
-          <SelectTrigger className="h-14 w-full border-0 focus:ring-0 focus:ring-offset-0 rounded-none bg-transparent px-4">
+          <SelectTrigger className="h-10 w-[90px] min-w-[90px] text-sm text-gray-700">
             <SelectValue placeholder="Año" />
           </SelectTrigger>
           <SelectContent className="max-h-60">
@@ -118,16 +110,17 @@ export function BuscadorMMY() {
             ))}
           </SelectContent>
         </Select>
-      </div>
 
-      {/* Botón buscar */}
-      <Button
-        className="h-14 px-10 bg-blue-600 hover:bg-blue-700 text-white font-bold transition-all rounded-none sm:w-auto"
-        disabled={!marca || !modeloNombre || !year}
-        onClick={buscar}
-      >
-        Buscar
-      </Button>
+        {/* Botón buscar */}
+        <Button
+          className="px-8"
+          disabled={!marca || !modeloNombre || !year}
+          onClick={buscar}
+        >
+          <Search className="size-5" />
+          <span className="hidden md:flex">Buscar</span>
+        </Button>
+      </div>
     </div>
   );
 }

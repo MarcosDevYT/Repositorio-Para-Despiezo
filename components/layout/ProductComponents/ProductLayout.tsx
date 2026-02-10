@@ -109,30 +109,112 @@ export const ProductLayout = ({
 
   const checkCompatibility = (marca: string, modelo: string, anio: string): boolean => {
     if (!product.oemCompatibilidades) return false;
-    
-    const normalizedMarca = marca.toLowerCase().trim();
-    const normalizedModelo = modelo.toLowerCase().trim();
-    
+
+    // --- Helpers de normalización ---
+
+    // Sinónimos conocidos para modelos de coches en distintos idiomas/fuentes
+    const MODEL_SYNONYMS: Record<string, string> = {
+      "class": "class", "classe": "class", "klasse": "class",
+      "series": "series", "serie": "series",
+      "sportback": "sportback", "sport": "sport",
+    };
+
+    /** Normaliza un string: minúsculas, quita acentos, reemplaza separadores por espacio */
+    const normalize = (s: string): string =>
+      s.toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // quitar acentos
+        .replace(/[-_/.]/g, " ")  // separadores → espacio
+        .replace(/\s+/g, " ")     // colapsar espacios
+        .trim();
+
+    /** Extrae tokens significativos (ignora paréntesis y contenido dentro) */
+    const tokenize = (s: string): string[] =>
+      normalize(s)
+        .replace(/\([^)]*\)/g, "") // quitar (W177), (F20), etc.
+        .split(" ")
+        .filter(t => t.length > 0)
+        .map(t => MODEL_SYNONYMS[t] || t);
+
+    /** Compara marca: ambas normalizadas deben coincidir o una contener a la otra */
+    const matchMarca = (a: string, b: string): boolean => {
+      const na = normalize(a);
+      const nb = normalize(b);
+      if (na === nb) return true;
+      // Una contiene a la otra (ej: "mercedes benz" includes "mercedes benz")
+      if (na.includes(nb) || nb.includes(na)) return true;
+      // Comparar primera palabra (ej: "mercedes" === "mercedes")
+      const firstA = na.split(" ")[0];
+      const firstB = nb.split(" ")[0];
+      return firstA === firstB;
+    };
+
+    /** Compara modelo con lógica de tokens: 
+     *  Verifica que los tokens significativos del modelo más corto 
+     *  estén presentes en el más largo */
+    const matchModelo = (a: string, b: string): boolean => {
+      const na = normalize(a);
+      const nb = normalize(b);
+      if (na === nb) return true;
+      if (na.includes(nb) || nb.includes(na)) return true;
+
+      const tokensA = tokenize(a);
+      const tokensB = tokenize(b);
+
+      if (tokensA.length === 0 || tokensB.length === 0) return false;
+
+      // Contar cuántos tokens del conjunto más pequeño aparecen en el más grande
+      const [shorter, longer] = tokensA.length <= tokensB.length 
+        ? [tokensA, tokensB] : [tokensB, tokensA];
+
+      const matchCount = shorter.filter(t => longer.includes(t)).length;
+
+      // Si al menos la mitad de los tokens del más corto coinciden → match
+      // Y al menos 1 token coincide
+      return matchCount >= 1 && matchCount >= Math.ceil(shorter.length / 2);
+    };
+
+    /** Extrae todos los años de un string (ej: "11.2018 - actual 2026" → [2018, 2026]) */
+    const extractYears = (s: string): number[] => {
+      const matches = s.match(/\b(19|20)\d{2}\b/g);
+      return matches ? matches.map(Number) : [];
+    };
+
+    /** Compara año: el año de la compatibilidad debe caer dentro del rango del vehículo */
+    const matchAnio = (vehicleAnio: string, compAnio: string): boolean => {
+      if (!vehicleAnio || !compAnio) return true; // sin datos → no filtrar
+
+      const vehicleYears = extractYears(vehicleAnio);
+      const compYears = extractYears(compAnio);
+
+      if (vehicleYears.length === 0 || compYears.length === 0) return true;
+
+      // Rango del vehículo (desde la matrícula)
+      const vMin = Math.min(...vehicleYears);
+      const vMax = vehicleAnio.toLowerCase().includes("actual") 
+        ? new Date().getFullYear() 
+        : Math.max(...vehicleYears);
+
+      // Rango de la compatibilidad
+      const cMin = Math.min(...compYears);
+      const cMax = compAnio.toLowerCase().includes("actual")
+        ? new Date().getFullYear()
+        : Math.max(...compYears);
+
+      // Los rangos se solapan si uno no termina antes de que empiece el otro
+      return vMin <= cMax && cMin <= vMax;
+    };
+
+    // --- Ejecución del matching ---
     return product.oemCompatibilidades.some((comp: any) => {
-      const compMarca = (comp.marca || "").toLowerCase().trim();
-      const compModelo = (comp.modelo || "").toLowerCase().trim();
+      const compMarca = comp.marca || "";
+      const compModelo = comp.modelo || "";
       const compAnio = comp.anio || "";
-      
-      const marcaMatch = compMarca.includes(normalizedMarca) || normalizedMarca.includes(compMarca);
-      const modeloMatch = compModelo.includes(normalizedModelo) || normalizedModelo.includes(compModelo);
-      
-      let anioMatch = true;
-      if (anio && compAnio) {
-        if (compAnio.includes("-")) {
-          const [start, end] = compAnio.split("-").map((y: string) => parseInt(y.trim()));
-          const vehicleYear = parseInt(anio);
-          anioMatch = vehicleYear >= start && vehicleYear <= end;
-        } else {
-          anioMatch = compAnio.includes(anio) || anio.includes(compAnio);
-        }
-      }
-      
-      return marcaMatch && modeloMatch && anioMatch;
+
+      const marcaOk = matchMarca(marca, compMarca);
+      const modeloOk = matchModelo(modelo, compModelo);
+      const anioOk = matchAnio(anio, compAnio);
+
+      return marcaOk && modeloOk && anioOk;
     });
   };
 
@@ -149,9 +231,7 @@ export const ProductLayout = ({
     const details = version.details;
     let anio = "";
     if (details && details["Año de fabricación (desde - hasta)"]) {
-      const yearRange = details["Año de fabricación (desde - hasta)"];
-      const yearMatch = yearRange.match(/\b(19|20)\d{2}\b/);
-      anio = yearMatch ? yearMatch[0] : "";
+      anio = details["Año de fabricación (desde - hasta)"];
     }
 
     setVehicleInfo({ marca, modelo, anio });
@@ -216,9 +296,7 @@ export const ProductLayout = ({
         } else {
           modelo = fullName.split(" ").slice(1, 3).join(" ");
           if (details && details["Año de fabricación (desde - hasta)"]) {
-            const yearRange = details["Año de fabricación (desde - hasta)"];
-            const yearMatch = yearRange.match(/\b(19|20)\d{2}\b/);
-            anio = yearMatch ? yearMatch[0] : "";
+            anio = details["Año de fabricación (desde - hasta)"];
           }
         }
 

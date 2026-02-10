@@ -86,7 +86,7 @@ export function Hero() {
             <SearchMatricula />
           </TabsContent>
 
-          <TabsContent value="mmy" className="mt-0">
+          <TabsContent value="mmy" className="w-full mt-0">
             <BuscadorMMY />
           </TabsContent>
           </Tabs>
