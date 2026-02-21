@@ -21,6 +21,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { Package, Plus } from "lucide-react";
+import { toast } from "sonner";
 
 /**
  * @description Componente de productos para la venta
@@ -51,9 +52,12 @@ export const SellProducts = () => {
   // HandleDeleteProduct
   const handleDeleteProduct = async (id: string) => {
     const response = await deleteProductAction(id);
-    if (response) {
+    if (response?.success) {
       const newProducts = products.filter((product) => product.id !== id);
       setProducts(newProducts);
+      toast.success(response.success);
+    } else if (response?.error) {
+      toast.error(response.error);
     }
   };
 

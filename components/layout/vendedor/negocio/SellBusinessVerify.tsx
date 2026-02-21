@@ -22,7 +22,7 @@ import {
 } from "@/actions/user-actions";
 
 import { useState, useTransition } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Mail } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { LocationAutocomplete } from "@/components/LocationSearchInput";
 import { toast } from "sonner";
@@ -96,29 +96,60 @@ export const SellBusinessVerify = ({ session }: Props) => {
     });
   };
 
+  const emailVerified = !!session.user.emailVerified;
+
   return (
     <Card className="w-full">
       <CardHeader>
         <h1 className="text-2xl font-bold">
-          Verifica tu información de vendedor
+          Configuración de tu negocio
         </h1>
         <p className="text-muted-foreground">
-          Para poder vender productos, necesitas completar y verificar tus
-          datos.
+          Completa tus datos de vendedor para mejorar tu perfil.
         </p>
       </CardHeader>
       <CardContent>
-        {/* Vinculación con Stripe Connect */}
-        <div className="mb-6">
-          <h2 className="text-lg font-bold">Vincula tu cuenta con stripe</h2>
+        {/* Verificación del email - PROMINENTE si no está verificado */}
+        {!emailVerified && (
+          <div className="mb-6 rounded-xl border-2 border-orange-300 bg-gradient-to-r from-orange-50 to-amber-50 p-5">
+            <h2 className="text-lg font-bold text-orange-900 flex items-center gap-2">
+              <span className="bg-orange-200 rounded-full p-1">
+                <Mail className="size-4 text-orange-700" />
+              </span>
+              Verifica tu email
+            </h2>
+            <p className="text-orange-800/80 text-sm mt-1 mb-3">
+              Para poder seguir publicando productos necesitas verificar tu correo electrónico.
+            </p>
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-sm font-medium text-gray-700">{session.user.email}</span>
+              <EmailVerificationStatus session={session} />
+            </div>
+          </div>
+        )}
+
+        {emailVerified && (
+          <div className="mb-6 rounded-xl border border-green-200 bg-green-50 p-4">
+            <h2 className="text-lg font-bold text-green-800 flex items-center gap-2">
+              Email verificado
+            </h2>
+            <p className="text-sm text-green-700 mt-1">
+              {session.user.email} <EmailVerificationStatus session={session} />
+            </p>
+          </div>
+        )}
+
+        {/* Vinculación con Stripe Connect - Informativo */}
+        <div className="mb-6 rounded-xl border bg-card p-5">
+          <h2 className="text-lg font-bold">Recibir pagos con Stripe</h2>
           <p className="text-sm text-muted-foreground mb-2">
             {isConnected
-              ? "Tu cuenta de Stripe está conectada"
-              : "Conecta tu cuenta de Stripe para empezar a recibir pagos"}
+              ? "Tu cuenta de Stripe está conectada. Puedes recibir pagos."
+              : "Vincula tu cuenta de Stripe cuando quieras empezar a recibir pagos de compradores. No es necesario para publicar productos."}
           </p>
           {session.user.stripeConnectedLinked === false && (
             <form action={createStripeAccountLinkAction}>
-              <SubmitButton title="Vincula tu Cuenta con stripe" />
+              <SubmitButton title="Vincular cuenta de Stripe" />
             </form>
           )}
 
@@ -127,17 +158,6 @@ export const SellBusinessVerify = ({ session }: Props) => {
               <SubmitButton title="Ver Panel de Control" />
             </form>
           )}
-        </div>
-
-        {/* Verificación del email */}
-        <div className="mb-6">
-          <h2 className="text-lg font-bold">Verifica tu email</h2>
-          <p className="text-muted-foreground">
-            Para poder vender productos, necesitas verificar tu email
-          </p>
-          <p className="my-2">
-            {session.user.email} <EmailVerificationStatus session={session} />
-          </p>
         </div>
 
         {/* Formulario de verificación de datos de vendedor */}

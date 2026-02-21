@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 import { SessionProvider } from "next-auth/react";
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/navbar/Navbar";
+import { EmailVerificationBanner } from "@/components/layout/EmailVerificationBanner";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -32,6 +33,7 @@ export default async function RootLayout({
       <body className={`${poppins.variable} antialiased bg-slate-50`}>
         <SessionProvider>
           <Navbar />
+          <EmailVerificationBanner />
           {children}
 
           <Footer />

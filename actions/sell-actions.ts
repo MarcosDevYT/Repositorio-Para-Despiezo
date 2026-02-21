@@ -50,6 +50,14 @@ export const createProductAction = async (data: z.infer<typeof sellSchema>) => {
       (product) => product.status !== "vendido"
     );
 
+    // Si el usuario ya tiene al menos 1 producto y NO ha verificado su email → bloquear
+    if (user.products.length >= 1 && !user.emailVerified) {
+      return {
+        error:
+          "Debes verificar tu email para publicar más productos. Revisa tu bandeja de entrada.",
+      };
+    }
+
     // Si no es pro y ya tiene 40 productos activos → error
     if (!user.pro && activeProducts.length >= 40) {
       return {
@@ -159,9 +167,15 @@ export async function deleteProductAction(id: string) {
       return { error: "No puedes eliminar un producto vendido" };
     }
 
-    await prisma.product.delete({
-      where: { id },
-    });
+    // Eliminar registros relacionados que no tienen onDelete: Cascade
+    await prisma.$transaction([
+      prisma.kitProduct.deleteMany({ where: { productId: id } }),
+      prisma.compatibilidad.deleteMany({ where: { productId: id } }),
+      prisma.orderItem.deleteMany({ where: { productId: id } }),
+      prisma.message.deleteMany({ where: { room: { productId: id } } }),
+      prisma.room.deleteMany({ where: { productId: id } }),
+      prisma.product.delete({ where: { id } }),
+    ]);
 
     // Revalidar el cache global de productos y búsquedas
     revalidateTag("products");

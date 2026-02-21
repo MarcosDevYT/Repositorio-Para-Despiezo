@@ -53,7 +53,7 @@ export const FormRegister = () => {
       if (result.error) {
         setError(result.error);
       } else {
-        router.push("/");
+        router.push("/bienvenido");
       }
     });
   };

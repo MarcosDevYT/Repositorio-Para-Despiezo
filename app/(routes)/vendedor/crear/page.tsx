@@ -8,19 +8,20 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { verifySeller } from "@/lib/utils";
 import { redirect } from "next/navigation";
+import { EmailVerifyBlockCard } from "@/components/layout/vendedor/EmailVerifyBlockCard";
 
 export default async function SellCreatePage() {
-  // Verificamos que el usuario este logeado
   const session = await auth();
 
   if (!session?.user) redirect("/login");
 
-  const isVerify = verifySeller(session);
+  const productCount = session.user.products?.length ?? 0;
+  const emailVerified = !!session.user.emailVerified;
 
-  if (!isVerify) {
-    redirect("/vendedor/negocio");
+  // Si ya tiene 1+ productos y NO ha verificado email → mostrar bloqueo con CTA
+  if (productCount >= 1 && !emailVerified) {
+    return <EmailVerifyBlockCard session={session} />;
   }
 
   return (

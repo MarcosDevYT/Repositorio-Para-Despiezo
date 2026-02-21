@@ -59,20 +59,28 @@ export const sellSchema = z
       .min(1, "El Tipo de Pieza es requerido"),
 
     weight: z
-      .number({ message: "El peso es requerido" })
-      .positive("El peso debe ser mayor a 0"),
+      .number()
+      .positive("El peso debe ser mayor a 0")
+      .optional()
+      .nullable(),
 
     length: z
-      .number({ message: "El largo es requerido" })
-      .positive("El largo debe ser mayor a 0"),
+      .number()
+      .positive("El largo debe ser mayor a 0")
+      .optional()
+      .nullable(),
 
     width: z
-      .number({ message: "El ancho es requerido" })
-      .positive("El ancho debe ser mayor a 0"),
+      .number()
+      .positive("El ancho debe ser mayor a 0")
+      .optional()
+      .nullable(),
 
     height: z
-      .number({ message: "El alto es requerido" })
-      .positive("El alto debe ser mayor a 0"),
+      .number()
+      .positive("El alto debe ser mayor a 0")
+      .optional()
+      .nullable(),
 
     location: string({ message: "La Ubicación es requerida" })
       .trim()
