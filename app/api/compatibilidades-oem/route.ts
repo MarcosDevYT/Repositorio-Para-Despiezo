@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 
 // GET /api/compatibilidades-oem - Obtener listado plano de compatibilidades con datos del OEM
 export async function GET(req: Request) {
@@ -177,6 +178,9 @@ export async function POST(req: Request) {
         compatibilidadesCount: item.compatibilidad?.length || 0,
       });
     }
+
+    // Invalidar cache de productos para que las compatibilidades se reflejen
+    revalidateTag("products");
 
     return NextResponse.json({
       success: true,

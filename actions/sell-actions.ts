@@ -822,7 +822,7 @@ export const getProductByIdAction = async (id: string) => {
     let oemCompatibilidades: any[] = [];
     if (product.oemNumber) {
       const oemPieza = await prisma.oemPieza.findUnique({
-        where: { oem: product.oemNumber.toUpperCase() },
+        where: { oem: product.oemNumber.trim().toUpperCase() },
         include: {
           compatibilidades: {
             orderBy: { createdAt: "desc" },

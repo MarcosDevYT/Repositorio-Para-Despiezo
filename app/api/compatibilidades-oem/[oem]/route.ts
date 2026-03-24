@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 
 // GET /api/compatibilidades-oem/[oem] - Obtener pieza OEM específica
 export async function GET(
@@ -72,6 +73,9 @@ export async function DELETE(
     await prisma.oemPieza.delete({
       where: { oem },
     });
+
+    // Invalidar cache de productos para que se reflejen los cambios
+    revalidateTag("products");
 
     return NextResponse.json({
       success: true,
