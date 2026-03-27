@@ -58,6 +58,7 @@ import Image from "next/image";
 import { Session } from "next-auth";
 import { differenceInDays, differenceInHours } from "date-fns";
 import { ProductCompatibilities } from "./ProductCompatibilities";
+import { AutoCompatibilityLoader } from "./AutoCompatibilityLoader";
 
 function Detail({
   icon: Icon,
@@ -907,11 +908,17 @@ export const ProductLayout = ({
       </section>
 
       {/* Compatibilidades - Ocupando todo el ancho abajo */}
-      {product.oemCompatibilidades && product.oemCompatibilidades.length > 0 && (
-        <section className="container mx-auto px-4 lg:px-6 pb-12">
+      <section className="container mx-auto px-4 lg:px-6 pb-12">
+        {product.oemCompatibilidades && product.oemCompatibilidades.length > 0 ? (
           <ProductCompatibilities compatibilidades={product.oemCompatibilidades} />
-        </section>
-      )}
+        ) : (
+          <AutoCompatibilityLoader
+            productId={product.id}
+            oemNumber={product.oemNumber}
+            hasCompatibilities={product.oemCompatibilidades && product.oemCompatibilidades.length > 0}
+          />
+        )}
+      </section>
     </>
   );
 };

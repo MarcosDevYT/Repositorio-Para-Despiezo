@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -31,10 +32,12 @@ import {
   Car,
   Settings,
   Database,
+  ListChecks,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useMarcas } from "@/hooks/use-marcas";
 import { useModelos } from "@/hooks/use-modelos";
+import { OemTrackingTab } from "@/components/tools/OemTrackingTab";
 
 const SECRET_KEY = "catalogosecreto";
 
@@ -276,47 +279,62 @@ export default function CompatibilidadToolsPage() {
           </Button>
         </div>
 
-        {/* OEM Lookup Card */}
-        <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-transparent">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Database className="h-5 w-5" />
-              Consultar y Registrar OEM
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Input
-                placeholder="Ingresa número OEM (ej: 66321D3000)"
-                value={oemInput}
-                onChange={(e) => setOemInput(e.target.value.toUpperCase())}
-                className="flex-1 font-mono"
-                onKeyDown={(e) => e.key === "Enter" && handleOemLookup()}
-              />
-              <Button
-                onClick={handleOemLookup}
-                disabled={lookupLoading}
-                className="min-w-[180px]"
-              >
-                {lookupLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Consultando...
-                  </>
-                ) : (
-                  <>
-                    <Download className="h-4 w-4 mr-2" />
-                    Buscar y Guardar
-                  </>
-                )}
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Consulta el API externo y guarda automáticamente las
-              compatibilidades encontradas
-            </p>
-          </CardContent>
-        </Card>
+        {/* Tabs System */}
+        <Tabs defaultValue="compatibilidades" className="space-y-6">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="compatibilidades" className="flex items-center gap-2">
+              <Database className="h-4 w-4" />
+              Compatibilidades OEM
+            </TabsTrigger>
+            <TabsTrigger value="tracking" className="flex items-center gap-2">
+              <ListChecks className="h-4 w-4" />
+              Tracking Productos
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Tab: Compatibilidades */}
+          <TabsContent value="compatibilidades" className="space-y-6">
+            {/* OEM Lookup Card */}
+            <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-transparent">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Database className="h-5 w-5" />
+                  Consultar y Registrar OEM
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Input
+                    placeholder="Ingresa número OEM (ej: 66321D3000)"
+                    value={oemInput}
+                    onChange={(e) => setOemInput(e.target.value.toUpperCase())}
+                    className="flex-1 font-mono"
+                    onKeyDown={(e) => e.key === "Enter" && handleOemLookup()}
+                  />
+                  <Button
+                    onClick={handleOemLookup}
+                    disabled={lookupLoading}
+                    className="min-w-[180px]"
+                  >
+                    {lookupLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Consultando...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-4 w-4 mr-2" />
+                        Buscar y Guardar
+                      </>
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Consulta el API externo y guarda automáticamente las
+                  compatibilidades encontradas
+                </p>
+              </CardContent>
+            </Card>
 
         {/* Filters & Search */}
         <Card>
@@ -513,6 +531,13 @@ export default function CompatibilidadToolsPage() {
             )}
           </CardContent>
         </Card>
+          </TabsContent>
+
+          {/* Tab: Tracking de Productos */}
+          <TabsContent value="tracking">
+            <OemTrackingTab />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

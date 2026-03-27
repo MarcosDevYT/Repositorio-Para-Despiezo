@@ -261,6 +261,7 @@ model Product {
   orderItems     OrderItem[]
   kits           KitProduct[]
   compatibilidades Compatibilidad[]
+  oemTracker     OemCompatibilityTracker?
 
   // Relación inversa con vistas de usuarios
   userViews      UserProductView[]
@@ -596,4 +597,21 @@ model OemCompatibilidad {
   @@index([marca])
   @@index([modelo])
   @@index([anio])
+}
+
+// Modelo para rastrear el estado de compatibilidades de productos
+model OemCompatibilityTracker {
+  id                  String   @id @default(cuid())
+  productId           String   @unique
+  product             Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  oem                 String
+  status              Boolean  @default(false) // false = sin compatibilidades, true = con compatibilidades
+  compatibilityCount  Int      @default(0)     // Número de compatibilidades encontradas
+  lastCheckedAt       DateTime @default(now()) // Última vez que se verificó
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  @@index([oem])
+  @@index([status])
+  @@index([productId])
 }

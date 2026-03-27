@@ -27,15 +27,119 @@ export const SearchMatricula = () => {
   const [searchResult, setSearchResult] = useState<MatriculaResponseSolvedia | null>(null);
   const router = useRouter();
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Limpiar intervalo al desmontar
+  // Limpiar intervalos al desmontar
   useEffect(() => {
     return () => {
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current);
       }
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
     };
   }, []);
+
+  // Funciones para interactuar con el API de logging de placas
+  const crearArchivoPlaca = async (placa: string, procesed: boolean) => {
+    try {
+      const response = await fetch('https://2025.luisredy.com/DespiezoData/api-v3.php/?api=insert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: placa.toLowerCase(),
+          folder: 'placalog',
+          estructura: { placa: placa.toLowerCase(), procesed }
+        })
+      });
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error({ mensaje: "Error al crear archivo de placa", error });
+      return { success: false, message: "Error al crear archivo", error };
+    }
+  };
+
+  const actualizarArchivoPlaca = async (placa: string, procesed: boolean) => {
+    try {
+      const response = await fetch('https://2025.luisredy.com/DespiezoData/api-v3.php/?api=update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: placa.toLowerCase(),
+          folder: 'placalog',
+          estructura: { placa: placa.toLowerCase(), procesed }
+        })
+      });
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error({ mensaje: "Error al actualizar archivo de placa", error });
+      return { success: false, message: "Error al actualizar archivo", error };
+    }
+  };
+
+  const verificarPlacaEnLog = async (placa: string) => {
+    try {
+      const response = await fetch(`https://2025.luisredy.com/DespiezoData/api-v3.php/?api=all&folder=placalog`);
+      const data = await response.json();
+      
+      if (data && Array.isArray(data)) {
+        const placaData = data.find((item: any) => item.placa === placa.toLowerCase());
+        return placaData || null;
+      }
+      return null;
+    } catch (error) {
+      console.error({ mensaje: "Error al verificar placa en log", error });
+      return null;
+    }
+  };
+
+  const iniciarPollingPlaca = (placa: string) => {
+    let intentos = 0;
+    const maxIntentos = 20; // 20 segundos
+
+    pollingIntervalRef.current = setInterval(async () => {
+      intentos++;
+
+      // Verificar si la placa está cacheada en el servicio de Despiezo
+      try {
+        const url = `https://despiezo.solvedia.app/matricula/cached/${placa.toLowerCase()}`;
+        const response = await fetch(url, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          cache: "no-store",
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            // La placa está cacheada, actualizar el log
+            await actualizarArchivoPlaca(placa, true);
+            
+            // Detener polling
+            if (pollingIntervalRef.current) {
+              clearInterval(pollingIntervalRef.current);
+              pollingIntervalRef.current = null;
+            }
+            
+            console.log(`Placa ${placa} cacheada y log actualizado`);
+          }
+        }
+      } catch (error) {
+        console.error("Error en polling de placa:", error);
+      }
+
+      // Detener después de 20 intentos
+      if (intentos >= maxIntentos) {
+        if (pollingIntervalRef.current) {
+          clearInterval(pollingIntervalRef.current);
+          pollingIntervalRef.current = null;
+        }
+      }
+    }, 1000); // Cada segundo
+  };
 
   const startProgressAnimation = () => {
     setProgress(0);
@@ -120,6 +224,27 @@ export const SearchMatricula = () => {
 
     startTransition(async () => {
       try {
+        const basePlate = matricula.trim().toLowerCase().split("-")[0];
+        
+        // 1. Verificar si la placa ya existe en el log
+        const placaEnLog = await verificarPlacaEnLog(basePlate);
+        
+        // 2. Si existe y está procesada (cacheada), continuar normalmente
+        if (placaEnLog && placaEnLog.procesed === true) {
+          console.log(`Placa ${basePlate} ya está cacheada en el log`);
+        } else if (!placaEnLog) {
+          // 3. Si no existe en el log, crearla con procesed: false
+          console.log(`Registrando placa ${basePlate} en el log con procesed: false`);
+          await crearArchivoPlaca(basePlate, false);
+          
+          // 4. Iniciar polling para detectar cuando se cachee
+          iniciarPollingPlaca(basePlate);
+        } else if (placaEnLog.procesed === false) {
+          // 5. Si existe pero no está procesada, reiniciar polling
+          console.log(`Placa ${basePlate} existe pero no está cacheada, reiniciando polling`);
+          iniciarPollingPlaca(basePlate);
+        }
+
         const result = await searchByMatricula(matricula);
 
         if (!result.success) {
@@ -131,6 +256,16 @@ export const SearchMatricula = () => {
           }
           toast.error("error" in result ? result.error : "Error desconocido");
           return;
+        }
+
+        // 6. Si la búsqueda fue exitosa y la placa está cacheada, actualizar el log
+        if (result.success) {
+          await actualizarArchivoPlaca(basePlate, true);
+          // Detener polling si está activo
+          if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+            pollingIntervalRef.current = null;
+          }
         }
 
         // Si tiene múltiples versiones, mostramos el modal
