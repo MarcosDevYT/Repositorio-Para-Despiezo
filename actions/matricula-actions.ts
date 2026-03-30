@@ -2,6 +2,15 @@
 
 import { prisma } from "@/lib/prisma";
 
+// Formato de versiones disponibles (cuando no todas están procesadas)
+export interface AvailableVersion {
+  index: number;
+  name: string;
+  makerId: string;
+  modelId: string;
+  carId: string;
+}
+
 // Formato Solvedia/Autodoc (con details)
 export interface VehicleVersion {
   currentVersionIndex: number;
@@ -230,9 +239,14 @@ export async function searchByMatricula(
         try {
           if (!isOscaroFormat(data)) {
             const solData = data as MatriculaResponseSolvedia;
+            const basePlate = solData.plate.toLowerCase();
+
+            // 1. Guardar versiones procesadas (con datos completos)
+            const savedIndices = new Set<number>();
             for (let i = 0; i < solData.data.processedVersions.length; i++) {
               const version = solData.data.processedVersions[i];
-              const versionPlate = i === 0 ? solData.plate.toLowerCase() : `${solData.plate.toLowerCase()}-${i}`;
+              const idx = version.currentVersionIndex ?? i;
+              const versionPlate = idx === 0 ? basePlate : `${basePlate}-${idx}`;
               const normalizedVersion = normalizeVehicleVersion(versionPlate, version, solData.data.source);
               
               await prisma.vehicle.upsert({
@@ -240,6 +254,43 @@ export async function searchByMatricula(
                 update: normalizedVersion,
                 create: normalizedVersion,
               });
+              savedIndices.add(idx);
+            }
+
+            // 2. Guardar registros stub para availableVersions no procesadas
+            //    Esto permite que getVehicleByPlate encuentre todas las variaciones
+            if (solData.data.availableVersions) {
+              for (const av of solData.data.availableVersions) {
+                if (savedIndices.has(av.index)) continue; // ya guardada como procesada
+                const versionPlate = av.index === 0 ? basePlate : `${basePlate}-${av.index}`;
+                const stubData = {
+                  plate: versionPlate,
+                  source: solData.data.source || "Autodoc",
+                  title: av.name,
+                  fullName: av.name,
+                  tipo: null,
+                  yearRange: null,
+                  bodyType: null,
+                  driveType: null,
+                  powerKw: null,
+                  powerHp: null,
+                  displacement: null,
+                  cylinders: null,
+                  valves: null,
+                  engineType: null,
+                  engineCode: null,
+                  transmission: null,
+                  fuelType: null,
+                  fuelPreparation: null,
+                  brakeSystem: null,
+                };
+                
+                // Solo crear si no existe (no sobreescribir datos completos con stub)
+                const existing = await prisma.vehicle.findUnique({ where: { plate: versionPlate } });
+                if (!existing) {
+                  await prisma.vehicle.create({ data: stubData });
+                }
+              }
             }
           } else {
             const normalizedData = normalizeVehicleData(data);
@@ -331,9 +382,10 @@ export async function getVehicleByPlate(plate: string) {
   try {
     const cleanPlate = plate.toLowerCase();
     const basePlate = cleanPlate.includes("-") ? cleanPlate.split("-")[0] : cleanPlate;
+    const hasIndexSuffix = cleanPlate.includes("-");
 
     // Buscar todas las variaciones de esta matrícula
-    const variations = await prisma.vehicle.findMany({
+    let variations = await prisma.vehicle.findMany({
       where: {
         plate: {
           startsWith: basePlate,
@@ -345,9 +397,27 @@ export async function getVehicleByPlate(plate: string) {
     });
 
     // Filtrar para asegurarnos que solo coincidan con "basePlate" o "basePlate-index"
-    const exactVariations = variations.filter((v: any) => 
+    let exactVariations = variations.filter((v: any) => 
       v.plate === basePlate || v.plate.startsWith(`${basePlate}-`)
     );
+
+    // Si la placa tiene índice (ej: "3588jvz-1") pero solo encontramos 1 variación en BD,
+    // significa que faltan registros. Refrescamos el caché llamando a searchByMatricula.
+    if (exactVariations.length <= 1 && hasIndexSuffix) {
+      try {
+        await searchByMatricula(basePlate);
+        // Re-consultar después del refresh
+        variations = await prisma.vehicle.findMany({
+          where: { plate: { startsWith: basePlate } },
+          orderBy: { plate: "asc" },
+        });
+        exactVariations = variations.filter((v: any) => 
+          v.plate === basePlate || v.plate.startsWith(`${basePlate}-`)
+        );
+      } catch (refreshError) {
+        console.error("Error al refrescar caché de variaciones:", refreshError);
+      }
+    }
 
     if (exactVariations.length === 0) return null;
 

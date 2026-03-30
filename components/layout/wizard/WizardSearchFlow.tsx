@@ -24,7 +24,7 @@ import {
 import { useMarcas } from "@/hooks/use-marcas";
 import { useModelos } from "@/hooks/use-modelos";
 import { searchByMatricula } from "@/actions/matricula-actions";
-import type { MatriculaResponseSolvedia } from "@/actions/matricula-actions";
+import type { MatriculaResponseSolvedia, AvailableVersion } from "@/actions/matricula-actions";
 
 type SearchMode = "choice" | "oem" | "matricula" | "marca";
 
@@ -43,6 +43,7 @@ export const WizardSearchFlow = ({ onBack }: Props) => {
   // Matrícula search
   const [matriculaQuery, setMatriculaQuery] = useState("");
   const [vehicleVersions, setVehicleVersions] = useState<any[]>([]);
+  const [availableVersions, setAvailableVersions] = useState<AvailableVersion[]>([]);
   const [showVersions, setShowVersions] = useState(false);
 
   // Marca/Modelo search
@@ -73,7 +74,8 @@ export const WizardSearchFlow = ({ onBack }: Props) => {
       // Check if it has multiple versions
       if ("hasMultipleVersions" in result && result.hasMultipleVersions) {
         const solData = result as MatriculaResponseSolvedia;
-        setVehicleVersions(solData.data.processedVersions);
+        setVehicleVersions(solData.data.processedVersions || []);
+        setAvailableVersions(solData.data.availableVersions || []);
         setShowVersions(true);
       } else {
         // Single version - redirect to search with vehicle data
@@ -89,9 +91,40 @@ export const WizardSearchFlow = ({ onBack }: Props) => {
     });
   };
 
-  const handleVersionSelect = (version: any) => {
-    const title = version.title || version.versionName || "";
-    router.push(`/productos?query=${encodeURIComponent(title)}`);
+  const handleVersionSelect = (version: any, index?: number, availVersion?: AvailableVersion) => {
+    const basePlate = matriculaQuery.trim().toLowerCase().split("-")[0];
+    const versionIndex = index ?? 0;
+    const selectedPlate = versionIndex === 0 ? basePlate : `${basePlate}-${versionIndex}`;
+    
+    let marca = "";
+    let modelo = "";
+    let year = "";
+
+    if (version) {
+      marca = (version.versionName || "").split(" ")[0];
+      modelo = (version.versionName || "").split(" ").slice(1, 3).join(" ");
+      if (version.details?.["A\u00f1o de fabricaci\u00f3n (desde - hasta)"]) {
+        year = version.details["A\u00f1o de fabricaci\u00f3n (desde - hasta)"];
+      }
+    } else if (availVersion) {
+      const nameParts = availVersion.name.split(" ");
+      marca = nameParts[0];
+      modelo = nameParts.slice(1, 3).join(" ");
+      const yearMatch = availVersion.name.match(/\((\d{2}\.\d{4})/);
+      if (yearMatch) year = yearMatch[1];
+    }
+
+    const params = new URLSearchParams();
+    if (marca) params.set("marca", marca);
+    if (modelo) params.set("modelo", modelo);
+    if (year) params.set("a\u00f1o", year);
+    params.set("matricula", selectedPlate);
+
+    // Forzar reset de overflow antes de navegar
+    document.body.style.overflow = "";
+    document.body.style.paddingRight = "";
+
+    router.push(`/productos?${params.toString()}`);
   };
 
   const handleMarcaModeloSearch = () => {
@@ -272,12 +305,13 @@ export const WizardSearchFlow = ({ onBack }: Props) => {
           ) : (
             <div className="space-y-3">
               <p className="text-sm text-gray-500 text-center mb-4">
-                Se encontraron <span className="font-semibold">{vehicleVersions.length}</span> variaciones. Selecciona la tuya:
+                Se encontraron <span className="font-semibold">{availableVersions.length > 0 ? availableVersions.length : vehicleVersions.length}</span> variaciones. Selecciona la tuya:
               </p>
-              {vehicleVersions.map((version: any, idx: number) => (
+              {/* Si tenemos processedVersions completas, las mostramos */}
+              {vehicleVersions.length > 1 ? vehicleVersions.map((version: any, idx: number) => (
                 <button
                   key={idx}
-                  onClick={() => handleVersionSelect(version)}
+                  onClick={() => handleVersionSelect(version, version.currentVersionIndex)}
                   className="w-full bg-white rounded-xl border-2 border-gray-100 hover:border-purple-400 p-4 text-left transition-all hover:shadow-md cursor-pointer"
                 >
                   <p className="font-semibold text-gray-900 text-sm">{version.title || version.versionName}</p>
@@ -293,15 +327,49 @@ export const WizardSearchFlow = ({ onBack }: Props) => {
                           {version.details["Potencia [cv]"]} cv
                         </span>
                       )}
-                      {version.details["Año de fabricación (desde - hasta)"] && (
+                      {version.details["A\u00f1o de fabricaci\u00f3n (desde - hasta)"] && (
                         <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-                          {version.details["Año de fabricación (desde - hasta)"]}
+                          {version.details["A\u00f1o de fabricaci\u00f3n (desde - hasta)"]}
                         </span>
                       )}
                     </div>
                   )}
                 </button>
-              ))}
+              )) : availableVersions.map((av) => {
+                const processedVersion = vehicleVersions.find((v: any) => v.currentVersionIndex === av.index);
+                return (
+                  <button
+                    key={av.index}
+                    onClick={() => handleVersionSelect(processedVersion || null, av.index, av)}
+                    className="w-full bg-white rounded-xl border-2 border-gray-100 hover:border-purple-400 p-4 text-left transition-all hover:shadow-md cursor-pointer"
+                  >
+                    <p className="font-semibold text-gray-900 text-sm">
+                      {processedVersion ? (processedVersion.title || processedVersion.versionName) : av.name}
+                    </p>
+                    {processedVersion?.details ? (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {processedVersion.details["Tipo de combustible"] && (
+                          <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                            {processedVersion.details["Tipo de combustible"]}
+                          </span>
+                        )}
+                        {processedVersion.details["Potencia [cv]"] && (
+                          <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                            {processedVersion.details["Potencia [cv]"]} cv
+                          </span>
+                        )}
+                        {processedVersion.details["A\u00f1o de fabricaci\u00f3n (desde - hasta)"] && (
+                          <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                            {processedVersion.details["A\u00f1o de fabricaci\u00f3n (desde - hasta)"]}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-gray-400 mt-1">{av.name}</p>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>

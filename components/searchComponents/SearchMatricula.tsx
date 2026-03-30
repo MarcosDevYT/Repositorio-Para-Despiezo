@@ -4,7 +4,7 @@ import { useState, useTransition, useEffect, useRef } from "react";
 import { Search, Loader2, Car, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { searchByMatricula, type MatriculaResponseSolvedia, type VehicleVersion } from "@/actions/matricula-actions";
+import { searchByMatricula, type MatriculaResponseSolvedia, type VehicleVersion, type AvailableVersion } from "@/actions/matricula-actions";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { LoadingOverlay } from "@/components/ui/loading-overlay";
@@ -24,6 +24,7 @@ export const SearchMatricula = () => {
   const [progress, setProgress] = useState(0);
   const [showVersionModal, setShowVersionModal] = useState(false);
   const [versions, setVersions] = useState<VehicleVersion[]>([]);
+  const [availableVersions, setAvailableVersions] = useState<AvailableVersion[]>([]);
   const [searchResult, setSearchResult] = useState<MatriculaResponseSolvedia | null>(null);
   const router = useRouter();
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -183,32 +184,39 @@ export const SearchMatricula = () => {
     await new Promise(resolve => setTimeout(resolve, 1000));
   };
 
-  const handleSelectVersion = async (version: VehicleVersion, index: number) => {
+  const handleSelectVersion = async (version: VehicleVersion | null, index: number, availVersion?: AvailableVersion) => {
     setShowVersionModal(false);
-    setIsLoading(true);
-    setProgress(90);
 
     const basePlate = matricula.trim().toLowerCase().split("-")[0];
     const selectedPlate = index === 0 ? basePlate : `${basePlate}-${index}`;
     
-    // Extraer marca del versionName
-    const marca = version.versionName.split(" ")[0];
-    
-    // Extraer modelo
-    const modelo = version.versionName.split(" ").slice(1, 3).join(" ");
-    
-    // Extraer año
-    const year = version.details["Año de fabricación (desde - hasta)"];
+    let marca = "";
+    let modelo = "";
+    let year = "";
 
-    await completeProgress();
-    setIsLoading(false);
-    setProgress(0);
+    if (version) {
+      marca = version.versionName.split(" ")[0];
+      modelo = version.versionName.split(" ").slice(1, 3).join(" ");
+      year = version.details["Año de fabricación (desde - hasta)"];
+    } else if (availVersion) {
+      const nameParts = availVersion.name.split(" ");
+      marca = nameParts[0];
+      modelo = nameParts.slice(1, 3).join(" ");
+      const yearMatch = availVersion.name.match(/\((\d{2}\.\d{4})/);
+      if (yearMatch) {
+        year = yearMatch[1];
+      }
+    }
 
     const searchParams = new URLSearchParams();
     if (marca) searchParams.set("marca", marca);
     if (modelo) searchParams.set("modelo", modelo);
     if (year) searchParams.set("año", year);
     searchParams.set("matricula", selectedPlate);
+    
+    // Forzar reset de overflow antes de navegar (el Dialog de Radix puede dejarlo en hidden)
+    document.body.style.overflow = "";
+    document.body.style.paddingRight = "";
     
     router.push(`/productos?${searchParams.toString()}`);
   };
@@ -269,9 +277,14 @@ export const SearchMatricula = () => {
         }
 
         // Si tiene múltiples versiones, mostramos el modal
-        if ("data" in result && "processedVersions" in result.data && result.data.processedVersions.length > 1) {
-          setVersions(result.data.processedVersions);
-          setSearchResult(result as MatriculaResponseSolvedia);
+        const solResult = result as MatriculaResponseSolvedia;
+        const hasMultiple = solResult.hasMultipleVersions || 
+          ("data" in result && "processedVersions" in result.data && result.data.processedVersions.length > 1);
+        
+        if (hasMultiple) {
+          setVersions(solResult.data.processedVersions || []);
+          setAvailableVersions(solResult.data.availableVersions || []);
+          setSearchResult(solResult);
           
           if (progressIntervalRef.current) {
             clearInterval(progressIntervalRef.current);
@@ -324,6 +337,10 @@ export const SearchMatricula = () => {
         if (year) searchParams.set("año", year);
         searchParams.set("matricula", matricula.toLowerCase());
         
+        // Forzar reset de overflow antes de navegar
+        document.body.style.overflow = "";
+        document.body.style.paddingRight = "";
+        
         router.push(`/productos?${searchParams.toString()}`);
       } catch (error) {
         console.error(error);
@@ -349,19 +366,33 @@ export const SearchMatricula = () => {
       <Dialog open={showVersionModal} onOpenChange={setShowVersionModal}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Múltiples versiones encontradas</DialogTitle>
-            <DialogDescription>
-              Hemos encontrado varias versiones para la matrícula <strong>{matricula}</strong>. 
-              Por favor, selecciona la que corresponde a tu vehículo.
-            </DialogDescription>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-blue-50">
+                <Car className="size-5 text-blue-600" />
+              </div>
+              <div>
+                <DialogTitle>Selecciona tu versión</DialogTitle>
+                <DialogDescription className="mt-0.5">
+                  Matrícula: <strong>{matricula}</strong>
+                </DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
 
-          <ScrollArea className="max-h-[60vh] mt-4 pr-4">
+          <div className="flex items-start gap-2 px-1 py-2 bg-amber-50 rounded-lg border border-amber-100 mt-2">
+            <span className="text-amber-500 mt-0.5">⚠</span>
+            <p className="text-sm text-amber-700">
+              Encontramos {availableVersions.length > 0 ? availableVersions.length : versions.length} versiones para este vehículo. Selecciona la que corresponda a tu coche.
+            </p>
+          </div>
+
+          <ScrollArea className="max-h-[60vh] mt-2 pr-4">
             <div className="grid gap-3">
-              {versions.map((version, index) => (
+              {/* Si tenemos processedVersions completas, las mostramos */}
+              {versions.length > 1 ? versions.map((version, index) => (
                 <button
                   key={index}
-                  onClick={() => handleSelectVersion(version, index)}
+                  onClick={() => handleSelectVersion(version, version.currentVersionIndex)}
                   className="flex items-center justify-between p-4 rounded-xl border-2 border-slate-100 hover:border-blue-500 hover:bg-blue-50 transition-all text-left group"
                 >
                   <div className="flex items-center gap-4">
@@ -369,21 +400,63 @@ export const SearchMatricula = () => {
                       <Car className="size-6" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-slate-900 group-hover:text-blue-700 transition-colors line-clamp-1">
+                      <h3 className="font-semibold text-slate-900 group-hover:text-blue-700 transition-colors line-clamp-2">
                         {version.versionName}
                       </h3>
                       <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-sm text-slate-500">
-                        <span><strong>Motor:</strong> {version.details.Tipo}</span>
-                        <span><strong>Año:</strong> {version.details["Año de fabricación (desde - hasta)"]}</span>
-                        <span><strong>Potencia:</strong> {version.details["Potencia [cv]"]} CV</span>
+                        {version.details?.Tipo && <span><strong>Motor:</strong> {version.details.Tipo}</span>}
+                        {version.details?.["Año de fabricación (desde - hasta)"] && <span><strong>Año:</strong> {version.details["Año de fabricación (desde - hasta)"]}</span>}
+                        {version.details?.["Potencia [cv]"] && <span><strong>Potencia:</strong> {version.details["Potencia [cv]"]} CV</span>}
+                        {version.details?.["Tipo de combustible"] && <span><strong>Combustible:</strong> {version.details["Tipo de combustible"]}</span>}
                       </div>
                     </div>
                   </div>
-                  <ChevronRight className="size-5 text-slate-300 group-hover:text-blue-500 transition-colors" />
+                  <ChevronRight className="size-5 text-slate-300 group-hover:text-blue-500 transition-colors flex-shrink-0" />
                 </button>
-              ))}
+              )) : availableVersions.map((av) => {
+                // Buscar si existe una processedVersion para esta availableVersion
+                const processedVersion = versions.find(v => v.currentVersionIndex === av.index);
+                return (
+                  <button
+                    key={av.index}
+                    onClick={() => handleSelectVersion(processedVersion || null, av.index, av)}
+                    className="flex items-center justify-between p-4 rounded-xl border-2 border-slate-100 hover:border-blue-500 hover:bg-blue-50 transition-all text-left group"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 rounded-full bg-slate-100 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
+                        <Car className="size-6" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-slate-900 group-hover:text-blue-700 transition-colors line-clamp-2">
+                          {processedVersion ? processedVersion.versionName : av.name}
+                        </h3>
+                        {processedVersion ? (
+                          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-sm text-slate-500">
+                            {processedVersion.details?.Tipo && <span><strong>Motor:</strong> {processedVersion.details.Tipo}</span>}
+                            {processedVersion.details?.["Año de fabricación (desde - hasta)"] && <span><strong>Año:</strong> {processedVersion.details["Año de fabricación (desde - hasta)"]}</span>}
+                            {processedVersion.details?.["Potencia [cv]"] && <span><strong>Potencia:</strong> {processedVersion.details["Potencia [cv]"]} CV</span>}
+                            {processedVersion.details?.["Tipo de combustible"] && <span><strong>Combustible:</strong> {processedVersion.details["Tipo de combustible"]}</span>}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-slate-400 mt-1">{av.name}</p>
+                        )}
+                      </div>
+                    </div>
+                    <ChevronRight className="size-5 text-slate-300 group-hover:text-blue-500 transition-colors flex-shrink-0" />
+                  </button>
+                );
+              })}
             </div>
           </ScrollArea>
+
+          <div className="flex justify-center pt-2">
+            <button
+              onClick={() => setShowVersionModal(false)}
+              className="text-sm text-slate-500 hover:text-slate-700 font-medium transition-colors"
+            >
+              Cancelar
+            </button>
+          </div>
         </DialogContent>
       </Dialog>
       

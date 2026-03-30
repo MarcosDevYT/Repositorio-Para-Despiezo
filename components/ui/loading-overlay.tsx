@@ -39,8 +39,6 @@ export const LoadingOverlay = ({ isLoading, progress, message = "Buscando vehíc
   useEffect(() => {
     if (isLoading) {
       const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-      const originalStyle = window.getComputedStyle(document.body).overflow;
-      const originalPadding = document.body.style.paddingRight;
 
       document.body.style.overflow = "hidden";
       if (scrollbarWidth > 0) {
@@ -48,11 +46,19 @@ export const LoadingOverlay = ({ isLoading, progress, message = "Buscando vehíc
       }
 
       return () => {
-        document.body.style.overflow = originalStyle;
-        document.body.style.paddingRight = originalPadding;
+        document.body.style.overflow = "";
+        document.body.style.paddingRight = "";
       };
     }
   }, [isLoading]);
+
+  // Safety cleanup: siempre resetear al desmontar el componente
+  useEffect(() => {
+    return () => {
+      document.body.style.overflow = "";
+      document.body.style.paddingRight = "";
+    };
+  }, []);
 
   if (!mounted || !isLoading) return null;
 

@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 interface VehicleVariation {
   plate: string;
   fullName: string;
+  yearRange?: string | null;
   index: number;
 }
 
