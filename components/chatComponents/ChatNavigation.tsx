@@ -20,7 +20,9 @@ export const ChatNavigation = ({ session }: { session: Session | null }) => {
       try {
         const res = await getChats();
         if (res.success === true) {
-          setChats(res.chats);
+          // Cast the response to Chat[] to satisfy TypeScript, as our Chat type
+          // now allows product to be null, which aligns with the actual data
+          setChats((res.chats as unknown) as Chat[]);
         }
       } catch (error) {
         toast.error("Error al conseguir los chats");

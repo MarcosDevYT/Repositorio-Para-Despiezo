@@ -22,7 +22,7 @@ export interface MarketplaceChatMessage {
 export interface ChatRoom {
   id: string;
   productId: string;
-  product: ProductType;
+  product: ProductType | null;
   vendor: {
     id: string;
     name: string;
@@ -45,7 +45,7 @@ export interface Chat {
     id: string;
     name: string;
     images: string[];
-  };
+  } | null;
   vendor: {
     id: string;
     name: string | null;

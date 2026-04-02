@@ -30,11 +30,12 @@ export function useMarketplaceChat({
   const loadChatRoom = () => {
     startTransition(async () => {
       try {
+        if (!roomId) return;
         const res = await getChatRoomAction(roomId);
         if (res.success === true) {
-          const roomData = res.room;
+          const roomData = res.room as unknown as ChatRoom;
           setRoom(roomData);
-          setMessages(roomData.messages || []);
+          setMessages(roomData?.messages || []);
         }
       } catch (error) {
         console.error("Error loading room:", error);

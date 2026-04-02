@@ -54,16 +54,22 @@ export const ChatList = ({
             className="flex flex-row items-start gap-3 py-4 px-3 hover:bg-muted/50 cursor-pointer border-b transition-colors"
           >
             <div className="min-w-10 size-10 bg-gray-200 rounded-full overflow-clip flex items-center justify-center flex-shrink-0">
-              <img
-                src={chat.product.images[0]}
-                alt={chat.product.name}
-                className="object-cover w-full h-full"
-              />
+              {chat.product?.images?.[0] ? (
+                <img
+                  src={chat.product.images[0]}
+                  alt={chat.product.name}
+                  className="object-cover w-full h-full"
+                />
+              ) : (
+                <span className="text-xs font-bold text-gray-500">
+                  {chat.product?.name?.charAt(0) || "?"}
+                </span>
+              )}
             </div>
             <div className="flex flex-col flex-1 min-w-0">
               <div className="flex items-start justify-between gap-2">
                 <span className="font-semibold text-sm line-clamp-1">
-                  {chat.product.name}
+                  {chat.product?.name || "Producto no disponible"}
                 </span>
                 {lastMessage && (
                   <span className="text-xs text-muted-foreground flex-shrink-0">

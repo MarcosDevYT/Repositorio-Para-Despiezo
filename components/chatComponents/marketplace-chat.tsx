@@ -92,12 +92,18 @@ export const MarketplaceChat = ({
                   {isVendor ? "Comprador" : "Vendedor"}
                 </span>
               </div>
-              <Link
-                href={`/productos/${room.product.id}`}
-                className="text-sm text-muted-foreground line-clamp-1"
-              >
-                Producto: {room.product.name}
-              </Link>
+              {room.product ? (
+                <Link
+                  href={`/productos/${room.product.id}`}
+                  className="text-sm text-muted-foreground line-clamp-1"
+                >
+                  Producto: {room.product.name}
+                </Link>
+              ) : (
+                <span className="text-sm text-muted-foreground line-clamp-1">
+                  Producto no disponible
+                </span>
+              )}
             </div>
           </div>
         </header>
@@ -164,7 +170,7 @@ export const MarketplaceChat = ({
         </form>
       </div>
       {/* Product details */}
-      <ChatProductDetails product={room.product} />
+      {room.product && <ChatProductDetails product={room.product} />}
     </div>
   );
 };
