@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { MainContainer } from "@/components/layout/MainContainer";
 import {
@@ -45,6 +45,9 @@ export const WizardSearchFlow = ({ onBack }: Props) => {
   const [vehicleVersions, setVehicleVersions] = useState<any[]>([]);
   const [availableVersions, setAvailableVersions] = useState<AvailableVersion[]>([]);
   const [showVersions, setShowVersions] = useState(false);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingAbortControllerRef = useRef<AbortController | null>(null);
+  const isPollingActiveRef = useRef(false);
 
   // Marca/Modelo search
   const { marcas, loading: marcasLoading } = useMarcas();
@@ -56,6 +59,107 @@ export const WizardSearchFlow = ({ onBack }: Props) => {
   const modelosFiltrados = selectedBrand ? getModelosByMarca(selectedBrand) : [];
   const aniosFiltrados = selectedBrand ? getAniosByMarca(selectedBrand) : [];
 
+  // Limpiar polling al desmontar
+  useEffect(() => {
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+      if (pollingAbortControllerRef.current) {
+        pollingAbortControllerRef.current.abort();
+      }
+    };
+  }, []);
+
+  const detenerPolling = () => {
+    isPollingActiveRef.current = false;
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+    if (pollingAbortControllerRef.current) {
+      pollingAbortControllerRef.current.abort();
+      pollingAbortControllerRef.current = null;
+    }
+  };
+
+  const iniciarPollingMatriculaConRedireccion = (placa: string) => {
+    isPollingActiveRef.current = true;
+
+    const ejecutarPolling = async () => {
+      if (!isPollingActiveRef.current) {
+        if (pollingIntervalRef.current) {
+          clearInterval(pollingIntervalRef.current);
+          pollingIntervalRef.current = null;
+        }
+        return;
+      }
+
+      pollingAbortControllerRef.current = new AbortController();
+      const timeoutId = setTimeout(() => {
+        if (pollingAbortControllerRef.current) {
+          pollingAbortControllerRef.current.abort();
+        }
+      }, 2500);
+
+      try {
+        const url = `https://despiezo.solvedia.app/matricula/cached2/${placa.toLowerCase()}`;
+        const response = await fetch(url, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          cache: "no-store",
+          signal: pollingAbortControllerRef.current.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            // Detener polling INMEDIATAMENTE
+            detenerPolling();
+
+            const solData = data as MatriculaResponseSolvedia;
+            const hasMultiple = solData.hasMultipleVersions || 
+              (solData.data.processedVersions && solData.data.processedVersions.length > 1);
+
+            if (hasMultiple) {
+              setVehicleVersions(solData.data.processedVersions || []);
+              setAvailableVersions(solData.data.availableVersions || []);
+              setShowVersions(true);
+            } else {
+              const version = solData.data.processedVersions[0];
+              if (version) {
+                const marca = version.versionName.split(" ")[0];
+                const modelo = version.versionName.split(" ").slice(1, 3).join(" ");
+                const year = version.details["Año de fabricación (desde - hasta)"];
+
+                const searchParams = new URLSearchParams();
+                if (marca) searchParams.set("marca", marca);
+                if (modelo) searchParams.set("modelo", modelo);
+                if (year) searchParams.set("año", year);
+                searchParams.set("matricula", placa.toLowerCase());
+                
+                document.body.style.overflow = "";
+                document.body.style.paddingRight = "";
+                
+                router.push(`/productos?${searchParams.toString()}`);
+              }
+            }
+          }
+        }
+      } catch (error: any) {
+        clearTimeout(timeoutId);
+        if (error.name !== 'AbortError') {
+          console.error("Error en polling con redirección:", error);
+        }
+      }
+    };
+
+    ejecutarPolling();
+    pollingIntervalRef.current = setInterval(ejecutarPolling, 3000);
+  };
+
   // --- Handlers ---
   const handleOemSearch = () => {
     if (!oemQuery.trim()) return;
@@ -64,29 +168,45 @@ export const WizardSearchFlow = ({ onBack }: Props) => {
 
   const handleMatriculaSearch = () => {
     if (!matriculaQuery.trim()) return;
+    
+    const basePlate = matriculaQuery.trim().toLowerCase().split("-")[0];
+    
+    // Iniciar polling en paralelo
+    iniciarPollingMatriculaConRedireccion(basePlate);
+    
     startTransition(async () => {
-      const result = await searchByMatricula(matriculaQuery.trim());
-      if ("error" in result) {
-        router.push(`/productos?query=${encodeURIComponent(matriculaQuery.trim())}`);
-        return;
-      }
-
-      // Check if it has multiple versions
-      if ("hasMultipleVersions" in result && result.hasMultipleVersions) {
-        const solData = result as MatriculaResponseSolvedia;
-        setVehicleVersions(solData.data.processedVersions || []);
-        setAvailableVersions(solData.data.availableVersions || []);
-        setShowVersions(true);
-      } else {
-        // Single version - redirect to search with vehicle data
-        const solData = result as MatriculaResponseSolvedia;
-        const version = solData.data.processedVersions[0];
-        if (version) {
-          const title = version.title || "";
-          router.push(`/productos?query=${encodeURIComponent(title)}`);
-        } else {
+      try {
+        const result = await searchByMatricula(matriculaQuery.trim());
+        
+        if ("error" in result) {
+          detenerPolling();
           router.push(`/productos?query=${encodeURIComponent(matriculaQuery.trim())}`);
+          return;
         }
+
+        // Detener polling ya que el proceso principal tuvo éxito
+        detenerPolling();
+
+        // Check if it has multiple versions
+        if ("hasMultipleVersions" in result && result.hasMultipleVersions) {
+          const solData = result as MatriculaResponseSolvedia;
+          setVehicleVersions(solData.data.processedVersions || []);
+          setAvailableVersions(solData.data.availableVersions || []);
+          setShowVersions(true);
+        } else {
+          // Single version - redirect to search with vehicle data
+          const solData = result as MatriculaResponseSolvedia;
+          const version = solData.data.processedVersions[0];
+          if (version) {
+            const title = version.title || "";
+            router.push(`/productos?query=${encodeURIComponent(title)}`);
+          } else {
+            router.push(`/productos?query=${encodeURIComponent(matriculaQuery.trim())}`);
+          }
+        }
+      } catch (error) {
+        console.error("Error en búsqueda de matrícula:", error);
+        detenerPolling();
       }
     });
   };

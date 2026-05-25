@@ -29,6 +29,11 @@ export const SearchMatricula = () => {
   const router = useRouter();
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingAbortControllerRef = useRef<AbortController | null>(null);
+  const isPollingActiveRef = useRef(false);
+  const patienceMessageShownRef = useRef(false);
+  const currentMatriculaRef = useRef<string>("");
+  const hasRestarted = useRef(false);
 
   // Limpiar intervalos al desmontar
   useEffect(() => {
@@ -38,6 +43,9 @@ export const SearchMatricula = () => {
       }
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
+      }
+      if (pollingAbortControllerRef.current) {
+        pollingAbortControllerRef.current.abort();
       }
     };
   }, []);
@@ -142,23 +150,159 @@ export const SearchMatricula = () => {
     }, 1000); // Cada segundo
   };
 
-  const startProgressAnimation = () => {
-    setProgress(0);
+  const iniciarPollingMatriculaConRedireccion = (placa: string) => {
+    // Marcar que el polling está activo
+    isPollingActiveRef.current = true;
+
+    const ejecutarPolling = async () => {
+      // Si el polling ya no está activo, detener
+      if (!isPollingActiveRef.current) {
+        if (pollingIntervalRef.current) {
+          clearInterval(pollingIntervalRef.current);
+          pollingIntervalRef.current = null;
+        }
+        return;
+      }
+
+      // Crear nuevo AbortController para este request
+      pollingAbortControllerRef.current = new AbortController();
+      const timeoutId = setTimeout(() => {
+        if (pollingAbortControllerRef.current) {
+          pollingAbortControllerRef.current.abort();
+        }
+      }, 2500); // Timeout de 2.5 segundos
+
+      try {
+        const url = `https://despiezo.solvedia.app/matricula/cached2/${placa.toLowerCase()}`;
+        const response = await fetch(url, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          cache: "no-store",
+          signal: pollingAbortControllerRef.current.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            // Datos encontrados! Detener polling INMEDIATAMENTE
+            detenerPolling();
+
+            // Actualizar log
+            await actualizarArchivoPlaca(placa, true);
+
+            // Procesar datos y redirigir
+            const solData = data as MatriculaResponseSolvedia;
+            const hasMultiple = solData.hasMultipleVersions || 
+              (solData.data.processedVersions && solData.data.processedVersions.length > 1);
+
+            if (hasMultiple) {
+              // Mostrar modal de versiones
+              setVersions(solData.data.processedVersions || []);
+              setAvailableVersions(solData.data.availableVersions || []);
+              setSearchResult(solData);
+              
+              await completeProgress();
+              setIsLoading(false);
+              setProgress(0);
+              setShowVersionModal(true);
+            } else {
+              // Redirigir directamente
+              const version = solData.data.processedVersions[0];
+              if (version) {
+                const marca = version.versionName.split(" ")[0];
+                const modelo = version.versionName.split(" ").slice(1, 3).join(" ");
+                const year = version.details["Año de fabricación (desde - hasta)"];
+
+                await completeProgress();
+                setIsLoading(false);
+                setProgress(0);
+
+                const searchParams = new URLSearchParams();
+                if (marca) searchParams.set("marca", marca);
+                if (modelo) searchParams.set("modelo", modelo);
+                if (year) searchParams.set("año", year);
+                searchParams.set("matricula", placa.toLowerCase());
+                
+                document.body.style.overflow = "";
+                document.body.style.paddingRight = "";
+                
+                router.push(`/productos?${searchParams.toString()}`);
+              }
+            }
+          }
+        }
+      } catch (error: any) {
+        clearTimeout(timeoutId);
+        // Ignorar errores de abort, son esperados
+        if (error.name !== 'AbortError') {
+          console.error("Error en polling con redirección:", error);
+        }
+      }
+    };
+
+    // Ejecutar inmediatamente el primer polling
+    ejecutarPolling();
+
+    // Continuar polling cada 3 segundos
+    pollingIntervalRef.current = setInterval(ejecutarPolling, 3000);
+  };
+
+  const detenerPolling = () => {
+    isPollingActiveRef.current = false;
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+    if (pollingAbortControllerRef.current) {
+      pollingAbortControllerRef.current.abort();
+      pollingAbortControllerRef.current = null;
+    }
+  };
+
+  const startProgressAnimation = (startFrom: number = 0) => {
+    setProgress(startFrom);
     const duration = 15000; // 15 segundos
     const targetProgress = 90; // Máximo 90%
     const intervalTime = 100; // Actualizar cada 100ms
     const totalSteps = duration / intervalTime;
+    const progressRange = targetProgress - startFrom;
     let currentStep = 0;
 
     progressIntervalRef.current = setInterval(() => {
       currentStep++;
       
       // Progreso con variación aleatoria para hacerlo más natural
-      const baseProgress = (currentStep / totalSteps) * targetProgress;
+      const baseProgress = startFrom + (currentStep / totalSteps) * progressRange;
       const randomVariation = Math.random() * 2 - 1; // -1 a +1
       const newProgress = Math.min(targetProgress, baseProgress + randomVariation);
       
       setProgress(newProgress);
+
+      // Al llegar al 60%, pausar y preparar reinicio
+      if (newProgress >= 60 && !patienceMessageShownRef.current && !hasRestarted.current) {
+        patienceMessageShownRef.current = true;
+        
+        // Detener el progreso actual
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current);
+          progressIntervalRef.current = null;
+        }
+        
+        // Esperar 3 segundos antes de mostrar mensaje
+        setTimeout(() => {
+          toast.info("Paciencia, el proceso ya está terminando su ejecución", {
+            duration: 3000,
+          });
+          
+          // Reiniciar la búsqueda inmediatamente después del mensaje
+          if (currentMatriculaRef.current && !hasRestarted.current) {
+            hasRestarted.current = true;
+            reiniciarBusqueda();
+          }
+        }, 3000);
+      }
 
       // Detener cuando llegue al objetivo
       if (currentStep >= totalSteps) {
@@ -182,6 +326,151 @@ export const SearchMatricula = () => {
 
     // Esperar 1 segundo mostrando el 100%
     await new Promise(resolve => setTimeout(resolve, 1000));
+  };
+
+  const reiniciarBusqueda = async () => {
+    // Detener animación de progreso actual
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+
+    // Detener polling anterior para evitar duplicación
+    detenerPolling();
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+
+    // Continuar desde 65%
+    startProgressAnimation(65);
+
+    // Relanzar todas las operaciones de búsqueda
+    const basePlate = currentMatriculaRef.current.trim().toLowerCase().split("-")[0];
+
+    try {
+      // 1. Verificar si la placa ya existe en el log
+      const placaEnLog = await verificarPlacaEnLog(basePlate);
+      
+      // 2. Si existe y está procesada (cacheada), continuar normalmente
+      if (placaEnLog && placaEnLog.procesed === true) {
+        console.log(`Placa ${basePlate} ya está cacheada en el log`);
+      } else if (!placaEnLog) {
+        // 3. Si no existe en el log, crearla con procesed: false
+        console.log(`Registrando placa ${basePlate} en el log con procesed: false`);
+        await crearArchivoPlaca(basePlate, false);
+        
+        // 4. Iniciar polling para detectar cuando se cachee
+        iniciarPollingPlaca(basePlate);
+      } else if (placaEnLog.procesed === false) {
+        // 5. Si existe pero no está procesada, reiniciar polling
+        console.log(`Placa ${basePlate} existe pero no está cacheada, reiniciando polling`);
+        iniciarPollingPlaca(basePlate);
+      }
+
+      // Reiniciar polling con redirección en paralelo
+      iniciarPollingMatriculaConRedireccion(basePlate);
+
+      const result = await searchByMatricula(currentMatriculaRef.current);
+
+      if (!result.success) {
+        detenerPolling();
+        setIsLoading(false);
+        setProgress(0);
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current);
+          progressIntervalRef.current = null;
+        }
+        toast.error("error" in result ? result.error : "Error desconocido");
+        return;
+      }
+
+      // Si la búsqueda fue exitosa y la placa está cacheada, actualizar el log
+      if (result.success) {
+        await actualizarArchivoPlaca(basePlate, true);
+        detenerPolling();
+        if (pollingIntervalRef.current) {
+          clearInterval(pollingIntervalRef.current);
+          pollingIntervalRef.current = null;
+        }
+      }
+
+      // Si tiene múltiples versiones, mostramos el modal
+      const solResult = result as MatriculaResponseSolvedia;
+      const hasMultiple = solResult.hasMultipleVersions || 
+        ("data" in result && "processedVersions" in result.data && result.data.processedVersions.length > 1);
+      
+      if (hasMultiple) {
+        setVersions(solResult.data.processedVersions || []);
+        setAvailableVersions(solResult.data.availableVersions || []);
+        setSearchResult(solResult);
+        
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current);
+          progressIntervalRef.current = null;
+        }
+        setIsLoading(false);
+        setProgress(0);
+        setShowVersionModal(true);
+        return;
+      }
+
+      toast.success("Matrícula encontrada");
+      
+      // Extraer marca del fullName
+      const isOscaro = "version" in result.data && "label" in result.data;
+      let fullName = "";
+      let details: any = null;
+
+      if (isOscaro) {
+        fullName = (result.data as any).fullName;
+      } else {
+        fullName = (result as MatriculaResponseSolvedia).data.processedVersions[0].versionName;
+        details = (result as MatriculaResponseSolvedia).data.processedVersions[0].details;
+      }
+
+      const marca = fullName.split(" ")[0];
+      let modelo = "";
+      let year = "";
+      
+      if (isOscaro) {
+        const parts = fullName.split(" ");
+        modelo = parts.slice(1, 3).join(" ");
+        const oscaroData = result.data as any;
+        const yearMatch = oscaroData.version?.match(/\b(19|20)\d{2}\b/);
+        year = yearMatch ? yearMatch[0] : "";
+      } else {
+        modelo = fullName.split(" ").slice(1, 3).join(" ");
+        if (details && details["Año de fabricación (desde - hasta)"]) {
+          year = details["Año de fabricación (desde - hasta)"];
+        }
+      }
+
+      await completeProgress();
+      setIsLoading(false);
+      setProgress(0);
+
+      const searchParams = new URLSearchParams();
+      if (marca) searchParams.set("marca", marca);
+      if (modelo) searchParams.set("modelo", modelo);
+      if (year) searchParams.set("año", year);
+      searchParams.set("matricula", currentMatriculaRef.current.toLowerCase());
+      
+      document.body.style.overflow = "";
+      document.body.style.paddingRight = "";
+      
+      router.push(`/productos?${searchParams.toString()}`);
+    } catch (error) {
+      console.error(error);
+      detenerPolling();
+      setIsLoading(false);
+      setProgress(0);
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
+      toast.error("Error al procesar la búsqueda");
+    }
   };
 
   const handleSelectVersion = async (version: VehicleVersion | null, index: number, availVersion?: AvailableVersion) => {
@@ -227,6 +516,11 @@ export const SearchMatricula = () => {
       return;
     }
 
+    // Resetear flags para nueva búsqueda
+    patienceMessageShownRef.current = false;
+    hasRestarted.current = false;
+    currentMatriculaRef.current = matricula;
+
     setIsLoading(true);
     startProgressAnimation();
 
@@ -253,9 +547,20 @@ export const SearchMatricula = () => {
           iniciarPollingPlaca(basePlate);
         }
 
+        // NUEVO: Iniciar polling con redirección en paralelo
+        iniciarPollingMatriculaConRedireccion(basePlate);
+
         const result = await searchByMatricula(matricula);
 
+        // Si se ha reiniciado, detener este proceso original
+        if (hasRestarted.current) {
+          console.log('Proceso original detenido - reinicio en progreso');
+          return;
+        }
+
         if (!result.success) {
+          // Detener polling de redirección ya que el proceso principal falló
+          detenerPolling();
           setIsLoading(false);
           setProgress(0);
           if (progressIntervalRef.current) {
@@ -266,10 +571,17 @@ export const SearchMatricula = () => {
           return;
         }
 
+        // Si se ha reiniciado, detener este proceso original
+        if (hasRestarted.current) {
+          console.log('Proceso original detenido después de búsqueda - reinicio en progreso');
+          return;
+        }
+
         // 6. Si la búsqueda fue exitosa y la placa está cacheada, actualizar el log
         if (result.success) {
           await actualizarArchivoPlaca(basePlate, true);
-          // Detener polling si está activo
+          // Detener polling si está activo (ambos tipos)
+          detenerPolling();
           if (pollingIntervalRef.current) {
             clearInterval(pollingIntervalRef.current);
             pollingIntervalRef.current = null;
@@ -344,6 +656,7 @@ export const SearchMatricula = () => {
         router.push(`/productos?${searchParams.toString()}`);
       } catch (error) {
         console.error(error);
+        detenerPolling();
         setIsLoading(false);
         setProgress(0);
         if (progressIntervalRef.current) {

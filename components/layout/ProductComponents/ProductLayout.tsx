@@ -106,8 +106,113 @@ export const ProductLayout = ({
   const [showVersionModal, setShowVersionModal] = useState(false);
   const [versions, setVersions] = useState<VehicleVersion[]>([]);
   const [availableVersions, setAvailableVersions] = useState<AvailableVersion[]>([]);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingAbortControllerRef = useRef<AbortController | null>(null);
+  const isPollingActiveRef = useRef(false);
 
   const isSold = product.status === "vendido";
+
+  // Limpiar polling al desmontar
+  useEffect(() => {
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+      if (pollingAbortControllerRef.current) {
+        pollingAbortControllerRef.current.abort();
+      }
+    };
+  }, []);
+
+  const detenerPolling = () => {
+    isPollingActiveRef.current = false;
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+    if (pollingAbortControllerRef.current) {
+      pollingAbortControllerRef.current.abort();
+      pollingAbortControllerRef.current = null;
+    }
+  };
+
+  const iniciarPollingMatriculaConRedireccion = (placa: string) => {
+    isPollingActiveRef.current = true;
+
+    const ejecutarPolling = async () => {
+      if (!isPollingActiveRef.current) {
+        if (pollingIntervalRef.current) {
+          clearInterval(pollingIntervalRef.current);
+          pollingIntervalRef.current = null;
+        }
+        return;
+      }
+
+      pollingAbortControllerRef.current = new AbortController();
+      const timeoutId = setTimeout(() => {
+        if (pollingAbortControllerRef.current) {
+          pollingAbortControllerRef.current.abort();
+        }
+      }, 2500);
+
+      try {
+        const url = `https://despiezo.solvedia.app/matricula/cached2/${placa.toLowerCase()}`;
+        const response = await fetch(url, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          cache: "no-store",
+          signal: pollingAbortControllerRef.current.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            // Detener polling INMEDIATAMENTE
+            detenerPolling();
+
+            const solData = data as MatriculaResponseSolvedia;
+            const hasMultiple = solData.hasMultipleVersions || 
+              (solData.data.processedVersions && solData.data.processedVersions.length > 1);
+
+            if (hasMultiple) {
+              setVersions(solData.data.processedVersions || []);
+              setAvailableVersions(solData.data.availableVersions || []);
+              setCompatibilityStatus("idle");
+              setShowVersionModal(true);
+            } else {
+              const version = solData.data.processedVersions[0];
+              if (version) {
+                const marca = version.versionName.split(" ")[0];
+                const modelo = version.versionName.split(" ").slice(1, 3).join(" ");
+                const anio = version.details["Año de fabricación (desde - hasta)"];
+
+                setVehicleInfo({ marca, modelo, anio });
+                
+                const isCompatible = checkCompatibility(marca, modelo, anio);
+                setCompatibilityStatus(isCompatible ? "compatible" : "incompatible");
+                
+                if (isCompatible) {
+                  toast.success("¡Esta pieza es compatible con tu vehículo!");
+                } else {
+                  toast.warning("Esta pieza no es compatible con tu vehículo");
+                }
+              }
+            }
+          }
+        }
+      } catch (error: any) {
+        clearTimeout(timeoutId);
+        if (error.name !== 'AbortError') {
+          console.error("Error en polling con redirección:", error);
+        }
+      }
+    };
+
+    ejecutarPolling();
+    pollingIntervalRef.current = setInterval(ejecutarPolling, 3000);
+  };
 
   const checkCompatibility = (marca: string, modelo: string, anio: string): boolean => {
     if (!product.oemCompatibilidades) return false;
@@ -266,15 +371,24 @@ export const ProductLayout = ({
 
     setCompatibilityStatus("loading");
 
+    const basePlate = matricula.trim().toLowerCase().split("-")[0];
+    
+    // Iniciar polling en paralelo
+    iniciarPollingMatriculaConRedireccion(basePlate);
+
     startVerifyTransition(async () => {
       try {
         const result = await searchByMatricula(matricula);
 
         if (!result.success) {
+          detenerPolling();
           setCompatibilityStatus("idle");
           toast.error("error" in result ? result.error : "Matrícula no encontrada");
           return;
         }
+
+        // Detener polling ya que el proceso principal tuvo éxito
+        detenerPolling();
 
         // Si tiene múltiples versiones, mostramos el modal
         const solResult = result as MatriculaResponseSolvedia;
@@ -329,6 +443,7 @@ export const ProductLayout = ({
         }
       } catch (error) {
         console.error(error);
+        detenerPolling();
         setCompatibilityStatus("idle");
         toast.error("Error al verificar la matrícula");
       }
